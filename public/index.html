@@ -1321,6 +1321,11 @@
     transition: all 0.2s;
   }
 
+  /* ── GOOGLE ADS ── */
+  .google-kw-preview {
+    margin-top: 4px;
+  }
+
   /* Responsive */
   @media (max-width: 1100px) {
     .main { grid-template-columns: 260px 1fr; }
@@ -1498,6 +1503,7 @@
         <button class="tab-btn active" onclick="switchTab('canales', this)">📊 Por Canal</button>
         <button class="tab-btn" onclick="switchTab('campanas', this)">🎯 Por Campaña</button>
         <button class="tab-btn" onclick="switchTab('creativos', this)">🎨 Creativos</button>
+        <button class="tab-btn" onclick="switchTab('google', this)">🔍 Google Ads</button>
         <button class="tab-btn" onclick="switchTab('log', this)">🤖 Log IA</button>
       </div>
 
@@ -1551,6 +1557,20 @@
       </div>
 
       <!-- Tab: Log IA -->
+      <!-- Tab: Google Ads -->
+      <div id="tab-google" class="tab-content">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+          <div style="font-size:13px;color:var(--text-muted)" id="googleTabStatus">Cargando campañas...</div>
+          <div style="display:flex;gap:8px">
+            <button class="btn btn-secondary btn-sm" style="width:auto" onclick="loadGoogleCampaigns()">🔄 Actualizar</button>
+            <button class="btn btn-primary btn-sm" style="width:auto" onclick="switchView('inmuebles')">+ Nueva campaña</button>
+          </div>
+        </div>
+        <div id="googleCampaignsContainer">
+          <div class="empty-state"><div class="empty-icon">🎯</div><p>Cargando campañas de Google Ads...</p></div>
+        </div>
+      </div>
+
       <div id="tab-log" class="tab-content">
         <div class="log-timeline" id="logTimeline">
           <div class="empty-state">
@@ -1809,6 +1829,58 @@
         <label>Advertiser ID</label>
         <input type="text" class="form-control" id="s-tiktokAdvertiserId" placeholder="Próximamente..." disabled>
       </div>
+    </div>
+
+    <!-- Google Ads -->
+    <div class="settings-card">
+      <div class="settings-card-header">
+        <span class="settings-icon">🎯</span>
+        <div>
+          <div class="settings-card-title">Google Ads</div>
+          <div class="settings-card-sub">Search + Performance Max</div>
+        </div>
+        <div class="settings-status" id="status-google">
+          <span class="status-dot"></span> Sin configurar
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Developer Token <a class="settings-help" href="https://developers.google.com/google-ads/api/docs/get-started/dev-token" target="_blank">Obtener ↗</a></label>
+        <div class="input-secret-wrap">
+          <input type="password" class="form-control" id="s-gDevToken" placeholder="AbCdEfGhIjKlMnOpQrSt">
+          <button class="toggle-secret" onclick="toggleSecret('s-gDevToken')">👁</button>
+        </div>
+      </div>
+      <div class="pauta-form-grid">
+        <div class="form-group">
+          <label>Customer ID <a class="settings-help" href="https://support.google.com/google-ads/answer/1704344" target="_blank">¿Cuál es? ↗</a></label>
+          <input type="text" class="form-control" id="s-gCustomerId" placeholder="1234567890 (sin guiones)">
+        </div>
+        <div class="form-group">
+          <label>Manager Account ID (MCC)</label>
+          <input type="text" class="form-control" id="s-gMccId" placeholder="Opcional">
+        </div>
+        <div class="form-group">
+          <label>OAuth2 Client ID</label>
+          <input type="text" class="form-control" id="s-gClientId" placeholder="xxxxx.apps.googleusercontent.com">
+        </div>
+        <div class="form-group">
+          <label>OAuth2 Client Secret</label>
+          <div class="input-secret-wrap">
+            <input type="password" class="form-control" id="s-gClientSecret" placeholder="GOCSPX-xxxxxxxx">
+            <button class="toggle-secret" onclick="toggleSecret('s-gClientSecret')">👁</button>
+          </div>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Refresh Token <a class="settings-help" href="https://developers.google.com/google-ads/api/docs/get-started/oauth-cloud-project" target="_blank">Generar ↗</a></label>
+        <div class="input-secret-wrap">
+          <input type="password" class="form-control" id="s-gRefreshToken" placeholder="1//0gxxxxxxxxxxxxxxxx">
+          <button class="toggle-secret" onclick="toggleSecret('s-gRefreshToken')">👁</button>
+        </div>
+      </div>
+      <button class="btn btn-secondary" style="width:auto;margin-top:4px" onclick="testGoogleConnection()">
+        🔌 Probar conexión
+      </button>
     </div>
 
     <!-- Instrucciones Vercel -->
@@ -2452,7 +2524,8 @@ function switchTab(tab, btn) {
   btn.classList.add('active')
   document.getElementById(`tab-${tab}`).classList.add('active')
 
-  if (tab === 'log' && state.logsData.length === 0) loadLogs()
+  if (tab === 'log'    && state.logsData.length === 0)    loadLogs()
+  if (tab === 'google' && state.googleCampaigns.length === 0) loadGoogleCampaigns()
 }
 
 // ══════════════════════════════════════════════════════
@@ -2551,6 +2624,7 @@ function switchView(view) {
   }
 
   if (view === 'inmuebles' && state.inmuebles.length === 0) loadInmuebles()
+  if (view === 'settings') setTimeout(() => { loadSettingsForm(); loadGoogleSettingsFields() }, 50)
   if (view === 'calendario') renderCalendar()
 }
 
@@ -2727,14 +2801,48 @@ function openPautaModal(inmueble) {
         <input type="checkbox" value="meta_stories" onchange="togglePlatform(this)">
         <span class="platform-icon">📱</span><span class="platform-name">Stories</span>
       </label>
+      <label class="platform-check" id="pplat-google_search">
+        <input type="checkbox" value="google_search" onchange="togglePlatform(this);toggleGoogleFields(this.checked)">
+        <span class="platform-icon">🔍</span><span class="platform-name">Google Search</span>
+        ${s.gDevToken && s.gCustomerId ? '<span class="platform-sub" style="color:var(--green)">✓ Conectado</span>' : '<span class="platform-sub">Simulado</span>'}
+      </label>
+      <label class="platform-check">
+        <input type="checkbox" value="google_pmax" onchange="togglePlatform(this);toggleGoogleFields(this.checked)">
+        <span class="platform-icon">⚡</span><span class="platform-name">Performance Max</span>
+        <span class="platform-sub" style="font-size:10px">PMax</span>
+      </label>
+    </div>
+
+    <!-- Google Ads extra options — shown when Google is selected -->
+    <div id="googleAdsFields" style="display:none;margin-top:16px">
+      <div class="pauta-section-title" style="color:var(--blue)">🔍 Configuración Google Ads</div>
+      <div class="pauta-form-grid">
+        <div class="form-group">
+          <label>Estrategia de puja</label>
+          <select id="pautaGBidding" class="form-control">
+            <option value="MAXIMIZE_CLICKS">Maximizar clics</option>
+            <option value="MAXIMIZE_CONVERSIONS">Maximizar conversiones</option>
+            <option value="TARGET_CPA">CPA objetivo</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>CPC máximo (COP)</label>
+          <input type="number" class="form-control" id="pautaGCpc" value="800" min="100" max="5000" placeholder="800">
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Palabras clave adicionales <span style="color:var(--text-muted);font-weight:400">(una por línea, opcional)</span></label>
+        <textarea class="form-control" id="pautaGKeywords" rows="3"
+          placeholder="arriendo apartamento bogotá&#10;apartamentos en venta medellín&#10;proyecto primavera"></textarea>
+      </div>
+      <div class="google-kw-preview" id="googleKwPreview"></div>
     </div>
 
     ${(!s.metaToken) ? `
     <div class="settings-note" style="margin-top:16px">
-      ⚠️ No hay credenciales Meta configuradas. Los ads se publicarán en modo simulado.
-      <button class="btn btn-secondary btn-sm" style="width:auto;margin-left:10px" onclick="closePautaModal();switchView('settings')">
-        Configurar →
-      </button>
+      ⚠️ Sin credenciales Meta. Instagram/Facebook se publicarán en modo simulado.
+      <button class="btn btn-secondary btn-sm" style="width:auto;margin-left:10px"
+        onclick="closePautaModal();switchView('settings')">Configurar →</button>
     </div>` : ''}
   `
 }
@@ -2822,24 +2930,39 @@ async function crearPauta() {
     toast(`✅ ${enrichedAds.length} ads creados para ${inmueble.proyecto}`, 'success')
     loadAdsFromData(enrichedAds)
 
-    // 2. Publicar en Instagram si está seleccionado y hay credenciales
-    const needsInstagram = plataformas.includes('instagram_feed')
-    if (needsInstagram) {
+    // 2. Instagram
+    if (plataformas.includes('instagram_feed')) {
       await publishToInstagramFlow(enrichedAds, inmueble, s)
     }
 
-    // 3. Publicar en Meta (mock o real)
+    // 3. Meta Feed (mock o real)
     await fetch('/api/publish', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ ads: enrichedAds })
     })
 
-    // 4. Agregar al calendario
+    // 4. Google Ads (Search o PMax)
+    const needsGoogle = plataformas.includes('google_search') || plataformas.includes('google_pmax')
+    if (needsGoogle) {
+      await createGoogleAdsCampaign(inmueble, {
+        ciudad,
+        presupuesto: document.getElementById('budgetRange')?.value || 50000,
+        ctaUrl:      ctaUrl || (s.whatsappNumber ? `https://wa.me/${s.whatsappNumber}` : ''),
+      })
+    }
+
+    // 5. Calendario
     addCalendarEvent({ label: `${inmueble.proyecto} · ${ciudad}`, type: 'draft', date: new Date() })
 
+    // 6. Ir a resultado — Google tab si se creó campaña Google, sino Creativos
     switchView('dashboard')
-    switchTab('creativos', document.querySelectorAll('.tab-btn')[2])
+    if (needsGoogle) {
+      switchTab('google', document.querySelectorAll('.tab-btn')[3])
+      await loadGoogleCampaigns()
+    } else {
+      switchTab('creativos', document.querySelectorAll('.tab-btn')[2])
+    }
 
   } catch(err) {
     toast(`❌ ${err.message}`, 'error')
@@ -2990,12 +3113,19 @@ function loadSettingsForm() {
     's-geminiKey':       s.geminiKey       || '',
     's-tiktokToken':     s.tiktokToken     || '',
     's-tiktokAdvertiserId': s.tiktokAdvertiserId || '',
+    's-gDevToken':      s.gDevToken      || '',
+    's-gCustomerId':    s.gCustomerId    || '',
+    's-gMccId':         s.gMccId         || '',
+    's-gClientId':      s.gClientId      || '',
+    's-gClientSecret':  s.gClientSecret  || '',
+    's-gRefreshToken':  s.gRefreshToken  || '',
   }
   Object.entries(fields).forEach(([id, val]) => {
     const el = document.getElementById(id)
     if (el) el.value = val
   })
   updateSettingsStatus(s)
+  updateGoogleStatus(s)
   renderEnvVarsList(s)
 }
 
@@ -3012,9 +3142,16 @@ function saveSettings() {
     geminiKey:          document.getElementById('s-geminiKey')?.value          || '',
     tiktokToken:        document.getElementById('s-tiktokToken')?.value        || '',
     tiktokAdvertiserId: document.getElementById('s-tiktokAdvertiserId')?.value || '',
+    gDevToken:      document.getElementById('s-gDevToken')?.value      || '',
+    gCustomerId:    document.getElementById('s-gCustomerId')?.value    || '',
+    gMccId:         document.getElementById('s-gMccId')?.value         || '',
+    gClientId:      document.getElementById('s-gClientId')?.value      || '',
+    gClientSecret:  document.getElementById('s-gClientSecret')?.value  || '',
+    gRefreshToken:  document.getElementById('s-gRefreshToken')?.value  || '',
   }
   localStorage.setItem(SETTINGS_KEY, JSON.stringify(s))
   updateSettingsStatus(s)
+  updateGoogleStatus(s)
   renderEnvVarsList(s)
   toast('✅ Configuración guardada', 'success')
 }
@@ -3048,7 +3185,12 @@ function renderEnvVarsList(s) {
     { key: 'META_IG_ACCOUNT_ID',  val: s.igAccountId,        label: 'Instagram Account ID' },
     { key: 'META_BUSINESS_ID',    val: s.businessId,         label: 'Business Manager ID' },
     { key: 'WHATSAPP_NUMBER',     val: s.whatsappNumber,     label: 'WhatsApp Number' },
-    { key: 'GEMINI_API_KEY',      val: s.geminiKey,          label: 'Gemini API Key' },
+    { key: 'GEMINI_API_KEY',               val: s.geminiKey,       label: 'Gemini API Key' },
+    { key: 'GOOGLE_ADS_DEVELOPER_TOKEN',   val: s.gDevToken,       label: 'Google Dev Token' },
+    { key: 'GOOGLE_ADS_CUSTOMER_ID',       val: s.gCustomerId,     label: 'Google Customer ID' },
+    { key: 'GOOGLE_ADS_CLIENT_ID',         val: s.gClientId,       label: 'Google Client ID' },
+    { key: 'GOOGLE_ADS_CLIENT_SECRET',     val: s.gClientSecret,   label: 'Google Client Secret' },
+    { key: 'GOOGLE_ADS_REFRESH_TOKEN',     val: s.gRefreshToken,   label: 'Google Refresh Token' },
   ]
   container.innerHTML = vars.map(v => `
     <div class="env-var-row">
@@ -3083,16 +3225,277 @@ function toggleSecret(inputId) {
   if (el) el.type = el.type === 'password' ? 'text' : 'password'
 }
 
+// ══════════════════════════════════════════════════════
+// GOOGLE ADS — Dashboard tab
+// ══════════════════════════════════════════════════════
+state.googleCampaigns = []
+
+async function loadGoogleCampaigns() {
+  const s = getSettings()
+  const container = document.getElementById('googleCampaignsContainer')
+  const statusEl  = document.getElementById('googleTabStatus')
+  if (statusEl) statusEl.textContent = 'Actualizando...'
+
+  try {
+    const res = await fetch('/api/google-ads', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        action:       'list_campaigns',
+        developerToken: s.gDevToken    || '',
+        clientId:       s.gClientId    || '',
+        clientSecret:   s.gClientSecret|| '',
+        refreshToken:   s.gRefreshToken|| '',
+        customerId:     s.gCustomerId  || '',
+        simulate:       !s.gDevToken || !s.gCustomerId
+      })
+    })
+    const data = await res.json()
+    if (!data.success) throw new Error(data.error)
+
+    state.googleCampaigns = data.campaigns || []
+    renderGoogleCampaigns(state.googleCampaigns, data.simulated)
+
+    if (statusEl) statusEl.textContent =
+      `${state.googleCampaigns.length} campañas${data.simulated ? ' · Modo simulado' : ' · Google Ads real'}`
+
+  } catch(err) {
+    if (container) container.innerHTML =
+      `<div class="empty-state"><div class="empty-icon">❌</div><p>${err.message}</p></div>`
+  }
+}
+
+function renderGoogleCampaigns(campaigns, simulated) {
+  const container = document.getElementById('googleCampaignsContainer')
+  if (!container) return
+
+  if (!campaigns.length) {
+    container.innerHTML = `<div class="empty-state">
+      <div class="empty-icon">🎯</div>
+      <p>Sin campañas aún. Genera una pauta desde <strong>Inmuebles</strong> con Google Search o PMax.</p>
+    </div>`
+    return
+  }
+
+  // Summary cards
+  const totalSpend   = campaigns.reduce((s,c) => s + (c.costCOP || 0), 0)
+  const totalClicks  = campaigns.reduce((s,c) => s + (c.clicks || 0), 0)
+  const totalLeads   = campaigns.reduce((s,c) => s + (c.conversions || 0), 0)
+  const avgCtr       = campaigns.length ? (campaigns.reduce((s,c) => s + (c.ctr || 0), 0) / campaigns.length).toFixed(2) : 0
+
+  const summaryHtml = `
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px">
+      ${[
+        { label:'Campañas activas', val: campaigns.filter(c=>c.status==='ENABLED').length, color:'var(--green)' },
+        { label:'Gasto 7 días',     val: '$' + totalSpend.toLocaleString() + ' COP', color:'var(--white)' },
+        { label:'CTR promedio',     val: avgCtr + '%', color: avgCtr >= 2 ? 'var(--green)' : 'var(--yellow)' },
+        { label:'Leads totales',    val: totalLeads, color:'var(--green)' }
+      ].map(m => `<div class="metric-card" style="padding:12px">
+        <div class="metric-label">${m.label}</div>
+        <div class="metric-value" style="font-size:20px;color:${m.color}">${m.val}</div>
+      </div>`).join('')}
+    </div>`
+
+  const tableHtml = `
+    <table class="data-table">
+      <thead><tr>
+        <th>Campaña</th><th>Tipo</th><th>Estado</th>
+        <th>Impresiones</th><th>Clicks</th><th>CTR</th>
+        <th>CPC avg</th><th>Gasto</th><th>Leads</th><th>CPL</th><th>Acción</th>
+      </tr></thead>
+      <tbody>
+        ${campaigns.map(c => {
+          const name     = c.name.replace('Rentmies_','').replace(/_\d{4}-\d{2}-\d{2}/,'')
+          const typeIcon = c.type === 'PERFORMANCE_MAX' ? '⚡ PMax' : '🔍 Search'
+          const status   = c.status === 'ENABLED'
+            ? '<span class="status-badge status-active">● Activo</span>'
+            : '<span class="status-badge status-paused">⏸ Pausado</span>'
+          const cpl      = c.cpl ? '$' + c.cpl.toLocaleString() : '—'
+          const action   = c.status === 'ENABLED'
+            ? `<button class="btn btn-danger btn-sm" onclick="toggleGoogleCampaign('${c.id}','pause')">⏸ Pausar</button>`
+            : `<button class="btn btn-primary btn-sm" onclick="toggleGoogleCampaign('${c.id}','enable')">▶ Activar</button>`
+          return `<tr>
+            <td style="font-weight:600;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${c.name}">${name}</td>
+            <td style="font-size:12px">${typeIcon}</td>
+            <td>${status}</td>
+            <td>${(c.impressions||0).toLocaleString()}</td>
+            <td>${(c.clicks||0).toLocaleString()}</td>
+            <td style="color:${c.ctr>=2?'var(--green)':c.ctr<1?'var(--red)':'inherit'};font-weight:600">${c.ctr||0}%</td>
+            <td>$${(c.avgCpc||0).toLocaleString()}</td>
+            <td>$${(c.costCOP||0).toLocaleString()}</td>
+            <td style="color:var(--green);font-weight:600">${c.conversions||0}</td>
+            <td>${cpl}</td>
+            <td>${action}</td>
+          </tr>`
+        }).join('')}
+      </tbody>
+    </table>
+    ${simulated ? '<div class="settings-note" style="margin-top:12px">📊 Datos simulados. Configura credenciales Google Ads en ⚙️ Settings para ver datos reales.</div>' : ''}`
+
+  container.innerHTML = summaryHtml + tableHtml
+}
+
+async function toggleGoogleCampaign(campaignId, action) {
+  const s = getSettings()
+  try {
+    const res = await fetch('/api/google-ads', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        action:          action === 'pause' ? 'pause_campaign' : 'enable_campaign',
+        campaignId,
+        developerToken:  s.gDevToken     || '',
+        clientId:        s.gClientId     || '',
+        clientSecret:    s.gClientSecret || '',
+        refreshToken:    s.gRefreshToken || '',
+        customerId:      s.gCustomerId   || '',
+        simulate:        !s.gDevToken
+      })
+    })
+    const data = await res.json()
+    if (data.success) {
+      toast(`${action === 'pause' ? '⏸ Campaña pausada' : '▶ Campaña activada'}`, 'success')
+      await loadGoogleCampaigns()
+    }
+  } catch(err) { toast(`❌ ${err.message}`, 'error') }
+}
+
+// ── Google Ads en crearPauta ──
+function toggleGoogleFields(show) {
+  const el = document.getElementById('googleAdsFields')
+  if (el) {
+    el.style.display = show ? 'block' : 'none'
+    if (show) renderKeywordPreview()
+  }
+}
+
+function renderKeywordPreview() {
+  const proyecto = state.pautaInmueble?.proyecto || ''
+  const ciudad   = state.pautaInmueble?.ciudad   || ''
+  const tipo     = state.pautaInmueble?.tipo      || 'apartamento'
+  const preview  = document.getElementById('googleKwPreview')
+  if (!preview) return
+  const cityLow = ciudad.toLowerCase().replace('á','a').replace('é','e').replace('ó','o')
+  const kwList = [
+    `[${tipo} en ${cityLow}]`,
+    `"arriendo ${tipo} ${cityLow}"`,
+    `"proyecto ${proyecto.toLowerCase()}"`,
+    `"inmuebles en ${cityLow}"`,
+    `${tipo} colombia`
+  ]
+  preview.innerHTML = `<div style="margin-top:8px">
+    <div class="pauta-section-title" style="margin-bottom:8px">Keywords generadas automáticamente:</div>
+    <div style="display:flex;flex-wrap:wrap;gap:6px">
+      ${kwList.map(k => `<span style="font-size:11px;padding:3px 10px;border-radius:20px;border:1px solid var(--gray-border);color:var(--text-muted);font-family:monospace">${k}</span>`).join('')}
+    </div>
+  </div>`
+}
+
+async function createGoogleAdsCampaign(inmueble, params) {
+  const s = getSettings()
+  addFeedItem('🔍', `Creando campaña Google Ads — ${inmueble.proyecto} · ${params.ciudad}...`, 'generating')
+
+  const extraKws = (document.getElementById('pautaGKeywords')?.value || '')
+    .split('\n').map(k=>k.trim()).filter(Boolean)
+
+  const res = await fetch('/api/google-ads', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      action:         'create_campaign',
+      developerToken:  s.gDevToken     || '',
+      clientId:        s.gClientId     || '',
+      clientSecret:    s.gClientSecret || '',
+      refreshToken:    s.gRefreshToken || '',
+      customerId:      s.gCustomerId   || '',
+      simulate:        !s.gDevToken || !s.gCustomerId,
+      // Campaign config
+      proyecto:        inmueble.proyecto,
+      ciudad:          params.ciudad,
+      tipo:            inmueble.tipo,
+      presupuestoCOP:  parseInt(params.presupuesto),
+      ctaUrl:          params.ctaUrl,
+      whatsappNumber:  s.whatsappNumber || '',
+      biddingStrategy: document.getElementById('pautaGBidding')?.value || 'MAXIMIZE_CLICKS',
+      extraKeywords:   extraKws
+    })
+  })
+  const data = await res.json()
+
+  if (data.success) {
+    const msg = data.simulated
+      ? `🔍 Google Ads simulado — ${data.keywords} keywords · ${inmueble.proyecto}`
+      : `🔍 Campaña Google Ads creada — ID: ${data.campaignId} · PAUSADA`
+    addFeedItem('🎯', msg, data.simulated ? 'generating' : 'done')
+    toast(msg, 'success')
+    // Refresh Google tab if open
+    if (document.getElementById('tab-google')?.classList.contains('active')) {
+      await loadGoogleCampaigns()
+    }
+  } else {
+    addFeedItem('❌', `Google Ads error: ${data.error}`, 'warning')
+  }
+  return data
+}
+
+// ── Settings: Google fields ──
+function loadGoogleSettingsFields() {
+  const s = getSettings()
+  const map = {
+    's-gDevToken':     s.gDevToken     || '',
+    's-gCustomerId':   s.gCustomerId   || '',
+    's-gMccId':        s.gMccId        || '',
+    's-gClientId':     s.gClientId     || '',
+    's-gClientSecret': s.gClientSecret || '',
+    's-gRefreshToken': s.gRefreshToken || '',
+  }
+  Object.entries(map).forEach(([id, val]) => {
+    const el = document.getElementById(id)
+    if (el) el.value = val
+  })
+  updateGoogleStatus(s)
+}
+
+function updateGoogleStatus(s) {
+  const ok = !!(s.gDevToken && s.gCustomerId && s.gRefreshToken)
+  const el = document.getElementById('status-google')
+  if (el) el.innerHTML = ok
+    ? '<span class="status-dot" style="background:var(--green)"></span> <span style="color:var(--green)">Conectado</span>'
+    : '<span class="status-dot" style="background:var(--red)"></span> <span style="color:var(--text-muted)">Sin configurar</span>'
+}
+
+async function testGoogleConnection() {
+  const s = getSettings()
+  if (!s.gDevToken || !s.gCustomerId) {
+    toast('⚠️ Ingresa Developer Token y Customer ID primero', 'error')
+    return
+  }
+  toast('🔌 Probando conexión Google Ads...', 'success')
+  try {
+    const res = await fetch('/api/google-ads', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        action:         'test_connection',
+        developerToken:  s.gDevToken,
+        clientId:        s.gClientId,
+        clientSecret:    s.gClientSecret,
+        refreshToken:    s.gRefreshToken,
+        customerId:      s.gCustomerId,
+        simulate:        false
+      })
+    })
+    const data = await res.json()
+    if (data.success) toast(`✅ Conectado: ${data.accountName} (${data.currency})`, 'success')
+    else throw new Error(data.error)
+  } catch(err) { toast(`❌ ${err.message}`, 'error') }
+}
+
 async function init() {
   connectWebSocket()
 
   await refreshMetrics()
   await loadLogs()
-
-  // Cargar settings al abrir la vista
-  document.getElementById('nav-settings')?.addEventListener('click', () => {
-    setTimeout(loadSettingsForm, 50)
-  })
 
   // Auto-refresh cada 30s
   setInterval(refreshMetrics, 30000)
