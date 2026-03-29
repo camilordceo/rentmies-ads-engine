@@ -1151,6 +1151,176 @@
     flex-shrink: 0;
   }
 
+  /* ── SETTINGS ── */
+  .settings-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(420px, 1fr));
+    gap: 20px;
+  }
+
+  .settings-card {
+    background: var(--gray-card);
+    border: 1px solid var(--gray-border);
+    border-radius: 14px;
+    padding: 22px;
+  }
+
+  .settings-card-full { grid-column: 1 / -1; }
+
+  .settings-card-header {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: 20px;
+  }
+
+  .settings-icon {
+    font-size: 26px;
+    width: 48px;
+    height: 48px;
+    background: var(--gray-mid);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+
+  .settings-card-title {
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--white);
+    margin-bottom: 2px;
+  }
+
+  .settings-card-sub {
+    font-size: 12px;
+    color: var(--text-muted);
+  }
+
+  .settings-status {
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    font-weight: 600;
+    flex-shrink: 0;
+  }
+
+  .status-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--red);
+    flex-shrink: 0;
+  }
+
+  .settings-help {
+    color: var(--green);
+    font-size: 11px;
+    text-decoration: none;
+    margin-left: 8px;
+    font-weight: 600;
+  }
+
+  .settings-help:hover { text-decoration: underline; }
+
+  .settings-note {
+    background: rgba(29,158,117,0.08);
+    border: 1px solid rgba(29,158,117,0.2);
+    border-radius: 8px;
+    padding: 10px 14px;
+    font-size: 12px;
+    color: var(--text-muted);
+    line-height: 1.5;
+  }
+
+  .input-secret-wrap {
+    position: relative;
+    display: flex;
+  }
+
+  .input-secret-wrap .form-control { padding-right: 40px; }
+
+  .toggle-secret {
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 16px;
+    padding: 0;
+    opacity: 0.6;
+  }
+
+  .toggle-secret:hover { opacity: 1; }
+
+  .env-vars-list { display: flex; flex-direction: column; gap: 8px; }
+
+  .env-var-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 9px 14px;
+    background: var(--gray-dark);
+    border-radius: 8px;
+    font-size: 12px;
+  }
+
+  .env-var-key {
+    font-family: monospace;
+    color: var(--green);
+    font-weight: 600;
+    min-width: 220px;
+  }
+
+  .env-var-val {
+    color: var(--text-muted);
+    flex: 1;
+    font-family: monospace;
+  }
+
+  .env-var-copy {
+    cursor: pointer;
+    opacity: 0.5;
+    transition: opacity 0.2s;
+  }
+
+  .env-var-copy:hover { opacity: 1; }
+
+  /* ── CTA PREVIEW ── */
+  .cta-preview {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 16px;
+    background: var(--gray-dark);
+    border-radius: 10px;
+    margin-top: 8px;
+  }
+
+  .cta-preview-label {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    white-space: nowrap;
+  }
+
+  .cta-preview-btn {
+    background: var(--green);
+    color: white;
+    padding: 8px 18px;
+    border-radius: 20px;
+    font-size: 13px;
+    font-weight: 600;
+    transition: all 0.2s;
+  }
+
   /* Responsive */
   @media (max-width: 1100px) {
     .main { grid-template-columns: 260px 1fr; }
@@ -1182,6 +1352,7 @@
     <button class="nav-btn active" id="nav-dashboard" onclick="switchView('dashboard')">📊 Dashboard</button>
     <button class="nav-btn" id="nav-inmuebles" onclick="switchView('inmuebles')">🏠 Inmuebles</button>
     <button class="nav-btn" id="nav-calendario" onclick="switchView('calendario')">📅 Calendario</button>
+    <button class="nav-btn" id="nav-settings" onclick="switchView('settings')">⚙️ Settings</button>
   </nav>
   <div class="header-right">
     <button class="btn btn-secondary btn-sm" onclick="openPromptsModal()" style="width:auto">
@@ -1511,6 +1682,153 @@
     <span class="cal-leg-item"><span class="cal-dot" style="background:var(--blue)"></span> Draft programado</span>
     <span class="cal-leg-item"><span class="cal-dot" style="background:var(--yellow)"></span> Bajo rendimiento</span>
     <span class="cal-leg-item"><span class="cal-dot" style="background:var(--red)"></span> Pausado</span>
+  </div>
+</div>
+
+<!-- ═══════════════════ VISTA: SETTINGS ═══════════════════ -->
+<div id="view-settings" class="view" style="display:none">
+  <div class="view-header">
+    <div>
+      <h2 class="view-title">⚙️ Configuración</h2>
+      <p class="view-subtitle">Conecta tus cuentas publicitarias para publicar campañas reales</p>
+    </div>
+    <button class="btn btn-primary" style="width:auto" onclick="saveSettings()">
+      <div class="spinner"></div>
+      <span class="btn-text">💾 Guardar</span>
+    </button>
+  </div>
+
+  <div class="settings-grid">
+
+    <!-- Perfil de empresa -->
+    <div class="settings-card">
+      <div class="settings-card-header">
+        <span class="settings-icon">🏢</span>
+        <div>
+          <div class="settings-card-title">Perfil de Empresa</div>
+          <div class="settings-card-sub">Información general de tu inmobiliaria</div>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Nombre de la empresa</label>
+        <input type="text" class="form-control" id="s-companyName" placeholder="Ej: Rentmies Inmobiliaria">
+      </div>
+      <div class="form-group">
+        <label>WhatsApp de contacto</label>
+        <input type="text" class="form-control" id="s-whatsappNumber" placeholder="573001234567 (sin + ni espacios)">
+      </div>
+      <div class="form-group">
+        <label>URL del sitio web</label>
+        <input type="text" class="form-control" id="s-websiteUrl" placeholder="https://tuinmobiliaria.com">
+      </div>
+    </div>
+
+    <!-- Meta / Instagram -->
+    <div class="settings-card">
+      <div class="settings-card-header">
+        <span class="settings-icon">📘</span>
+        <div>
+          <div class="settings-card-title">Meta Business</div>
+          <div class="settings-card-sub">Facebook Ads + Instagram</div>
+        </div>
+        <div class="settings-status" id="status-meta">
+          <span class="status-dot"></span> Sin configurar
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Access Token <a class="settings-help" href="https://developers.facebook.com/tools/explorer/" target="_blank">¿Cómo obtenerlo? ↗</a></label>
+        <div class="input-secret-wrap">
+          <input type="password" class="form-control" id="s-metaToken" placeholder="EAAxxxxxxxxxxxxxxxx">
+          <button class="toggle-secret" onclick="toggleSecret('s-metaToken')">👁</button>
+        </div>
+      </div>
+      <div class="pauta-form-grid">
+        <div class="form-group">
+          <label>Ad Account ID</label>
+          <input type="text" class="form-control" id="s-adAccountId" placeholder="act_123456789">
+        </div>
+        <div class="form-group">
+          <label>Page ID</label>
+          <input type="text" class="form-control" id="s-pageId" placeholder="123456789">
+        </div>
+        <div class="form-group">
+          <label>Instagram Account ID</label>
+          <input type="text" class="form-control" id="s-igAccountId" placeholder="17841400000000000">
+        </div>
+        <div class="form-group">
+          <label>Business Manager ID</label>
+          <input type="text" class="form-control" id="s-businessId" placeholder="123456789">
+        </div>
+      </div>
+      <button class="btn btn-secondary" style="width:auto;margin-top:4px" onclick="testMetaConnection()">
+        🔌 Probar conexión
+      </button>
+    </div>
+
+    <!-- Google AI -->
+    <div class="settings-card">
+      <div class="settings-card-header">
+        <span class="settings-icon">🤖</span>
+        <div>
+          <div class="settings-card-title">Google AI (Gemini)</div>
+          <div class="settings-card-sub">Generación de copy e imágenes</div>
+        </div>
+        <div class="settings-status" id="status-gemini">
+          <span class="status-dot"></span> Sin configurar
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Gemini API Key <a class="settings-help" href="https://aistudio.google.com/app/apikey" target="_blank">Obtener key ↗</a></label>
+        <div class="input-secret-wrap">
+          <input type="password" class="form-control" id="s-geminiKey" placeholder="AIzaSyxxxxxxxxxxxxxxxx">
+          <button class="toggle-secret" onclick="toggleSecret('s-geminiKey')">👁</button>
+        </div>
+      </div>
+      <div class="settings-note">
+        💡 Con Gemini activo, el copy de los ads se genera con IA real en lugar de templates.
+      </div>
+    </div>
+
+    <!-- TikTok -->
+    <div class="settings-card">
+      <div class="settings-card-header">
+        <span class="settings-icon">🎵</span>
+        <div>
+          <div class="settings-card-title">TikTok Ads</div>
+          <div class="settings-card-sub">Próximamente</div>
+        </div>
+        <div class="settings-status">
+          <span class="status-dot" style="background:var(--text-muted)"></span> No disponible
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Access Token</label>
+        <input type="password" class="form-control" id="s-tiktokToken" placeholder="Próximamente..." disabled>
+      </div>
+      <div class="form-group">
+        <label>Advertiser ID</label>
+        <input type="text" class="form-control" id="s-tiktokAdvertiserId" placeholder="Próximamente..." disabled>
+      </div>
+    </div>
+
+    <!-- Instrucciones Vercel -->
+    <div class="settings-card settings-card-full">
+      <div class="settings-card-header">
+        <span class="settings-icon">▲</span>
+        <div>
+          <div class="settings-card-title">Variables de Entorno en Vercel</div>
+          <div class="settings-card-sub">Para persistir las credenciales en producción</div>
+        </div>
+      </div>
+      <div class="settings-note" style="margin-bottom:12px">
+        Los valores guardados aquí se almacenan en tu navegador (localStorage). Para que funcionen en producción y no se pierdan, agrégalos en Vercel:
+        <br><strong>vercel.com → tu proyecto → Settings → Environment Variables</strong>
+      </div>
+      <div class="env-vars-list" id="envVarsList">
+        <!-- generado dinámicamente -->
+      </div>
+    </div>
+
   </div>
 </div>
 
@@ -2210,7 +2528,7 @@ function startMockSimulation() {
 // ══════════════════════════════════════════════════════
 // NAVEGACIÓN PRINCIPAL
 // ══════════════════════════════════════════════════════
-const VIEWS = ['dashboard', 'inmuebles', 'calendario']
+const VIEWS = ['dashboard', 'inmuebles', 'calendario', 'settings']
 
 function switchView(view) {
   // Ocultar/mostrar layout principal vs vistas
@@ -2317,6 +2635,7 @@ function renderInmuebles(inmuebles) {
 function openPautaModal(inmueble) {
   state.pautaInmueble = inmueble
   document.getElementById('pautaModal').classList.add('open')
+  const s = getSettings()
 
   document.getElementById('pautaModalBody').innerHTML = `
     <div class="pauta-preview">
@@ -2331,7 +2650,7 @@ function openPautaModal(inmueble) {
 
     <div class="pauta-section-title">Presupuesto diario</div>
     <div class="budget-display" id="budgetDisplay">$50.000 COP</div>
-    <div class="budget-sub" id="budgetSub">Total estimado: $350.000 COP / semana</div>
+    <div class="budget-sub" id="budgetSub">Total estimado: $700.000 COP / 14 días</div>
     <input type="range" id="budgetRange" min="20000" max="500000" step="10000" value="50000"
            oninput="updateBudgetDisplay(this.value)">
     <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--text-muted);margin-top:4px">
@@ -2348,7 +2667,7 @@ function openPautaModal(inmueble) {
       </div>
       <div class="form-group">
         <label>Duración</label>
-        <select id="pautaDuracion" class="form-control">
+        <select id="pautaDuracion" class="form-control" onchange="updateBudgetDisplay(document.getElementById('budgetRange').value)">
           <option value="7">7 días</option>
           <option value="14" selected>14 días</option>
           <option value="30">30 días</option>
@@ -2356,37 +2675,67 @@ function openPautaModal(inmueble) {
       </div>
     </div>
 
+    <div class="pauta-section-title">Call to Action</div>
+    <div class="pauta-form-grid">
+      <div class="form-group">
+        <label>Tipo de CTA</label>
+        <select id="pautaCtaType" class="form-control" onchange="updateCtaPreview()">
+          <option value="whatsapp">💬 WhatsApp</option>
+          <option value="url">🔗 URL del proyecto</option>
+          <option value="call">📞 Llamar</option>
+          <option value="form">📋 Formulario</option>
+          <option value="custom">✏️ Personalizado</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Texto del botón</label>
+        <input type="text" class="form-control" id="pautaCtaText" value="Ver proyecto" maxlength="25"
+               oninput="updateCtaPreview()">
+      </div>
+    </div>
+    <div class="form-group">
+      <label>URL de destino</label>
+      <input type="text" class="form-control" id="pautaCtaUrl"
+             placeholder="https://tuproyecto.com/${inmueble.proyecto.toLowerCase()}"
+             value="${s.websiteUrl ? s.websiteUrl + '/' + inmueble.proyecto.toLowerCase() : ''}">
+    </div>
+    <div class="cta-preview" id="ctaPreview">
+      <span class="cta-preview-label">Preview CTA:</span>
+      <span class="cta-preview-btn">💬 Escribir por WhatsApp</span>
+    </div>
+
     <div class="pauta-section-title">Variaciones a generar</div>
     <div class="variation-grid">
-      <label class="variation-check selected" id="pcheck-painPoint">
-        <input type="checkbox" value="painPoint" checked onchange="toggleVariation(this)"> 😤 Dolor
-      </label>
-      <label class="variation-check selected" id="pcheck-outcome">
-        <input type="checkbox" value="outcome" checked onchange="toggleVariation(this)"> 🎯 Resultado
-      </label>
-      <label class="variation-check selected" id="pcheck-social">
-        <input type="checkbox" value="social" checked onchange="toggleVariation(this)"> 👥 Social
-      </label>
-      <label class="variation-check selected" id="pcheck-urgency">
-        <input type="checkbox" value="urgency" checked onchange="toggleVariation(this)"> ⚡ Urgencia
-      </label>
+      <label class="variation-check selected"><input type="checkbox" value="painPoint" checked onchange="toggleVariation(this)"> 😤 Dolor</label>
+      <label class="variation-check selected"><input type="checkbox" value="outcome" checked onchange="toggleVariation(this)"> 🎯 Resultado</label>
+      <label class="variation-check selected"><input type="checkbox" value="social" checked onchange="toggleVariation(this)"> 👥 Social</label>
+      <label class="variation-check selected"><input type="checkbox" value="urgency" checked onchange="toggleVariation(this)"> ⚡ Urgencia</label>
     </div>
 
     <div class="pauta-section-title">Plataformas</div>
     <div class="platform-grid">
-      <label class="platform-check selected" id="pplat-meta_feed">
+      <label class="platform-check selected">
         <input type="checkbox" value="meta_feed" checked onchange="togglePlatform(this)">
         <span class="platform-icon">📘</span><span class="platform-name">Meta Feed</span>
       </label>
-      <label class="platform-check selected" id="pplat-instagram_feed">
+      <label class="platform-check selected">
         <input type="checkbox" value="instagram_feed" checked onchange="togglePlatform(this)">
         <span class="platform-icon">📸</span><span class="platform-name">Instagram</span>
+        ${s.metaToken && s.igAccountId ? '<span class="platform-sub" style="color:var(--green)">✓ Conectado</span>' : '<span class="platform-sub">Simulado</span>'}
       </label>
-      <label class="platform-check" id="pplat-meta_stories">
+      <label class="platform-check">
         <input type="checkbox" value="meta_stories" onchange="togglePlatform(this)">
         <span class="platform-icon">📱</span><span class="platform-name">Stories</span>
       </label>
     </div>
+
+    ${(!s.metaToken) ? `
+    <div class="settings-note" style="margin-top:16px">
+      ⚠️ No hay credenciales Meta configuradas. Los ads se publicarán en modo simulado.
+      <button class="btn btn-secondary btn-sm" style="width:auto;margin-left:10px" onclick="closePautaModal();switchView('settings')">
+        Configurar →
+      </button>
+    </div>` : ''}
   `
 }
 
@@ -2403,6 +2752,23 @@ function updateBudgetDisplay(val) {
     `Total estimado: $${(v * duracion).toLocaleString()} COP / ${duracion} días`
 }
 
+function updateCtaPreview() {
+  const type    = document.getElementById('pautaCtaType')?.value || 'whatsapp'
+  const text    = document.getElementById('pautaCtaText')?.value || 'Ver proyecto'
+  const s       = getSettings()
+  const ctaMap  = {
+    whatsapp: `💬 ${text || 'Escribir por WhatsApp'}`,
+    url:      `🔗 ${text || 'Ver proyecto'}`,
+    call:     `📞 ${text || 'Llamar ahora'}`,
+    form:     `📋 ${text || 'Solicitar información'}`,
+    custom:   `✨ ${text}`
+  }
+  const preview = document.getElementById('ctaPreview')
+  if (preview) {
+    preview.querySelector('.cta-preview-btn').textContent = ctaMap[type] || text
+  }
+}
+
 async function crearPauta() {
   const inmueble = state.pautaInmueble
   if (!inmueble) return
@@ -2414,6 +2780,10 @@ async function crearPauta() {
   const presupuesto = document.getElementById('budgetRange').value
   const variaciones = [...document.querySelectorAll('#pautaModalBody .variation-check input:checked')].map(i => i.value)
   const plataformas = [...document.querySelectorAll('#pautaModalBody .platform-check input:checked')].map(i => i.value)
+  const ctaType     = document.getElementById('pautaCtaType')?.value || 'whatsapp'
+  const ctaText     = document.getElementById('pautaCtaText')?.value || 'Ver proyecto'
+  const ctaUrl      = document.getElementById('pautaCtaUrl')?.value || ''
+  const s           = getSettings()
 
   if (!variaciones.length || !plataformas.length) {
     toast('⚠️ Selecciona al menos una variación y plataforma', 'error')
@@ -2422,51 +2792,109 @@ async function crearPauta() {
   }
 
   try {
+    // 1. Generar copy
     const res = await fetch('/api/generate', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        ciudad,
-        tipoInmueble: inmueble.tipo,
+        ciudad, tipoInmueble: inmueble.tipo,
         presupuesto: `$${parseInt(presupuesto).toLocaleString()} COP/día`,
-        plataformas,
-        variaciones,
-        inmuebleId: inmueble.id,
-        proyecto: inmueble.proyecto
+        plataformas, variaciones,
+        inmuebleId: inmueble.id, proyecto: inmueble.proyecto,
+        cta: { type: ctaType, text: ctaText, url: ctaUrl }
       })
     })
     const data = await res.json()
+    if (!data.success) throw new Error(data.error)
 
-    if (data.success) {
-      closePautaModal()
-      toast(`✅ ${data.totalGenerated} ads creados para ${inmueble.proyecto}`, 'success')
-      loadAdsFromData(data.ads)
+    // Enriquecer ads con CTA e imagen del inmueble
+    const enrichedAds = data.ads.map(ad => ({
+      ...ad,
+      cta: ctaText,
+      ctaType,
+      ctaUrl: ctaUrl || (ctaType === 'whatsapp' && s.whatsappNumber
+        ? `https://wa.me/${s.whatsappNumber}?text=Hola, me interesa el proyecto ${inmueble.proyecto}`
+        : ctaUrl),
+      feedImage: inmueble.imagen // usa imagen real del inmueble
+    }))
 
-      // Publicar automáticamente
-      await fetch('/api/publish', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ads: data.ads })
-      })
+    closePautaModal()
+    toast(`✅ ${enrichedAds.length} ads creados para ${inmueble.proyecto}`, 'success')
+    loadAdsFromData(enrichedAds)
 
-      // Agregar al calendario como evento
-      addCalendarEvent({
-        label: `${inmueble.proyecto} · ${ciudad}`,
-        type: 'draft',
-        date: new Date()
-      })
-
-      // Ir al dashboard para ver los resultados
-      switchView('dashboard')
-      switchTab('creativos', document.querySelector('.tab-btn:nth-child(3)'))
-    } else {
-      toast(`❌ ${data.error}`, 'error')
+    // 2. Publicar en Instagram si está seleccionado y hay credenciales
+    const needsInstagram = plataformas.includes('instagram_feed')
+    if (needsInstagram) {
+      await publishToInstagramFlow(enrichedAds, inmueble, s)
     }
+
+    // 3. Publicar en Meta (mock o real)
+    await fetch('/api/publish', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ads: enrichedAds })
+    })
+
+    // 4. Agregar al calendario
+    addCalendarEvent({ label: `${inmueble.proyecto} · ${ciudad}`, type: 'draft', date: new Date() })
+
+    switchView('dashboard')
+    switchTab('creativos', document.querySelectorAll('.tab-btn')[2])
+
   } catch(err) {
-    toast('❌ Error creando pauta', 'error')
+    toast(`❌ ${err.message}`, 'error')
   } finally {
     setButtonLoading(btn, false)
   }
+}
+
+async function publishToInstagramFlow(ads, inmueble, settings) {
+  // Publicar solo los ads de instagram_feed
+  const igAds = ads.filter(a => a.platform === 'instagram_feed')
+  if (!igAds.length) return
+
+  const ad = igAds[0] // publicar el primero como prueba
+
+  // Construir caption con CTA
+  const caption = buildInstagramCaption(ad, inmueble, settings)
+
+  toast('📸 Publicando en Instagram...', 'success')
+
+  try {
+    const res = await fetch('/api/instagram', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        imageUrl:    inmueble.imagen,
+        caption,
+        igAccountId: settings.igAccountId || '',
+        accessToken: settings.metaToken   || '',
+        simulate:    !settings.metaToken || !settings.igAccountId
+      })
+    })
+    const result = await res.json()
+
+    if (result.success) {
+      const msg = result.simulated
+        ? `📸 Instagram simulado — configura credenciales para publicar real`
+        : `📸 ¡Publicado en Instagram! → ${result.permalink}`
+      toast(msg, 'success')
+      addFeedItem('📸', msg, result.simulated ? 'generating' : 'done')
+    }
+  } catch(err) {
+    addFeedItem('⚠️', `Instagram: ${err.message}`, 'warning')
+  }
+}
+
+function buildInstagramCaption(ad, inmueble, settings) {
+  const whatsapp = settings.whatsappNumber
+    ? `\n\n💬 WhatsApp: wa.me/${settings.whatsappNumber}`
+    : ''
+  const website = settings.websiteUrl
+    ? `\n🌐 ${settings.websiteUrl}`
+    : ''
+  return `${ad.headline}\n\n${ad.description}${whatsapp}${website}\n\n` +
+    `#${inmueble.proyecto} #${inmueble.ciudad.replace('á','a').replace('é','e').replace('ó','o')} #Rentmies #InmobiliariaIA #ApartamentoColombia`
 }
 
 // ══════════════════════════════════════════════════════
@@ -2538,11 +2966,133 @@ function renderCalendar() {
   }).join('')
 }
 
+// ══════════════════════════════════════════════════════
+// SETTINGS — localStorage
+// ══════════════════════════════════════════════════════
+const SETTINGS_KEY = 'rentmies_settings'
+
+function getSettings() {
+  try { return JSON.parse(localStorage.getItem(SETTINGS_KEY)) || {} }
+  catch { return {} }
+}
+
+function loadSettingsForm() {
+  const s = getSettings()
+  const fields = {
+    's-companyName':     s.companyName     || '',
+    's-whatsappNumber':  s.whatsappNumber  || '',
+    's-websiteUrl':      s.websiteUrl      || '',
+    's-metaToken':       s.metaToken       || '',
+    's-adAccountId':     s.adAccountId     || '',
+    's-pageId':          s.pageId          || '',
+    's-igAccountId':     s.igAccountId     || '',
+    's-businessId':      s.businessId      || '',
+    's-geminiKey':       s.geminiKey       || '',
+    's-tiktokToken':     s.tiktokToken     || '',
+    's-tiktokAdvertiserId': s.tiktokAdvertiserId || '',
+  }
+  Object.entries(fields).forEach(([id, val]) => {
+    const el = document.getElementById(id)
+    if (el) el.value = val
+  })
+  updateSettingsStatus(s)
+  renderEnvVarsList(s)
+}
+
+function saveSettings() {
+  const s = {
+    companyName:        document.getElementById('s-companyName')?.value        || '',
+    whatsappNumber:     document.getElementById('s-whatsappNumber')?.value     || '',
+    websiteUrl:         document.getElementById('s-websiteUrl')?.value         || '',
+    metaToken:          document.getElementById('s-metaToken')?.value          || '',
+    adAccountId:        document.getElementById('s-adAccountId')?.value        || '',
+    pageId:             document.getElementById('s-pageId')?.value             || '',
+    igAccountId:        document.getElementById('s-igAccountId')?.value        || '',
+    businessId:         document.getElementById('s-businessId')?.value         || '',
+    geminiKey:          document.getElementById('s-geminiKey')?.value          || '',
+    tiktokToken:        document.getElementById('s-tiktokToken')?.value        || '',
+    tiktokAdvertiserId: document.getElementById('s-tiktokAdvertiserId')?.value || '',
+  }
+  localStorage.setItem(SETTINGS_KEY, JSON.stringify(s))
+  updateSettingsStatus(s)
+  renderEnvVarsList(s)
+  toast('✅ Configuración guardada', 'success')
+}
+
+function updateSettingsStatus(s) {
+  const metaOk   = !!(s.metaToken && s.igAccountId)
+  const geminiOk = !!s.geminiKey
+
+  const metaEl   = document.getElementById('status-meta')
+  const geminiEl = document.getElementById('status-gemini')
+
+  if (metaEl) {
+    metaEl.innerHTML = metaOk
+      ? '<span class="status-dot" style="background:var(--green)"></span> <span style="color:var(--green)">Conectado</span>'
+      : '<span class="status-dot" style="background:var(--red)"></span> <span style="color:var(--text-muted)">Sin configurar</span>'
+  }
+  if (geminiEl) {
+    geminiEl.innerHTML = geminiOk
+      ? '<span class="status-dot" style="background:var(--green)"></span> <span style="color:var(--green)">Conectado</span>'
+      : '<span class="status-dot" style="background:var(--text-muted)"></span> <span style="color:var(--text-muted)">Sin configurar</span>'
+  }
+}
+
+function renderEnvVarsList(s) {
+  const container = document.getElementById('envVarsList')
+  if (!container) return
+  const vars = [
+    { key: 'META_ACCESS_TOKEN',   val: s.metaToken,          label: 'Meta Access Token' },
+    { key: 'META_AD_ACCOUNT_ID',  val: s.adAccountId,        label: 'Ad Account ID' },
+    { key: 'META_PAGE_ID',        val: s.pageId,             label: 'Page ID' },
+    { key: 'META_IG_ACCOUNT_ID',  val: s.igAccountId,        label: 'Instagram Account ID' },
+    { key: 'META_BUSINESS_ID',    val: s.businessId,         label: 'Business Manager ID' },
+    { key: 'WHATSAPP_NUMBER',     val: s.whatsappNumber,     label: 'WhatsApp Number' },
+    { key: 'GEMINI_API_KEY',      val: s.geminiKey,          label: 'Gemini API Key' },
+  ]
+  container.innerHTML = vars.map(v => `
+    <div class="env-var-row">
+      <span class="env-var-key">${v.key}</span>
+      <span class="env-var-val">${v.val ? '••••••••' + v.val.slice(-4) : '<em style="opacity:.4">vacío</em>'}</span>
+      <span class="env-var-copy" onclick="navigator.clipboard.writeText('${v.key}=${v.val||''}');toast('Copiado','success')" title="Copiar">📋</span>
+    </div>
+  `).join('')
+}
+
+async function testMetaConnection() {
+  const s = getSettings()
+  if (!s.metaToken || !s.igAccountId) {
+    toast('⚠️ Ingresa Access Token e Instagram Account ID primero', 'error')
+    return
+  }
+  toast('🔌 Probando conexión Meta...', 'success')
+  try {
+    const res = await fetch(
+      `https://graph.facebook.com/v21.0/${s.igAccountId}?fields=name,username&access_token=${s.metaToken}`
+    )
+    const data = await res.json()
+    if (data.error) throw new Error(data.error.message)
+    toast(`✅ Conectado: @${data.username || data.name}`, 'success')
+  } catch(err) {
+    toast(`❌ ${err.message}`, 'error')
+  }
+}
+
+function toggleSecret(inputId) {
+  const el = document.getElementById(inputId)
+  if (el) el.type = el.type === 'password' ? 'text' : 'password'
+}
+
 async function init() {
   connectWebSocket()
 
   await refreshMetrics()
   await loadLogs()
+
+  // Cargar settings al abrir la vista
+  document.getElementById('nav-settings')?.addEventListener('click', () => {
+    setTimeout(loadSettingsForm, 50)
+  })
 
   // Auto-refresh cada 30s
   setInterval(refreshMetrics, 30000)
