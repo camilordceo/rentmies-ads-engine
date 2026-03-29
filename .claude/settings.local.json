@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm install:*)",
+      "Bash(taskkill:*)",
+      "Bash(node -e \"require\\(''./engine/analyzer''\\); require\\(''./engine/generator''\\); console.log\\(''OK''\\)\")"
+    ]
+  }
+}

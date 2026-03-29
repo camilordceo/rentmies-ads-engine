@@ -1,0 +1,28 @@
+{
+  "name": "rentmies-ads-engine",
+  "version": "1.0.0",
+  "description": "Rentmies AI Ads Engine — generación y optimización automática de ads",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "nodemon server.js",
+    "generate": "node engine/generator.js",
+    "analyze": "node engine/analyzer.js"
+  },
+  "dependencies": {
+    "@google/genai": "^0.7.0",
+    "axios": "^1.7.7",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
+    "jimp": "^0.22.12",
+    "node-cron": "^3.0.3",
+    "ws": "^8.18.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.7"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
