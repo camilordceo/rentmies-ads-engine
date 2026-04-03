@@ -1466,7 +1466,8 @@
         </div>
       </div>
       <button class="btn btn-secondary" style="width:auto;margin-top:4px" onclick="testMetaConnection()">
-        🔌 Probar conexión
+        <div class="spinner"></div>
+        <span class="btn-text">🔌 Probar conexión</span>
       </button>
     </div>
 
@@ -3003,21 +3004,64 @@ function renderEnvVarsList(s) {
 }
 
 async function testMetaConnection() {
-  const s = getSettings()
-  if (!s.metaToken || !s.igAccountId) {
-    toast('⚠️ Ingresa Access Token e Instagram Account ID primero', 'error')
+  // Read live from form fields (not localStorage — user may not have saved yet)
+  const token    = document.getElementById('s-metaToken')?.value?.trim()
+  const igId     = document.getElementById('s-igAccountId')?.value?.trim()
+  const adAcctId = document.getElementById('s-adAccountId')?.value?.trim()
+
+  if (!token) {
+    toast('⚠️ Ingresa el Access Token primero', 'error')
+    document.getElementById('s-metaToken')?.focus()
     return
   }
-  toast('🔌 Probando conexión Meta...', 'success')
+  if (!igId) {
+    toast('⚠️ Ingresa el Instagram Account ID primero', 'error')
+    document.getElementById('s-igAccountId')?.focus()
+    return
+  }
+
+  // Auto-save before testing so state is consistent
+  saveSettings()
+
+  const btn = document.querySelector('[onclick="testMetaConnection()"]')
+  if (btn) { btn.classList.add('loading'); btn.disabled = true }
+
   try {
-    const res = await fetch(
-      `https://graph.facebook.com/v21.0/${s.igAccountId}?fields=name,username&access_token=${s.metaToken}`
-    )
-    const data = await res.json()
-    if (data.error) throw new Error(data.error.message)
-    toast(`✅ Conectado: @${data.username || data.name}`, 'success')
+    // 1. Verify the token is valid and get the user/page it belongs to
+    const meRes  = await fetch(`https://graph.facebook.com/v21.0/me?access_token=${token}`)
+    const meData = await meRes.json()
+    if (meData.error) throw new Error(`Token inválido: ${meData.error.message}`)
+
+    // 2. Verify the Instagram account ID is accessible with this token
+    const igRes  = await fetch(`https://graph.facebook.com/v21.0/${igId}?fields=name,username,followers_count&access_token=${token}`)
+    const igData = await igRes.json()
+    if (igData.error) throw new Error(`Instagram Account ID inválido: ${igData.error.message}`)
+
+    // 3. If Ad Account ID provided, verify it too
+    let adMsg = ''
+    if (adAcctId) {
+      const acctId = adAcctId.startsWith('act_') ? adAcctId : `act_${adAcctId}`
+      const adRes  = await fetch(`https://graph.facebook.com/v21.0/${acctId}?fields=name,account_status,currency&access_token=${token}`)
+      const adData = await adRes.json()
+      if (adData.error) {
+        adMsg = ` · ⚠️ Ad Account: ${adData.error.message}`
+      } else {
+        const statusMap = { 1: 'Activa', 2: 'Deshabilitada', 3: 'Sin verificar', 7: 'Pendiente', 9: 'En revisión' }
+        adMsg = ` · Ad Account: ${adData.name} (${statusMap[adData.account_status] || adData.account_status})`
+      }
+    }
+
+    const igHandle = igData.username ? `@${igData.username}` : igData.name
+    toast(`✅ Conectado como ${meData.name} · IG: ${igHandle}${adMsg}`, 'success')
+
+    // Update status indicator in UI
+    const metaEl = document.getElementById('status-meta')
+    if (metaEl) metaEl.innerHTML = '<span class="status-dot" style="background:var(--green)"></span> <span style="color:var(--green)">Conectado</span>'
+
   } catch(err) {
     toast(`❌ ${err.message}`, 'error')
+  } finally {
+    if (btn) { btn.classList.remove('loading'); btn.disabled = false }
   }
 }
 
