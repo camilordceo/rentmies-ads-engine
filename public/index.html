@@ -3704,13 +3704,15 @@ async function createGoogleAdsCampaign(inmueble, params) {
     data.success ? null : data)
 
   if (data.success) {
-    const msg = data.simulated
-      ? `🔍 Google Ads simulado — configura credenciales en Settings`
-      : `🔍 Campaña Google Ads creada — ID: ${data.campaignId} · PAUSADA`
-    addFeedItem('🎯', msg, data.simulated ? 'generating' : 'done')
-    if (data.simulated) toast('⚠️ Google Ads simulado — agrega credenciales en Settings', 'error')
-    else toast(msg, 'success')
-    if (!data.simulated) await loadGoogleCampaigns()
+    if (data.simulated) {
+      addFeedItem('🔍', `Google Ads simulado — configura credenciales en Settings`, 'generating')
+      toast('⚠️ Google Ads simulado — agrega credenciales en Settings', 'error')
+    } else {
+      addFeedItem('🎯', `Campaña Google Ads creada · ID ${data.campaignId} · PAUSADA`, 'done')
+      if (data.adsManagerUrl) addFeedItem('🔗', `Ver en Google Ads Manager → ${data.adsManagerUrl}`, 'done')
+      toast(`🎯 Campaña Google Ads creada (PAUSADA)`, 'success')
+      await loadGoogleCampaigns()
+    }
   } else {
     addFeedItem('❌', `Google Ads: ${data.error}`, 'warning')
     toast(`❌ Google Ads: ${data.error}`, 'error')

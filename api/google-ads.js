@@ -384,15 +384,17 @@ async function createFullCampaign(creds, config) {
     ad: adContent
   })
 
+  const campaignId = campaignRN.split('/').pop()
   return {
-    success:      true,
-    campaignId:   campaignRN.split('/').pop(),
+    success:         true,
+    campaignId,
     campaignRN,
     adGroupRN,
     adRN,
-    status:       'PAUSED',
-    keywords:     keywords.length,
-    mensaje:      `Campaña creada en estado PAUSADO. Revísala en Google Ads y actívala cuando esté lista.`
+    status:          'PAUSED',
+    keywords:        keywords.length,
+    adsManagerUrl:   `https://ads.google.com/aw/campaigns?campaignId=${campaignId}`,
+    mensaje:         `Campaña creada en estado PAUSADO. Revísala en Google Ads y actívala cuando esté lista.`
   }
 }
 
