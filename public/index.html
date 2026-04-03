@@ -2861,10 +2861,11 @@ function openPautaModal(inmueble) {
 
 function closePautaModal() {
   document.getElementById('pautaModal').classList.remove('open')
-  state.pautaInmueble = null
-  state.pautaStep     = 1
-  state.pautaAds      = null
-  state.pautaConfig   = null
+  state.pautaInmueble  = null
+  state.pautaStep      = 1
+  state.pautaAds       = null
+  state.pautaConfig    = null
+  state.pautaIgAdIndex = 0
 }
 
 function updateBudgetDisplay(val) {
@@ -2893,9 +2894,10 @@ function updateCtaPreview() {
 }
 
 // ── Pauta modal state ──
-state.pautaStep    = 1
-state.pautaConfig  = null
-state.pautaAds     = null
+state.pautaStep       = 1
+state.pautaConfig     = null
+state.pautaAds        = null
+state.pautaIgAdIndex  = 0
 
 function pautaNextStep() {
   if (state.pautaStep === 1) {
@@ -2991,15 +2993,19 @@ async function pautaGenerateCopy() {
       </div>
 
       ${needsMeta ? `
-        <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--text-muted);margin-bottom:8px">📘 Meta / Instagram</div>
-        ${enrichedAds.map(ad => `
-          <div style="border:1px solid var(--border);border-radius:10px;overflow:hidden;margin-bottom:8px">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+          <span style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--text-muted)">📘 Meta / Instagram</span>
+          ${plataformas.includes('instagram_feed') ? '<span style="font-size:11px;color:var(--text-muted)">📸 = variación que se publica en Instagram</span>' : ''}
+        </div>
+        ${enrichedAds.map((ad, idx) => `
+          <div style="border:1px solid var(--border);border-radius:10px;overflow:hidden;margin-bottom:8px;${plataformas.includes('instagram_feed') && idx === 0 ? 'border-color:var(--green)' : ''}" id="igAdCard_${idx}">
             <div style="display:flex;gap:0">
               ${ad.feedImage ? `<img src="${ad.feedImage}" style="width:72px;height:72px;object-fit:cover;flex-shrink:0" onerror="this.style.display='none'">` : ''}
               <div style="padding:10px 12px;flex:1;min-width:0">
-                <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px">
+                <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px;flex-wrap:wrap">
                   <span style="font-size:10px;font-weight:700;padding:1px 6px;border-radius:20px;background:var(--green-light);color:var(--green);text-transform:uppercase">${ad.variationType}</span>
                   <span style="font-size:11px;color:var(--text-muted)">${ad.platforms ? ad.platforms.join(', ') : ad.platform}</span>
+                  ${plataformas.includes('instagram_feed') ? `<label style="margin-left:auto;display:flex;align-items:center;gap:4px;cursor:pointer;font-size:11px;color:var(--text-muted)"><input type="radio" name="igAdPick" value="${idx}" ${idx === 0 ? 'checked' : ''} onchange="selectIgAd(${idx},${enrichedAds.length})"> 📸 Instagram</label>` : ''}
                 </div>
                 <div style="font-size:13px;font-weight:700;margin-bottom:2px">${ad.headline}</div>
                 <div style="font-size:11px;color:var(--text-muted);line-height:1.4">${ad.description}</div>
@@ -3051,6 +3057,14 @@ async function pautaGenerateCopy() {
     toast(`❌ ${err.message}`, 'error')
   } finally {
     setButtonLoading(btn, false)
+  }
+}
+
+function selectIgAd(idx, total) {
+  state.pautaIgAdIndex = idx
+  for (let i = 0; i < total; i++) {
+    const card = document.getElementById(`igAdCard_${i}`)
+    if (card) card.style.borderColor = i === idx ? 'var(--green)' : 'var(--border)'
   }
 }
 
@@ -3167,9 +3181,10 @@ async function pautaPublish() {
 }
 
 async function publishToInstagramFlow(ads, inmueble, settings) {
-  // Use first ad (all ads share copy across platforms)
   if (!ads.length) return
-  const ad = ads[0]
+  // Use the variation selected in the preview (radio button), default 0
+  const idx = state.pautaIgAdIndex || 0
+  const ad  = ads[Math.min(idx, ads.length - 1)]
 
   const caption = buildInstagramCaption(ad, inmueble, settings)
   const simulate = !settings.metaToken || !settings.igAccountId
