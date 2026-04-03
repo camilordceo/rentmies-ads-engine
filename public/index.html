@@ -1153,7 +1153,7 @@
 
     <div class="divider"></div>
 
-    <button class="btn btn-primary" id="btnGenerate" onclick="generateCampaign()">
+    <button class="btn btn-primary" id="btnGenerate" onclick="openPropertyPicker()">
       <div class="spinner"></div>
       <span class="btn-text">✨ Generar y Publicar</span>
     </button>
@@ -1443,7 +1443,7 @@
       <div class="form-group">
         <label>Access Token <a class="settings-help" href="https://developers.facebook.com/tools/explorer/" target="_blank">¿Cómo obtenerlo? ↗</a></label>
         <div class="input-secret-wrap">
-          <input type="password" class="form-control" id="s-metaToken" placeholder="EAAxxxxxxxxxxxxxxxx">
+          <input type="password" class="form-control" id="s-metaToken" placeholder="EAAxxxxxxxxxxxxxxxx" autocomplete="new-password">
           <button class="toggle-secret" onclick="toggleSecret('s-metaToken')">👁</button>
         </div>
       </div>
@@ -1486,7 +1486,7 @@
       <div class="form-group">
         <label>Gemini API Key <a class="settings-help" href="https://aistudio.google.com/app/apikey" target="_blank">Obtener key ↗</a></label>
         <div class="input-secret-wrap">
-          <input type="password" class="form-control" id="s-geminiKey" placeholder="AIzaSyxxxxxxxxxxxxxxxx">
+          <input type="password" class="form-control" id="s-geminiKey" placeholder="AIzaSyxxxxxxxxxxxxxxxx" autocomplete="new-password">
           <button class="toggle-secret" onclick="toggleSecret('s-geminiKey')">👁</button>
         </div>
       </div>
@@ -1532,7 +1532,7 @@
       <div class="form-group">
         <label>Developer Token <a class="settings-help" href="https://developers.google.com/google-ads/api/docs/get-started/dev-token" target="_blank">Obtener ↗</a></label>
         <div class="input-secret-wrap">
-          <input type="password" class="form-control" id="s-gDevToken" placeholder="AbCdEfGhIjKlMnOpQrSt">
+          <input type="password" class="form-control" id="s-gDevToken" placeholder="AbCdEfGhIjKlMnOpQrSt" autocomplete="new-password">
           <button class="toggle-secret" onclick="toggleSecret('s-gDevToken')">👁</button>
         </div>
       </div>
@@ -1552,7 +1552,7 @@
         <div class="form-group">
           <label>OAuth2 Client Secret</label>
           <div class="input-secret-wrap">
-            <input type="password" class="form-control" id="s-gClientSecret" placeholder="GOCSPX-xxxxxxxx">
+            <input type="password" class="form-control" id="s-gClientSecret" placeholder="GOCSPX-xxxxxxxx" autocomplete="new-password">
             <button class="toggle-secret" onclick="toggleSecret('s-gClientSecret')">👁</button>
           </div>
         </div>
@@ -1560,7 +1560,7 @@
       <div class="form-group">
         <label>Refresh Token <a class="settings-help" href="https://developers.google.com/google-ads/api/docs/get-started/oauth-cloud-project" target="_blank">Generar ↗</a></label>
         <div class="input-secret-wrap">
-          <input type="password" class="form-control" id="s-gRefreshToken" placeholder="1//0gxxxxxxxxxxxxxxxx">
+          <input type="password" class="form-control" id="s-gRefreshToken" placeholder="1//0gxxxxxxxxxxxxxxxx" autocomplete="new-password">
           <button class="toggle-secret" onclick="toggleSecret('s-gRefreshToken')">👁</button>
         </div>
       </div>
@@ -1701,6 +1701,22 @@
           <tr><td colspan="7" style="text-align:center;padding:28px;color:var(--text-muted)">Cargando leads...</td></tr>
         </tbody>
       </table>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════ MODAL: SELECTOR INMUEBLE ═══════════════════ -->
+<div class="modal-overlay" id="propertyPickerModal" onclick="if(event.target===this)closePropertyPicker()">
+  <div class="modal" style="max-width:560px">
+    <div class="modal-header">
+      <h3>Seleccionar Inmueble</h3>
+      <button class="modal-close" onclick="closePropertyPicker()">✕</button>
+    </div>
+    <div class="modal-body" style="padding:16px">
+      <input type="text" class="form-control" id="pickerSearch" placeholder="Buscar por proyecto, ciudad o tipo..." oninput="filterPickerList(this.value)" style="margin-bottom:12px">
+      <div id="pickerList" style="max-height:380px;overflow-y:auto;display:flex;flex-direction:column;gap:8px">
+        <div class="empty-state" style="padding:32px 0"><div class="empty-icon">🏠</div><p>Cargando inmuebles...</p></div>
+      </div>
     </div>
   </div>
 </div>
@@ -2506,6 +2522,63 @@ function renderInmuebles(inmuebles) {
 }
 
 // ══════════════════════════════════════════════════════
+// PROPERTY PICKER
+// ══════════════════════════════════════════════════════
+async function openPropertyPicker() {
+  document.getElementById('propertyPickerModal').classList.add('open')
+  document.getElementById('pickerSearch').value = ''
+  if (state.inmuebles.length === 0) {
+    try {
+      const res = await fetch('/api/inmuebles')
+      const data = await res.json()
+      if (data.success) {
+        state.inmuebles = data.inmuebles
+        renderInmuebles(state.inmuebles)
+        populateProyectoFilter(state.inmuebles)
+      }
+    } catch(e) {}
+  }
+  renderPickerList(state.inmuebles)
+}
+
+function closePropertyPicker() {
+  document.getElementById('propertyPickerModal').classList.remove('open')
+}
+
+function filterPickerList(q) {
+  const lower = q.toLowerCase()
+  const filtered = state.inmuebles.filter(i =>
+    i.proyecto?.toLowerCase().includes(lower) ||
+    i.ciudad?.toLowerCase().includes(lower) ||
+    i.tipo?.toLowerCase().includes(lower) ||
+    i.descripcion?.toLowerCase().includes(lower)
+  )
+  renderPickerList(filtered)
+}
+
+function renderPickerList(list) {
+  const container = document.getElementById('pickerList')
+  if (!list.length) {
+    container.innerHTML = '<div class="empty-state" style="padding:32px 0"><div class="empty-icon">🔍</div><p>Sin resultados</p></div>'
+    return
+  }
+  container.innerHTML = list.map(i => `
+    <div style="display:flex;align-items:center;gap:12px;padding:10px 12px;border:1px solid var(--border);border-radius:10px;cursor:pointer;transition:border-color 0.15s,background 0.15s"
+         onmouseover="this.style.borderColor='var(--green)';this.style.background='var(--surface-hover,#f9f9f7)'"
+         onmouseout="this.style.borderColor='var(--border)';this.style.background=''"
+         onclick="closePropertyPicker();openPautaModal(${JSON.stringify(i).replace(/"/g,'&quot;')})">
+      <div style="width:44px;height:44px;border-radius:8px;background:var(--surface-2,#f0f0ec);display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0">
+        ${i.imagen ? `<img src="${i.imagen}" style="width:44px;height:44px;border-radius:8px;object-fit:cover" onerror="this.parentElement.textContent='🏠'">` : '🏠'}
+      </div>
+      <div style="flex:1;min-width:0">
+        <div style="font-weight:600;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${i.descripcion}</div>
+        <div style="font-size:11px;color:var(--text-muted);margin-top:2px">${i.proyecto} · ${i.ciudad} · ${i.tipo}</div>
+      </div>
+      <button class="btn btn-primary btn-sm" style="width:auto;flex-shrink:0">Seleccionar</button>
+    </div>
+  `).join('')
+}
+
 // MODAL: GENERAR PAUTA
 // ══════════════════════════════════════════════════════
 function openPautaModal(inmueble) {
