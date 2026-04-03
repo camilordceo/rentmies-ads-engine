@@ -2927,11 +2927,20 @@ async function pautaPublish() {
       })
       const metaData = await metaRes.json()
       if (metaData.success) {
-        const msg = metaData.simulated
-          ? `📘 Meta Ads simulado (${metaData.adCount} ads)`
-          : `📘 ${metaData.adCount} ads creados en Ads Manager (PAUSADOS) — ${metaData.adsManagerUrl ? '<a href="' + metaData.adsManagerUrl + '" target="_blank">Ver →</a>' : ''}`
-        addFeedItem('📘', msg.replace(/<[^>]+>/g, ''), metaData.simulated ? 'generating' : 'done')
-        if (!metaData.simulated) toast(`📘 ${metaData.adCount} ads en Meta Ads Manager`, 'success')
+        if (metaData.simulated) {
+          addFeedItem('📘', `Meta Ads simulado — configura Meta credentials en Settings`, 'generating')
+          toast('⚠️ Meta Ads simulado — agrega credenciales en Settings', 'error')
+        } else {
+          addFeedItem('📘', `${metaData.adCount} ads creados en Ads Manager (PAUSADOS)`, 'done')
+          toast(`📘 ${metaData.adCount} ads en Meta Ads Manager`, 'success')
+          if (metaData.adsManagerUrl) {
+            addFeedItem('🔗', `Ver en Ads Manager → ${metaData.adsManagerUrl}`, 'done')
+          }
+        }
+      } else {
+        const errMsg = metaData.error || 'Error desconocido de Meta'
+        addFeedItem('❌', `Meta Ads: ${errMsg}`, 'warning')
+        toast(`❌ Meta Ads: ${errMsg}`, 'error')
       }
     }
 
@@ -2970,11 +2979,9 @@ async function pautaPublish() {
 }
 
 async function publishToInstagramFlow(ads, inmueble, settings) {
-  // Publicar solo los ads de instagram_feed
-  const igAds = ads.filter(a => a.platform === 'instagram_feed')
-  if (!igAds.length) return
-
-  const ad = igAds[0] // publicar el primero como prueba
+  // Use first ad (all ads share copy across platforms)
+  if (!ads.length) return
+  const ad = ads[0]
 
   // Construir caption con CTA
   const caption = buildInstagramCaption(ad, inmueble, settings)
@@ -2996,14 +3003,21 @@ async function publishToInstagramFlow(ads, inmueble, settings) {
     const result = await res.json()
 
     if (result.success) {
-      const msg = result.simulated
-        ? `📸 Instagram simulado — configura credenciales para publicar real`
-        : `📸 ¡Publicado en Instagram! → ${result.permalink}`
-      toast(msg, 'success')
-      addFeedItem('📸', msg, result.simulated ? 'generating' : 'done')
+      if (result.simulated) {
+        addFeedItem('📸', `Instagram simulado — configura Meta Access Token e IG Account ID`, 'generating')
+        toast('⚠️ Instagram simulado — agrega credenciales en Settings', 'error')
+      } else {
+        addFeedItem('📸', `¡Publicado en Instagram! → ${result.permalink || ''}`, 'done')
+        toast(`📸 ¡Publicado en Instagram!`, 'success')
+      }
+    } else {
+      const errMsg = result.error || 'Error desconocido'
+      addFeedItem('❌', `Instagram: ${errMsg}`, 'warning')
+      toast(`❌ Instagram: ${errMsg}`, 'error')
     }
   } catch(err) {
     addFeedItem('⚠️', `Instagram: ${err.message}`, 'warning')
+    toast(`❌ Instagram: ${err.message}`, 'error')
   }
 }
 
