@@ -81,11 +81,10 @@ async function createAdSet({ adAccountId, accessToken, campaignId, name, dailyBu
   return graphPost(`/${acctId(adAccountId)}/adsets`, accessToken, {
     name,
     campaign_id:                     campaignId,
-    daily_budget:                    Math.max(5000, Math.round(dailyBudget)),
-    billing_event:                   'IMPRESSIONS',
-    optimization_goal:               'LINK_CLICKS',
-    bid_strategy:                    'LOWEST_COST_WITHOUT_CAP',
-    is_adset_budget_sharing_enabled: false,   // boolean false — ad set owns its own budget
+    daily_budget:      Math.max(5000, Math.round(dailyBudget)),
+    billing_event:     'IMPRESSIONS',
+    optimization_goal: 'LINK_CLICKS',
+    bid_strategy:      'LOWEST_COST_WITHOUT_CAP',
     targeting: {
       geo_locations: {
         cities: [{ key: geo.key, country: geo.country, radius: 20, distance_unit: 'kilometer' }],
