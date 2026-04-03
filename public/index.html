@@ -2926,8 +2926,14 @@ async function pautaGenerateCopy() {
   if (!variaciones.length) { toast('⚠️ Selecciona al menos una variación', 'error'); setButtonLoading(btn, false); return }
   if (!plataformas.length) { toast('⚠️ Selecciona al menos una plataforma', 'error'); setButtonLoading(btn, false); return }
 
+  // Read Google-specific fields before DOM gets replaced in step 2
+  const gBidding  = document.getElementById('pautaGBidding')?.value || 'MAXIMIZE_CLICKS'
+  const gCpc      = parseInt(document.getElementById('pautaGCpc')?.value || '800')
+  const gKeywords = (document.getElementById('pautaGKeywords')?.value || '')
+    .split('\n').map(k => k.trim()).filter(Boolean)
+
   // Save config for step 2
-  state.pautaConfig = { ciudad, presupuesto, duracion, variaciones, plataformas, ctaType, ctaText, ctaUrl, userContext }
+  state.pautaConfig = { ciudad, presupuesto, duracion, variaciones, plataformas, ctaType, ctaText, ctaUrl, userContext, gBidding, gCpc, gKeywords }
 
   addLog('info', 'generate', `Generando copy: ${inmueble.proyecto} · ${ciudad} · ${variaciones.join(',')}`, { inmueble: inmueble.id, plataformas, variaciones, hasGemini: !!s.geminiKey })
 
@@ -2967,30 +2973,68 @@ async function pautaGenerateCopy() {
       ? '<span style="color:var(--green);font-size:11px;font-weight:600">✦ Gemini generado</span>'
       : '<span style="color:var(--text-muted);font-size:11px">Mock copy</span>'
 
+    const needsMeta   = plataformas.some(p => p.startsWith('meta_') || p === 'instagram_feed')
+    const needsGoogle = plataformas.some(p => p.startsWith('google_'))
+
+    // Build auto keywords preview for Google
+    const autoKws = buildGoogleKeywordPreview(inmueble, ciudad)
+    const allKws  = [...autoKws, ...gKeywords]
+
     document.getElementById('pautaModalTitle').textContent = 'Preview — Confirmar Pauta'
     document.getElementById('pautaModalBody').innerHTML = `
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
-        <span style="font-size:13px;color:var(--text-secondary);font-weight:500">${enrichedAds.length} variaciones · ${ciudad} · $${parseInt(presupuesto).toLocaleString()} COP/día</span>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+        <span style="font-size:13px;color:var(--text-secondary);font-weight:500">
+          ${[needsMeta ? `${enrichedAds.length} vars Meta/IG` : '', needsGoogle ? 'Google Ads' : ''].filter(Boolean).join(' + ')}
+          · ${ciudad} · $${parseInt(presupuesto).toLocaleString()} COP/día
+        </span>
         ${sourceLabel}
       </div>
-      ${enrichedAds.map((ad, i) => `
-        <div style="border:1px solid var(--gray-border);border-radius:var(--radius-lg);overflow:hidden;margin-bottom:10px">
-          <div style="display:flex;gap:0">
-            ${ad.feedImage ? `<img src="${ad.feedImage}" style="width:80px;height:80px;object-fit:cover;flex-shrink:0" onerror="this.style.display='none'">` : ''}
-            <div style="padding:12px 14px;flex:1;min-width:0">
-              <div style="display:flex;align-items:center;gap:8px;margin-bottom:5px">
-                <span style="font-size:10px;font-weight:700;padding:2px 7px;border-radius:20px;background:var(--green-light);color:var(--green);text-transform:uppercase;letter-spacing:0.5px">${ad.variationType}</span>
-                <span style="font-size:11px;color:var(--text-muted)">${ad.platforms ? ad.platforms.join(', ') : ad.platform}</span>
+
+      ${needsMeta ? `
+        <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--text-muted);margin-bottom:8px">📘 Meta / Instagram</div>
+        ${enrichedAds.map(ad => `
+          <div style="border:1px solid var(--border);border-radius:10px;overflow:hidden;margin-bottom:8px">
+            <div style="display:flex;gap:0">
+              ${ad.feedImage ? `<img src="${ad.feedImage}" style="width:72px;height:72px;object-fit:cover;flex-shrink:0" onerror="this.style.display='none'">` : ''}
+              <div style="padding:10px 12px;flex:1;min-width:0">
+                <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px">
+                  <span style="font-size:10px;font-weight:700;padding:1px 6px;border-radius:20px;background:var(--green-light);color:var(--green);text-transform:uppercase">${ad.variationType}</span>
+                  <span style="font-size:11px;color:var(--text-muted)">${ad.platforms ? ad.platforms.join(', ') : ad.platform}</span>
+                </div>
+                <div style="font-size:13px;font-weight:700;margin-bottom:2px">${ad.headline}</div>
+                <div style="font-size:11px;color:var(--text-muted);line-height:1.4">${ad.description}</div>
               </div>
-              <div style="font-size:14px;font-weight:700;color:var(--text);margin-bottom:3px;letter-spacing:-0.2px">${ad.headline}</div>
-              <div style="font-size:12px;color:var(--text-secondary);line-height:1.45;margin-bottom:5px">${ad.description}</div>
-              ${ad.hook ? `<div style="font-size:11px;color:var(--text-muted);font-style:italic">"${ad.hook}"</div>` : ''}
             </div>
           </div>
+        `).join('')}
+      ` : ''}
+
+      ${needsGoogle ? `
+        <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--text-muted);margin:${needsMeta ? '16px' : '0'} 0 8px">🔍 Google Ads</div>
+        <div style="border:1px solid var(--border);border-radius:10px;padding:12px 14px;margin-bottom:8px">
+          <div style="display:flex;gap:16px;margin-bottom:10px">
+            <div><span style="font-size:11px;color:var(--text-muted)">Tipo</span><div style="font-size:12px;font-weight:600;margin-top:2px">${plataformas.includes('google_pmax') ? '⚡ Performance Max' : '🔍 Search'}</div></div>
+            <div><span style="font-size:11px;color:var(--text-muted)">Puja</span><div style="font-size:12px;font-weight:600;margin-top:2px">${gBidding}</div></div>
+            ${gBidding === 'MAXIMIZE_CLICKS' ? `<div><span style="font-size:11px;color:var(--text-muted)">CPC máx</span><div style="font-size:12px;font-weight:600;margin-top:2px">$${gCpc.toLocaleString()} COP</div></div>` : ''}
+          </div>
+          <div style="font-size:11px;color:var(--text-muted);margin-bottom:6px;font-weight:600">Keywords (${allKws.length}):</div>
+          <div style="display:flex;flex-wrap:wrap;gap:5px">
+            ${allKws.map(k => `<span style="font-size:11px;padding:2px 8px;border-radius:20px;border:1px solid var(--border);color:var(--text-muted);font-family:monospace">${k}</span>`).join('')}
+          </div>
+          <div style="margin-top:10px;font-size:11px;color:var(--text-muted)">
+            <div style="font-weight:600;margin-bottom:4px">Headlines RSA (auto-generados):</div>
+            ${buildRSAPreview(inmueble, ciudad, enrichedAds[0]?.headline).map(h => `<div style="padding:2px 0">· ${h}</div>`).join('')}
+          </div>
         </div>
-      `).join('')}
-      <div style="padding:12px 14px;background:var(--bg);border-radius:var(--radius-md);border:1px solid var(--gray-border);font-size:12px;color:var(--text-secondary)">
-        <strong>Al confirmar:</strong> se crearán ${enrichedAds.length} ads en Meta Ads Manager (estado PAUSADO) ${plataformas.includes('instagram_feed') ? '+ se publicará en Instagram' : ''}. Puedes activarlos desde Ads Manager.
+      ` : ''}
+
+      <div style="padding:10px 14px;background:var(--bg);border-radius:8px;border:1px solid var(--border);font-size:12px;color:var(--text-muted)">
+        <strong style="color:var(--text)">Al confirmar:</strong>
+        ${[
+          needsMeta && !plataformas.includes('instagram_feed') ? `${enrichedAds.length} ads en Meta Ads Manager (PAUSADOS)` : '',
+          needsMeta && plataformas.includes('instagram_feed') ? `${enrichedAds.length} ads en Meta Ads Manager + publicación en Instagram` : '',
+          needsGoogle ? 'campaña Google Ads (PAUSADA)' : ''
+        ].filter(Boolean).join(' · ')}
       </div>
     `
 
@@ -2999,7 +3043,7 @@ async function pautaGenerateCopy() {
       <button class="btn btn-secondary" style="width:auto" onclick="pautaGoBack()">← Editar</button>
       <button class="btn btn-primary" style="width:auto;min-width:200px" id="btnCrearPauta" onclick="pautaPublish()">
         <div class="spinner"></div>
-        <span class="btn-text">🚀 Publicar ${enrichedAds.length} ads</span>
+        <span class="btn-text">🚀 Publicar</span>
       </button>
     `
 
@@ -3093,9 +3137,12 @@ async function pautaPublish() {
     const needsGoogle = cfg.plataformas.includes('google_search') || cfg.plataformas.includes('google_pmax')
     if (needsGoogle) {
       await createGoogleAdsCampaign(inmueble, {
-        ciudad: cfg.ciudad,
+        ciudad:      cfg.ciudad,
         presupuesto: cfg.presupuesto,
-        ctaUrl: cfg.ctaUrl || (s.whatsappNumber ? `https://wa.me/${s.whatsappNumber}` : ''),
+        ctaUrl:      cfg.ctaUrl || (s.whatsappNumber ? `https://wa.me/${s.whatsappNumber}` : ''),
+        gBidding:    cfg.gBidding,
+        gCpc:        cfg.gCpc,
+        gKeywords:   cfg.gKeywords,
       })
     }
 
@@ -3562,6 +3609,34 @@ async function toggleGoogleCampaign(campaignId, action) {
 }
 
 // ── Google Ads en crearPauta ──
+// Returns the auto-generated keyword list (same logic used in preview + API)
+function buildGoogleKeywordPreview(inmueble, ciudad) {
+  const proyecto = inmueble?.proyecto || ''
+  const tipo     = inmueble?.tipo     || 'apartamento'
+  const cityLow  = (ciudad || inmueble?.ciudad || 'bogota')
+    .toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+  return [
+    `[${tipo} en ${cityLow}]`,
+    `"arriendo ${tipo} ${cityLow}"`,
+    `"proyecto ${proyecto.toLowerCase()}"`,
+    `"inmuebles en ${cityLow}"`,
+    `${tipo} colombia`,
+  ]
+}
+
+// Returns a short RSA headline preview
+function buildRSAPreview(inmueble, ciudad, geminiHeadline) {
+  const proyecto = inmueble?.proyecto || 'Proyecto'
+  const tipo     = inmueble?.tipo     || 'apartamento'
+  const list = [
+    geminiHeadline || `${proyecto} — ${tipo} en ${ciudad}`,
+    `Arrienda en ${ciudad} con Rentmies`,
+    `Respuesta inmediata por WhatsApp`,
+    `Ver ${tipo} disponibles ahora`,
+  ]
+  return list.slice(0, 4)
+}
+
 function toggleGoogleFields(show) {
   const el = document.getElementById('googleAdsFields')
   if (el) {
@@ -3593,48 +3668,52 @@ function renderKeywordPreview() {
 }
 
 async function createGoogleAdsCampaign(inmueble, params) {
-  const s = getSettings()
+  const s          = getSettings()
+  const simulate   = !s.gDevToken || !s.gCustomerId
+  const autoKws    = buildGoogleKeywordPreview(inmueble, params.ciudad)
+  const extraKws   = params.gKeywords || []
+  const allKeywords = [...autoKws, ...extraKws]
+
   addFeedItem('🔍', `Creando campaña Google Ads — ${inmueble.proyecto} · ${params.ciudad}...`, 'generating')
+  addLog('info', 'google-ads', `POST /api/google-ads · simulate=${simulate} · ${allKeywords.length} keywords`, { proyecto: inmueble.proyecto, ciudad: params.ciudad, gBidding: params.gBidding })
 
-  const extraKws = (document.getElementById('pautaGKeywords')?.value || '')
-    .split('\n').map(k=>k.trim()).filter(Boolean)
+  const payload = {
+    action:          'create_campaign',
+    developerToken:   s.gDevToken     || '',
+    clientId:         s.gClientId     || '',
+    clientSecret:     s.gClientSecret || '',
+    refreshToken:     s.gRefreshToken || '',
+    customerId:       s.gCustomerId   || '',
+    simulate,
+    proyecto:         inmueble.proyecto,
+    ciudad:           params.ciudad,
+    tipo:             inmueble.tipo,
+    presupuestoCOP:   parseInt(params.presupuesto),
+    ctaUrl:           params.ctaUrl,
+    whatsappNumber:   s.whatsappNumber  || '',
+    biddingStrategy:  params.gBidding   || 'MAXIMIZE_CLICKS',
+    maxCpcCOP:        params.gCpc       || 800,
+    extraKeywords:    extraKws,
+  }
 
-  const res = await fetch('/api/google-ads', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      action:         'create_campaign',
-      developerToken:  s.gDevToken     || '',
-      clientId:        s.gClientId     || '',
-      clientSecret:    s.gClientSecret || '',
-      refreshToken:    s.gRefreshToken || '',
-      customerId:      s.gCustomerId   || '',
-      simulate:        !s.gDevToken || !s.gCustomerId,
-      // Campaign config
-      proyecto:        inmueble.proyecto,
-      ciudad:          params.ciudad,
-      tipo:            inmueble.tipo,
-      presupuestoCOP:  parseInt(params.presupuesto),
-      ctaUrl:          params.ctaUrl,
-      whatsappNumber:  s.whatsappNumber || '',
-      biddingStrategy: document.getElementById('pautaGBidding')?.value || 'MAXIMIZE_CLICKS',
-      extraKeywords:   extraKws
-    })
-  })
+  const res  = await fetch('/api/google-ads', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) })
   const data = await res.json()
+
+  addLog(data.success ? (data.simulated ? 'warn' : 'info') : 'error', 'google-ads',
+    data.success ? (data.simulated ? `Simulado · ${data.keywords} keywords` : `OK · campaignId=${data.campaignId}`) : `Error: ${data.error}`,
+    data.success ? null : data)
 
   if (data.success) {
     const msg = data.simulated
-      ? `🔍 Google Ads simulado — ${data.keywords} keywords · ${inmueble.proyecto}`
+      ? `🔍 Google Ads simulado — configura credenciales en Settings`
       : `🔍 Campaña Google Ads creada — ID: ${data.campaignId} · PAUSADA`
     addFeedItem('🎯', msg, data.simulated ? 'generating' : 'done')
-    toast(msg, 'success')
-    // Refresh Google tab if open
-    if (document.getElementById('tab-google')?.classList.contains('active')) {
-      await loadGoogleCampaigns()
-    }
+    if (data.simulated) toast('⚠️ Google Ads simulado — agrega credenciales en Settings', 'error')
+    else toast(msg, 'success')
+    if (!data.simulated) await loadGoogleCampaigns()
   } else {
-    addFeedItem('❌', `Google Ads error: ${data.error}`, 'warning')
+    addFeedItem('❌', `Google Ads: ${data.error}`, 'warning')
+    toast(`❌ Google Ads: ${data.error}`, 'error')
   }
   return data
 }
