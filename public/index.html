@@ -1709,17 +1709,17 @@
 <div class="modal-overlay" id="pautaModal">
   <div class="modal" style="max-width:720px">
     <div class="modal-header">
-      <h3>✨ Generar Pauta</h3>
+      <h3 id="pautaModalTitle">✨ Generar Pauta</h3>
       <div class="modal-close" onclick="closePautaModal()">✕</div>
     </div>
     <div class="modal-body" id="pautaModalBody">
       <!-- generado dinámicamente -->
     </div>
-    <div class="modal-footer">
+    <div class="modal-footer" id="pautaModalFooter">
       <button class="btn btn-secondary" style="width:auto" onclick="closePautaModal()">Cancelar</button>
-      <button class="btn btn-primary" style="width:auto;min-width:180px" id="btnCrearPauta" onclick="crearPauta()">
+      <button class="btn btn-primary" style="width:auto;min-width:200px" id="btnCrearPauta" onclick="pautaNextStep()">
         <div class="spinner"></div>
-        <span class="btn-text">🚀 Crear Pauta</span>
+        <span class="btn-text">Generar copy →</span>
       </button>
     </div>
   </div>
@@ -2527,10 +2527,10 @@ function openPautaModal(inmueble) {
     <div class="pauta-section-title">Presupuesto diario</div>
     <div class="budget-display" id="budgetDisplay">$50.000 COP</div>
     <div class="budget-sub" id="budgetSub">Total estimado: $700.000 COP / 14 días</div>
-    <input type="range" id="budgetRange" min="20000" max="500000" step="10000" value="50000"
+    <input type="range" id="budgetRange" min="5000" max="500000" step="5000" value="50000"
            oninput="updateBudgetDisplay(this.value)">
     <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--text-muted);margin-top:4px">
-      <span>$20.000</span><span>$500.000</span>
+      <span>$5.000</span><span>$500.000</span>
     </div>
 
     <div class="pauta-form-grid" style="margin-top:20px">
@@ -2580,12 +2580,20 @@ function openPautaModal(inmueble) {
       <span class="cta-preview-btn">💬 Escribir por WhatsApp</span>
     </div>
 
-    <div class="pauta-section-title">Variaciones a generar</div>
+    <div class="pauta-section-title">Contexto adicional <span style="font-weight:400;text-transform:none;letter-spacing:0;color:var(--text-muted)">— opcional</span></div>
+    <div class="form-group" style="margin-bottom:0">
+      <textarea class="form-control" id="pautaUserContext" rows="2"
+        placeholder="Ej: el proyecto tiene zona BBQ exclusiva, está a 2 min del metro, entrega en junio..."
+        style="resize:none;font-size:13px"></textarea>
+      <span style="font-size:11px;color:var(--text-muted);margin-top:3px;display:block">Este contexto se envía a Gemini para personalizar el copy de los ads.</span>
+    </div>
+
+    <div class="pauta-section-title" style="margin-top:16px">Variaciones <span style="font-weight:400;text-transform:none;letter-spacing:0;color:var(--text-muted)">— máx 4 ads</span></div>
     <div class="variation-grid">
       <label class="variation-check selected"><input type="checkbox" value="painPoint" checked onchange="toggleVariation(this)"> 😤 Dolor</label>
       <label class="variation-check selected"><input type="checkbox" value="outcome" checked onchange="toggleVariation(this)"> 🎯 Resultado</label>
-      <label class="variation-check selected"><input type="checkbox" value="social" checked onchange="toggleVariation(this)"> 👥 Social</label>
-      <label class="variation-check selected"><input type="checkbox" value="urgency" checked onchange="toggleVariation(this)"> ⚡ Urgencia</label>
+      <label class="variation-check"><input type="checkbox" value="social" onchange="toggleVariation(this)"> 👥 Social</label>
+      <label class="variation-check"><input type="checkbox" value="urgency" onchange="toggleVariation(this)"> ⚡ Urgencia</label>
     </div>
 
     <div class="pauta-section-title">Plataformas</div>
@@ -2652,6 +2660,9 @@ function openPautaModal(inmueble) {
 function closePautaModal() {
   document.getElementById('pautaModal').classList.remove('open')
   state.pautaInmueble = null
+  state.pautaStep     = 1
+  state.pautaAds      = null
+  state.pautaConfig   = null
 }
 
 function updateBudgetDisplay(val) {
@@ -2679,7 +2690,20 @@ function updateCtaPreview() {
   }
 }
 
-async function crearPauta() {
+// ── Pauta modal state ──
+state.pautaStep    = 1
+state.pautaConfig  = null
+state.pautaAds     = null
+
+function pautaNextStep() {
+  if (state.pautaStep === 1) {
+    pautaGenerateCopy()
+  } else {
+    pautaPublish()
+  }
+}
+
+async function pautaGenerateCopy() {
   const inmueble = state.pautaInmueble
   if (!inmueble) return
 
@@ -2688,21 +2712,22 @@ async function crearPauta() {
 
   const ciudad      = document.getElementById('pautaCiudad').value
   const presupuesto = document.getElementById('budgetRange').value
+  const duracion    = document.getElementById('pautaDuracion').value
   const variaciones = [...document.querySelectorAll('#pautaModalBody .variation-check input:checked')].map(i => i.value)
   const plataformas = [...document.querySelectorAll('#pautaModalBody .platform-check input:checked')].map(i => i.value)
   const ctaType     = document.getElementById('pautaCtaType')?.value || 'whatsapp'
   const ctaText     = document.getElementById('pautaCtaText')?.value || 'Ver proyecto'
   const ctaUrl      = document.getElementById('pautaCtaUrl')?.value || ''
+  const userContext = document.getElementById('pautaUserContext')?.value?.trim() || ''
   const s           = getSettings()
 
-  if (!variaciones.length || !plataformas.length) {
-    toast('⚠️ Selecciona al menos una variación y plataforma', 'error')
-    setButtonLoading(btn, false)
-    return
-  }
+  if (!variaciones.length) { toast('⚠️ Selecciona al menos una variación', 'error'); setButtonLoading(btn, false); return }
+  if (!plataformas.length) { toast('⚠️ Selecciona al menos una plataforma', 'error'); setButtonLoading(btn, false); return }
+
+  // Save config for step 2
+  state.pautaConfig = { ciudad, presupuesto, duracion, variaciones, plataformas, ctaType, ctaText, ctaUrl, userContext }
 
   try {
-    // 1. Generar copy
     const res = await fetch('/api/generate', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -2711,53 +2736,151 @@ async function crearPauta() {
         presupuesto: `$${parseInt(presupuesto).toLocaleString()} COP/día`,
         plataformas, variaciones,
         inmuebleId: inmueble.id, proyecto: inmueble.proyecto,
+        userContext,
+        geminiKey: s.geminiKey || '',
         cta: { type: ctaType, text: ctaText, url: ctaUrl }
       })
     })
     const data = await res.json()
     if (!data.success) throw new Error(data.error)
 
-    // Enriquecer ads con CTA e imagen del inmueble
     const enrichedAds = data.ads.map(ad => ({
       ...ad,
-      cta: ctaText,
-      ctaType,
-      ctaUrl: ctaUrl || (ctaType === 'whatsapp' && s.whatsappNumber
-        ? `https://wa.me/${s.whatsappNumber}?text=Hola, me interesa el proyecto ${inmueble.proyecto}`
-        : ctaUrl),
-      feedImage: inmueble.imagen // usa imagen real del inmueble
+      cta: ctaText, ctaType, ctaUrl:
+        ctaUrl || (ctaType === 'whatsapp' && s.whatsappNumber
+          ? `https://wa.me/${s.whatsappNumber}?text=Hola, me interesa el proyecto ${inmueble.proyecto}`
+          : ctaUrl),
+      feedImage: ad.generatedImage || inmueble.imagen
     }))
 
-    closePautaModal()
-    toast(`✅ ${enrichedAds.length} ads creados para ${inmueble.proyecto}`, 'success')
-    loadAdsFromData(enrichedAds)
+    state.pautaAds  = enrichedAds
+    state.pautaStep = 2
 
-    // 2. Instagram
-    if (plataformas.includes('instagram_feed')) {
-      await publishToInstagramFlow(enrichedAds, inmueble, s)
+    // Render preview step
+    const sourceLabel = data.source === 'gemini-2.0-flash-lite'
+      ? '<span style="color:var(--green);font-size:11px;font-weight:600">✦ Gemini generado</span>'
+      : '<span style="color:var(--text-muted);font-size:11px">Mock copy</span>'
+
+    document.getElementById('pautaModalTitle').textContent = 'Preview — Confirmar Pauta'
+    document.getElementById('pautaModalBody').innerHTML = `
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
+        <span style="font-size:13px;color:var(--text-secondary);font-weight:500">${enrichedAds.length} variaciones · ${ciudad} · $${parseInt(presupuesto).toLocaleString()} COP/día</span>
+        ${sourceLabel}
+      </div>
+      ${enrichedAds.map((ad, i) => `
+        <div style="border:1px solid var(--gray-border);border-radius:var(--radius-lg);overflow:hidden;margin-bottom:10px">
+          <div style="display:flex;gap:0">
+            ${ad.feedImage ? `<img src="${ad.feedImage}" style="width:80px;height:80px;object-fit:cover;flex-shrink:0" onerror="this.style.display='none'">` : ''}
+            <div style="padding:12px 14px;flex:1;min-width:0">
+              <div style="display:flex;align-items:center;gap:8px;margin-bottom:5px">
+                <span style="font-size:10px;font-weight:700;padding:2px 7px;border-radius:20px;background:var(--green-light);color:var(--green);text-transform:uppercase;letter-spacing:0.5px">${ad.variationType}</span>
+                <span style="font-size:11px;color:var(--text-muted)">${ad.platforms ? ad.platforms.join(', ') : ad.platform}</span>
+              </div>
+              <div style="font-size:14px;font-weight:700;color:var(--text);margin-bottom:3px;letter-spacing:-0.2px">${ad.headline}</div>
+              <div style="font-size:12px;color:var(--text-secondary);line-height:1.45;margin-bottom:5px">${ad.description}</div>
+              ${ad.hook ? `<div style="font-size:11px;color:var(--text-muted);font-style:italic">"${ad.hook}"</div>` : ''}
+            </div>
+          </div>
+        </div>
+      `).join('')}
+      <div style="padding:12px 14px;background:var(--bg);border-radius:var(--radius-md);border:1px solid var(--gray-border);font-size:12px;color:var(--text-secondary)">
+        <strong>Al confirmar:</strong> se crearán ${enrichedAds.length} ads en Meta Ads Manager (estado PAUSADO) ${plataformas.includes('instagram_feed') ? '+ se publicará en Instagram' : ''}. Puedes activarlos desde Ads Manager.
+      </div>
+    `
+
+    const footer = document.getElementById('pautaModalFooter')
+    footer.innerHTML = `
+      <button class="btn btn-secondary" style="width:auto" onclick="pautaGoBack()">← Editar</button>
+      <button class="btn btn-primary" style="width:auto;min-width:200px" id="btnCrearPauta" onclick="pautaPublish()">
+        <div class="spinner"></div>
+        <span class="btn-text">🚀 Publicar ${enrichedAds.length} ads</span>
+      </button>
+    `
+
+  } catch(err) {
+    toast(`❌ ${err.message}`, 'error')
+  } finally {
+    setButtonLoading(btn, false)
+  }
+}
+
+function pautaGoBack() {
+  state.pautaStep = 1
+  state.pautaAds  = null
+  document.getElementById('pautaModalTitle').textContent = '✨ Generar Pauta'
+  const footer = document.getElementById('pautaModalFooter')
+  footer.innerHTML = `
+    <button class="btn btn-secondary" style="width:auto" onclick="closePautaModal()">Cancelar</button>
+    <button class="btn btn-primary" style="width:auto;min-width:200px" id="btnCrearPauta" onclick="pautaNextStep()">
+      <div class="spinner"></div>
+      <span class="btn-text">Generar copy →</span>
+    </button>
+  `
+  openPautaModal(state.pautaInmueble)
+}
+
+async function pautaPublish() {
+  const inmueble = state.pautaInmueble
+  const ads      = state.pautaAds
+  const cfg      = state.pautaConfig
+  if (!ads || !cfg) return
+
+  const btn = document.getElementById('btnCrearPauta')
+  setButtonLoading(btn, true)
+  const s = getSettings()
+
+  try {
+    loadAdsFromData(ads)
+
+    // 1. Meta Ads (campaign + ads in Ads Manager)
+    const metaAds = ads.filter(a => a.platforms?.includes('meta_feed') || a.platform === 'meta_feed')
+    if (metaAds.length) {
+      const metaRes = await fetch('/api/meta-ads', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          ads: metaAds,
+          inmueble,
+          ciudad:      cfg.ciudad,
+          dailyBudget: parseInt(cfg.presupuesto),
+          duracion:    parseInt(cfg.duracion),
+          ctaType:     cfg.ctaType,
+          ctaUrl:      cfg.ctaUrl,
+          accessToken: s.metaToken    || '',
+          adAccountId: s.adAccountId  || '',
+          pageId:      s.pageId       || '',
+          simulate:    !s.metaToken || !s.adAccountId || !s.pageId,
+        })
+      })
+      const metaData = await metaRes.json()
+      if (metaData.success) {
+        const msg = metaData.simulated
+          ? `📘 Meta Ads simulado (${metaData.adCount} ads)`
+          : `📘 ${metaData.adCount} ads creados en Ads Manager (PAUSADOS) — ${metaData.adsManagerUrl ? '<a href="' + metaData.adsManagerUrl + '" target="_blank">Ver →</a>' : ''}`
+        addFeedItem('📘', msg.replace(/<[^>]+>/g, ''), metaData.simulated ? 'generating' : 'done')
+        if (!metaData.simulated) toast(`📘 ${metaData.adCount} ads en Meta Ads Manager`, 'success')
+      }
     }
 
-    // 3. Meta Feed (mock o real)
-    await fetch('/api/publish', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ ads: enrichedAds })
-    })
+    // 2. Instagram (organic post)
+    if (cfg.plataformas.includes('instagram_feed')) {
+      await publishToInstagramFlow(ads, inmueble, s)
+    }
 
-    // 4. Google Ads (Search o PMax)
-    const needsGoogle = plataformas.includes('google_search') || plataformas.includes('google_pmax')
+    // 3. Google Ads
+    const needsGoogle = cfg.plataformas.includes('google_search') || cfg.plataformas.includes('google_pmax')
     if (needsGoogle) {
       await createGoogleAdsCampaign(inmueble, {
-        ciudad,
-        presupuesto: document.getElementById('budgetRange')?.value || 50000,
-        ctaUrl:      ctaUrl || (s.whatsappNumber ? `https://wa.me/${s.whatsappNumber}` : ''),
+        ciudad: cfg.ciudad,
+        presupuesto: cfg.presupuesto,
+        ctaUrl: cfg.ctaUrl || (s.whatsappNumber ? `https://wa.me/${s.whatsappNumber}` : ''),
       })
     }
 
-    // 5. Calendario
-    addCalendarEvent({ label: `${inmueble.proyecto} · ${ciudad}`, type: 'draft', date: new Date() })
+    addCalendarEvent({ label: `${inmueble.proyecto} · ${cfg.ciudad}`, type: 'draft', date: new Date() })
+    closePautaModal()
+    toast(`✅ Pauta creada — ${ads.length} ads`, 'success')
 
-    // 6. Ir a resultado — Google tab si se creó campaña Google, sino Creativos
     switchView('dashboard')
     if (needsGoogle) {
       switchTab('google', document.querySelectorAll('.tab-btn')[3])

@@ -1,5 +1,10 @@
 {
   "rewrites": [
     { "source": "/((?!api/).*)", "destination": "/public/index.html" }
-  ]
+  ],
+  "functions": {
+    "api/meta-ads.js": { "maxDuration": 30 },
+    "api/instagram.js": { "maxDuration": 30 },
+    "api/generate.js": { "maxDuration": 30 }
+  }
 }
