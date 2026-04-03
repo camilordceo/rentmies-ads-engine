@@ -46,7 +46,7 @@ const CITY_GEO = {
 }
 
 const CTA_TYPE_MAP = {
-  whatsapp: 'MESSAGE_PAGE',
+  whatsapp: 'WHATSAPP_MESSAGE', // wa.me links need WHATSAPP_MESSAGE, not MESSAGE_PAGE
   url:      'LEARN_MORE',
   call:     'CALL_NOW',
   form:     'SIGN_UP',
@@ -82,31 +82,33 @@ async function createAdSet({ adAccountId, accessToken, campaignId, name, dailyBu
 
   return await graphPost(`/${acct}/adsets`, {
     name,
-    campaign_id:       campaignId,
-    daily_budget:      String(Math.max(5000, Math.round(dailyBudget))), // COP min 5000
-    billing_event:     'IMPRESSIONS',
-    optimization_goal: 'LINK_CLICKS',   // must match OUTCOME_TRAFFIC objective
-    bid_strategy:      'LOWEST_COST_WITHOUT_CAP',
+    campaign_id:                    campaignId,
+    daily_budget:                   String(Math.max(5000, Math.round(dailyBudget))), // COP min 5000
+    billing_event:                  'IMPRESSIONS',
+    optimization_goal:              'LINK_CLICKS',   // must match OUTCOME_TRAFFIC objective
+    bid_strategy:                   'LOWEST_COST_WITHOUT_CAP',
+    is_adset_budget_sharing_enabled: 'false',  // explicit: budget is at ad set level, not campaign CBO
     targeting,
-    end_time:          String(Math.floor(endTime.getTime() / 1000)), // Unix timestamp
-    status:            'PAUSED',
-    access_token:      accessToken,
+    end_time:                       String(Math.floor(endTime.getTime() / 1000)), // Unix timestamp
+    status:                         'PAUSED',
+    access_token:                   accessToken,
   })
 }
 
 async function createAdCreative({ adAccountId, accessToken, pageId, name, imageUrl, headline, description, ctaUrl, ctaType = 'LEARN_MORE' }) {
-  const acct = adAccountId.startsWith('act_') ? adAccountId : `act_${adAccountId}`
+  const acct    = adAccountId.startsWith('act_') ? adAccountId : `act_${adAccountId}`
+  const destUrl = ctaUrl || 'https://rentmies.com'
 
-  const objectStorySpec = JSON.stringify({
-    page_id: pageId,
-    link_data: {
-      image_url:   imageUrl,
-      message:     description,
-      name:        headline,
-      link:        ctaUrl || `https://rentmies.com`,
-      call_to_action: { type: ctaType, value: { link: ctaUrl || `https://rentmies.com` } }
-    }
-  })
+  // Build link_data — image_url is optional (Meta will use page cover if absent)
+  const linkData = {
+    message: description,
+    name:    headline,
+    link:    destUrl,
+    call_to_action: { type: ctaType, value: { link: destUrl } },
+  }
+  if (imageUrl) linkData.image_url = imageUrl  // only set if a real public URL
+
+  const objectStorySpec = JSON.stringify({ page_id: pageId, link_data: linkData })
 
   return await graphPost(`/${acct}/adcreatives`, {
     name,
@@ -187,7 +189,9 @@ module.exports = async (req, res) => {
     // 3. Crear creative + ad por cada variación
     const createdAds = []
     for (const ad of ads) {
-      const imageUrl = inmueble.imagen || ad.feedImage || 'https://rentmies.com/og-image.jpg'
+      // Meta requires a public HTTPS URL — base64 data: URLs from Gemini are not supported
+      const rawImage = inmueble.imagen || ad.feedImage || ''
+      const imageUrl = rawImage.startsWith('data:') ? null : (rawImage || null)
 
       const creative = await createAdCreative({
         adAccountId, accessToken, pageId,
