@@ -1042,6 +1042,7 @@
     <button class="nav-btn" id="nav-inmuebles" onclick="switchView('inmuebles')">Inmuebles</button>
     <button class="nav-btn" id="nav-leads" onclick="switchView('leads')">Leads</button>
     <button class="nav-btn" id="nav-calendario" onclick="switchView('calendario')">Calendario</button>
+    <button class="nav-btn" id="nav-logs" onclick="switchView('logs')">Logs <span id="logsBadge" style="display:none;background:var(--red);color:#fff;border-radius:10px;font-size:10px;font-weight:700;padding:1px 5px;margin-left:4px">0</span></button>
     <button class="nav-btn" id="nav-settings" onclick="switchView('settings')">Settings</button>
   </nav>
   <div class="header-right">
@@ -1702,6 +1703,29 @@
         </tbody>
       </table>
     </div>
+  </div>
+</div>
+
+<!-- ═══════════════════ VISTA: LOGS ═══════════════════ -->
+<div id="view-logs" class="view" style="display:none">
+  <div class="view-header">
+    <div>
+      <h2 class="view-title">Logs</h2>
+      <p class="view-subtitle">Registro de todas las llamadas API y errores</p>
+    </div>
+    <div style="display:flex;gap:8px">
+      <select id="logsFilter" class="form-control" style="width:auto;font-size:12px" onchange="renderLogs()">
+        <option value="all">Todos</option>
+        <option value="error">Solo errores</option>
+        <option value="warn">Warnings</option>
+        <option value="info">Info</option>
+      </select>
+      <button class="btn btn-secondary btn-sm" style="width:auto" onclick="copyLogs()">Copiar</button>
+      <button class="btn btn-secondary btn-sm" style="width:auto" onclick="clearLogs()">Limpiar</button>
+    </div>
+  </div>
+  <div id="logsContainer" style="font-family:'Monaco','Consolas',monospace;font-size:12px">
+    <div style="text-align:center;padding:48px;color:var(--text-muted)">Sin logs aún. Genera una pauta para ver actividad.</div>
   </div>
 </div>
 
@@ -2418,7 +2442,7 @@ function startMockSimulation() {
 // ══════════════════════════════════════════════════════
 // NAVEGACIÓN PRINCIPAL
 // ══════════════════════════════════════════════════════
-const VIEWS = ['dashboard', 'inmuebles', 'leads', 'calendario', 'settings']
+const VIEWS = ['dashboard', 'inmuebles', 'leads', 'calendario', 'logs', 'settings']
 
 function switchView(view) {
   // Ocultar/mostrar layout principal vs vistas
@@ -2444,6 +2468,8 @@ function switchView(view) {
   if (view === 'settings') setTimeout(() => { loadSettingsForm(); loadGoogleSettingsFields() }, 50)
   if (view === 'calendario') renderCalendar()
   if (view === 'leads') loadLeadsView()
+  if (view === 'logs') { renderLogs(); resetLogsBadge() }
+  state.activeView = view
 }
 
 // ══════════════════════════════════════════════════════
@@ -2452,6 +2478,98 @@ function switchView(view) {
 state.inmuebles = []
 state.pautaInmueble = null
 state.calMonth = new Date()
+state.activeView = 'dashboard'
+state.logs = []
+state.logsErrorCount = 0
+
+function addLog(level, category, message, detail = null) {
+  const entry = {
+    id:       Date.now() + '_' + Math.random().toString(36).slice(2),
+    ts:       new Date(),
+    level,       // 'info' | 'warn' | 'error'
+    category,
+    message,
+    detail,
+    expanded: false,
+  }
+  state.logs.unshift(entry)
+  if (state.logs.length > 500) state.logs.pop()
+  if (level === 'error') {
+    state.logsErrorCount++
+    updateLogsBadge()
+  }
+  if (state.activeView === 'logs') renderLogs()
+}
+
+function updateLogsBadge() {
+  const badge = document.getElementById('logsBadge')
+  if (!badge) return
+  if (state.logsErrorCount > 0) {
+    badge.style.display = 'inline'
+    badge.textContent = state.logsErrorCount > 99 ? '99+' : state.logsErrorCount
+  } else {
+    badge.style.display = 'none'
+  }
+}
+
+function resetLogsBadge() {
+  state.logsErrorCount = 0
+  updateLogsBadge()
+}
+
+function clearLogs() {
+  state.logs = []
+  state.logsErrorCount = 0
+  updateLogsBadge()
+  renderLogs()
+}
+
+function copyLogs() {
+  const text = state.logs.map(e => {
+    const ts = e.ts.toISOString()
+    const detail = e.detail ? '\n  ' + JSON.stringify(e.detail, null, 2).replace(/\n/g, '\n  ') : ''
+    return `[${ts}] ${e.level.toUpperCase()} [${e.category}] ${e.message}${detail}`
+  }).join('\n\n')
+  navigator.clipboard.writeText(text).then(() => toast('✅ Logs copiados', 'success'))
+}
+
+function renderLogs() {
+  const container = document.getElementById('logsContainer')
+  if (!container) return
+  const filter = document.getElementById('logsFilter')?.value || 'all'
+  const filtered = filter === 'all' ? state.logs : state.logs.filter(e => e.level === filter)
+
+  if (!filtered.length) {
+    container.innerHTML = `<div style="text-align:center;padding:48px;color:var(--text-muted)">${state.logs.length ? 'Sin entradas para este filtro.' : 'Sin logs aún. Genera una pauta para ver actividad.'}</div>`
+    return
+  }
+
+  const levelStyle = { info: 'color:#22c55e', warn: 'color:#f59e0b', error: 'color:#ef4444' }
+  const levelIcon  = { info: '●', warn: '▲', error: '✕' }
+
+  container.innerHTML = filtered.map(e => {
+    const ts = e.ts.toLocaleTimeString('es-CO', { hour12: false }) + '.' + String(e.ts.getMilliseconds()).padStart(3,'0')
+    const detailId = `log_${e.id}`
+    const hasDetail = !!e.detail
+    return `
+      <div style="border-bottom:1px solid var(--border);padding:8px 0;display:grid;grid-template-columns:80px 45px 110px 1fr auto;gap:8px;align-items:start">
+        <span style="color:var(--text-muted);font-size:11px;padding-top:1px">${ts}</span>
+        <span style="${levelStyle[e.level]};font-size:11px;font-weight:700">${levelIcon[e.level]} ${e.level}</span>
+        <span style="color:var(--text-muted);font-size:11px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${e.category}</span>
+        <span style="font-size:12px;word-break:break-word">${e.message}</span>
+        ${hasDetail
+          ? `<button onclick="toggleLogDetail('${detailId}')" style="background:none;border:1px solid var(--border);border-radius:4px;padding:1px 6px;font-size:10px;cursor:pointer;white-space:nowrap;color:var(--text-muted)">JSON</button>`
+          : '<span></span>'}
+      </div>
+      ${hasDetail ? `<div id="${detailId}" style="display:none;background:var(--surface-2,#f5f5f3);border-radius:6px;padding:10px;margin:4px 0 8px;font-size:11px;overflow-x:auto;white-space:pre;border:1px solid var(--border)">${JSON.stringify(e.detail, null, 2)}</div>` : ''}
+    `
+  }).join('')
+}
+
+function toggleLogDetail(id) {
+  const el = document.getElementById(id)
+  if (el) el.style.display = el.style.display === 'none' ? 'block' : 'none'
+}
 
 async function loadInmuebles() {
   try {
@@ -2728,6 +2846,17 @@ function openPautaModal(inmueble) {
         onclick="closePautaModal();switchView('settings')">Configurar →</button>
     </div>` : ''}
   `
+
+  // Always reset footer to step 1 state
+  const footer = document.getElementById('pautaModalFooter')
+  if (footer) footer.innerHTML = `
+    <button class="btn btn-secondary" style="width:auto" onclick="closePautaModal()">Cancelar</button>
+    <button class="btn btn-primary" style="width:auto;min-width:200px" id="btnCrearPauta" onclick="pautaNextStep()">
+      <div class="spinner"></div>
+      <span class="btn-text">Generar copy →</span>
+    </button>
+  `
+  document.getElementById('pautaModalTitle').textContent = '✨ Generar Pauta'
 }
 
 function closePautaModal() {
@@ -2800,21 +2929,25 @@ async function pautaGenerateCopy() {
   // Save config for step 2
   state.pautaConfig = { ciudad, presupuesto, duracion, variaciones, plataformas, ctaType, ctaText, ctaUrl, userContext }
 
+  addLog('info', 'generate', `Generando copy: ${inmueble.proyecto} · ${ciudad} · ${variaciones.join(',')}`, { inmueble: inmueble.id, plataformas, variaciones, hasGemini: !!s.geminiKey })
+
   try {
+    const generatePayload = {
+      ciudad, tipoInmueble: inmueble.tipo,
+      presupuesto: `$${parseInt(presupuesto).toLocaleString()} COP/día`,
+      plataformas, variaciones,
+      inmuebleId: inmueble.id, proyecto: inmueble.proyecto,
+      userContext,
+      geminiKey: s.geminiKey || '',
+      cta: { type: ctaType, text: ctaText, url: ctaUrl }
+    }
     const res = await fetch('/api/generate', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        ciudad, tipoInmueble: inmueble.tipo,
-        presupuesto: `$${parseInt(presupuesto).toLocaleString()} COP/día`,
-        plataformas, variaciones,
-        inmuebleId: inmueble.id, proyecto: inmueble.proyecto,
-        userContext,
-        geminiKey: s.geminiKey || '',
-        cta: { type: ctaType, text: ctaText, url: ctaUrl }
-      })
+      body: JSON.stringify(generatePayload)
     })
     const data = await res.json()
+    addLog(data.success ? 'info' : 'error', 'generate', `Respuesta: ${data.success ? data.source + ' · ' + (data.ads?.length || 0) + ' ads' : data.error}`, data.success ? null : data)
     if (!data.success) throw new Error(data.error)
 
     const enrichedAds = data.ads.map(ad => ({
@@ -2902,30 +3035,37 @@ async function pautaPublish() {
   setButtonLoading(btn, true)
   const s = getSettings()
 
+  addLog('info', 'meta-ads', `Publicando pauta: ${inmueble.proyecto} · ${cfg.ciudad} · $${parseInt(cfg.presupuesto).toLocaleString()} COP/día`, { inmueble: inmueble.id, plataformas: cfg.plataformas, simulate: !s.metaToken || !s.adAccountId || !s.pageId })
+
   try {
     loadAdsFromData(ads)
 
     // 1. Meta Ads (campaign + ads in Ads Manager)
     const metaAds = ads.filter(a => a.platforms?.includes('meta_feed') || a.platform === 'meta_feed')
     if (metaAds.length) {
+      const metaPayload = {
+        ads: metaAds,
+        inmueble,
+        ciudad:      cfg.ciudad,
+        dailyBudget: parseInt(cfg.presupuesto),
+        duracion:    parseInt(cfg.duracion),
+        ctaType:     cfg.ctaType,
+        ctaUrl:      cfg.ctaUrl,
+        accessToken: s.metaToken    || '',
+        adAccountId: s.adAccountId  || '',
+        pageId:      s.pageId       || '',
+        simulate:    !s.metaToken || !s.adAccountId || !s.pageId,
+      }
+      addLog('info', 'meta-ads', `POST /api/meta-ads · ${metaAds.length} ads · simulate=${metaPayload.simulate} · budget=${metaPayload.dailyBudget} COP`, { adAccountId: s.adAccountId, pageId: s.pageId, hasToken: !!s.metaToken })
       const metaRes = await fetch('/api/meta-ads', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          ads: metaAds,
-          inmueble,
-          ciudad:      cfg.ciudad,
-          dailyBudget: parseInt(cfg.presupuesto),
-          duracion:    parseInt(cfg.duracion),
-          ctaType:     cfg.ctaType,
-          ctaUrl:      cfg.ctaUrl,
-          accessToken: s.metaToken    || '',
-          adAccountId: s.adAccountId  || '',
-          pageId:      s.pageId       || '',
-          simulate:    !s.metaToken || !s.adAccountId || !s.pageId,
-        })
+        body: JSON.stringify(metaPayload)
       })
       const metaData = await metaRes.json()
+      addLog(metaData.success ? (metaData.simulated ? 'warn' : 'info') : 'error', 'meta-ads',
+        metaData.success ? (metaData.simulated ? 'Simulado (sin credenciales)' : `OK · campaignId=${metaData.campaignId} · ${metaData.adCount} ads`) : `Error: ${metaData.error}`,
+        metaData)
       if (metaData.success) {
         if (metaData.simulated) {
           addFeedItem('📘', `Meta Ads simulado — configura Meta credentials en Settings`, 'generating')
@@ -2972,6 +3112,7 @@ async function pautaPublish() {
     }
 
   } catch(err) {
+    addLog('error', 'pauta-publish', `Exception: ${err.message}`)
     toast(`❌ ${err.message}`, 'error')
   } finally {
     setButtonLoading(btn, false)
@@ -2983,8 +3124,9 @@ async function publishToInstagramFlow(ads, inmueble, settings) {
   if (!ads.length) return
   const ad = ads[0]
 
-  // Construir caption con CTA
   const caption = buildInstagramCaption(ad, inmueble, settings)
+  const simulate = !settings.metaToken || !settings.igAccountId
+  addLog('info', 'instagram', `POST /api/instagram · simulate=${simulate}`, { igAccountId: settings.igAccountId, hasToken: !!settings.metaToken, imageUrl: inmueble.imagen })
 
   toast('📸 Publicando en Instagram...', 'success')
 
@@ -2997,10 +3139,13 @@ async function publishToInstagramFlow(ads, inmueble, settings) {
         caption,
         igAccountId: settings.igAccountId || '',
         accessToken: settings.metaToken   || '',
-        simulate:    !settings.metaToken || !settings.igAccountId
+        simulate,
       })
     })
     const result = await res.json()
+    addLog(result.success ? (result.simulated ? 'warn' : 'info') : 'error', 'instagram',
+      result.success ? (result.simulated ? 'Simulado (sin credenciales)' : `Publicado · ${result.permalink}`) : `Error: ${result.error}`,
+      result.success ? null : result)
 
     if (result.success) {
       if (result.simulated) {
@@ -3016,6 +3161,7 @@ async function publishToInstagramFlow(ads, inmueble, settings) {
       toast(`❌ Instagram: ${errMsg}`, 'error')
     }
   } catch(err) {
+    addLog('error', 'instagram', `Exception: ${err.message}`)
     addFeedItem('⚠️', `Instagram: ${err.message}`, 'warning')
     toast(`❌ Instagram: ${err.message}`, 'error')
   }

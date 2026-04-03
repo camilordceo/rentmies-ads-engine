@@ -25,8 +25,11 @@ function graphPost(path, params) {
       r.on('end', () => {
         try {
           const json = JSON.parse(data)
-          if (json.error) reject(new Error(`Meta: ${json.error.message} (${json.error.code})`))
-          else resolve(json)
+          if (json.error) {
+            const sub = json.error.error_subcode ? ` sub=${json.error.error_subcode}` : ''
+            const msg = json.error.error_user_msg || json.error.message
+            reject(new Error(`Meta: ${msg} (code=${json.error.code}${sub})`))
+          } else resolve(json)
         } catch(e) { reject(new Error('Non-JSON response from Meta')) }
       })
     })
@@ -55,9 +58,9 @@ async function createMetaCampaign({ adAccountId, accessToken, name, objective = 
   return await graphPost(`/${acct}/campaigns`, {
     name,
     objective,
-    status: 'PAUSED',
-    special_ad_categories: '[]',
-    access_token: accessToken,
+    status:                'PAUSED',
+    special_ad_categories: 'NONE',   // required — 'NONE' or e.g. 'HOUSING'
+    access_token:          accessToken,
   })
 }
 
@@ -75,20 +78,17 @@ async function createAdSet({ adAccountId, accessToken, campaignId, name, dailyBu
     },
     age_min: 24,
     age_max: 55,
-    publisher_platforms: ['facebook', 'instagram'],
-    facebook_positions: ['feed'],
-    instagram_positions: ['stream'],
   })
 
   return await graphPost(`/${acct}/adsets`, {
     name,
     campaign_id:       campaignId,
-    daily_budget:      String(Math.round(dailyBudget)), // COP, smallest unit = 1 peso
+    daily_budget:      String(Math.max(5000, Math.round(dailyBudget))), // COP min 5000
     billing_event:     'IMPRESSIONS',
-    optimization_goal: 'REACH',
+    optimization_goal: 'LINK_CLICKS',   // must match OUTCOME_TRAFFIC objective
     bid_strategy:      'LOWEST_COST_WITHOUT_CAP',
     targeting,
-    end_time:          endTime.toISOString(),
+    end_time:          String(Math.floor(endTime.getTime() / 1000)), // Unix timestamp
     status:            'PAUSED',
     access_token:      accessToken,
   })
