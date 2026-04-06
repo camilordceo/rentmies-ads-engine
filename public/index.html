@@ -2207,21 +2207,23 @@
         <button class="wad-btn wad-btn-ghost" onclick="resetWAFilters()">Reset</button>
       </div>
       <div class="wad-kpi-grid" id="wad-kpis"></div>
-      <div class="wad-chart-row">
+      <div class="wad-chart-row" style="grid-template-columns:2fr 1fr">
         <div class="wad-chart-card">
-          <div class="wad-chart-title">Daily Volume</div>
-          <div class="wad-chart-sub">Messages sent per day</div>
-          <div class="wad-chart-controls">
-            <button class="wad-ctoggle active" onclick="setVolToggle('all',this)">All</button>
-            <button class="wad-ctoggle" onclick="setVolToggle('success',this)">Successful</button>
-            <button class="wad-ctoggle" onclick="setVolToggle('failed',this)">Failed</button>
-          </div>
+          <div class="wad-chart-title">Entregados por Categoría</div>
+          <div class="wad-chart-sub">Volumen diario por tipo de mensaje</div>
           <div class="wad-chart-canvas"><canvas id="wad-vol-chart"></canvas></div>
         </div>
         <div class="wad-chart-card">
-          <div class="wad-chart-title">Success Rate by Day</div>
-          <div class="wad-chart-sub">% delivered + read vs sent</div>
-          <div class="wad-chart-canvas"><canvas id="wad-rate-chart"></canvas></div>
+          <div class="wad-chart-title">Paid vs Free</div>
+          <div class="wad-chart-sub">Distribución de mensajes</div>
+          <div class="wad-chart-canvas" style="height:220px"><canvas id="wad-rate-chart"></canvas></div>
+        </div>
+      </div>
+      <div class="wad-chart-row" style="grid-template-columns:1fr">
+        <div class="wad-chart-card">
+          <div class="wad-chart-title">Costo Diario (USD)</div>
+          <div class="wad-chart-sub">Solo mensajes pagados (pricing_type = REGULAR)</div>
+          <div class="wad-chart-canvas" style="height:160px"><canvas id="wad-cost-chart"></canvas></div>
         </div>
       </div>
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
@@ -5071,6 +5073,46 @@ function wadGenConvData() {
 }
 const WAD_CONV_DATA = wadGenConvData()
 
+// ── Mock pricing data (per-day, per category/type) ──
+function wadGenPricingData() {
+  const today = new Date()
+  // Realistic Rentmies Colombia mix
+  const categories = [
+    { type:'REGULAR',              cat:'MARKETING_LITE',              baseVol:1800, baseCost:0.0045 },
+    { type:'REGULAR',              cat:'UTILITY',                     baseVol:1200, baseCost:0.0030 },
+    { type:'FREE_CUSTOMER_SERVICE',cat:'SERVICE',                     baseVol:900,  baseCost:0 },
+    { type:'REGULAR',              cat:'MARKETING',                   baseVol:400,  baseCost:0.0065 },
+    { type:'FREE_ENTRY_POINT',     cat:'REFERRAL_CONVERSION',         baseVol:120,  baseCost:0 },
+    { type:'REGULAR',              cat:'AUTHENTICATION',               baseVol:80,   baseCost:0.0050 },
+    { type:'REGULAR',              cat:'AUTHENTICATION_INTERNATIONAL', baseVol:15,   baseCost:0.0120 },
+  ]
+  const rows = []
+  for (let d=29; d>=0; d--) {
+    const dt = new Date(today); dt.setDate(dt.getDate()-d)
+    const ds = dt.toISOString().slice(0,10)
+    const wknd = dt.getDay()===0||dt.getDay()===6
+    categories.forEach(c => {
+      const vol = Math.max(0, Math.round(c.baseVol*(0.6+Math.random()*.8)*(wknd?.55:1)))
+      const cost = +(vol*c.baseCost).toFixed(4)
+      rows.push({ date:ds, pricing_type:c.type, pricing_category:c.cat, volume:vol, cost })
+    })
+  }
+  return rows
+}
+const WAD_PRICING = wadGenPricingData()
+
+// ── Pricing category metadata ──
+const WAD_PRICE_CATS = {
+  MARKETING:                   { label:'Marketing',           color:'#6366f1' },
+  MARKETING_LITE:              { label:'Marketing Lite',      color:'#06b6d4' },
+  UTILITY:                     { label:'Utilidad',            color:'#f59e0b' },
+  AUTHENTICATION:              { label:'Autenticación',       color:'#8b5cf6' },
+  AUTHENTICATION_INTERNATIONAL:{ label:'Auth. Internacional', color:'#ec4899' },
+  SERVICE:                     { label:'Servicio',            color:'#40d99d' },
+  REFERRAL_CONVERSION:         { label:'Punto de Acceso',     color:'#3b82f6' },
+  AI_PROVIDER:                 { label:'Proveedor IA',        color:'#f97316' },
+}
+
 // ── State ──
 const wadS = {
   activeTab: 'analytics',
@@ -5081,15 +5123,16 @@ const wadS = {
   anPage: 1,
   anDateRange: '30d',
   anSelTpls: [],
-  anVolToggle: 'all',
   anDetailOpen: false,
   errOpen: false,
-  charts: { donut:null, vol:null, rate:null, err:null, errRate:null },
+  charts: { vol:null, rate:null, cost:null, err:null, errRate:null },
   arInterval: null,
   anSegment: 'all',
   anDataSource: 'mock',
-  anConvData: WAD_CONV_DATA,  // null=never loaded, {}=api ok but empty, {date:{paid,response,cost}}=has data
-  anConvError: null, // stores last API error message for conv analytics
+  pricingData: WAD_PRICING,      // array of {date, pricing_type, pricing_category, volume, cost}
+  messagingData: null,           // {sent, delivered, received} from analytics API
+  anConvData: WAD_CONV_DATA,
+  anConvError: null,
 }
 const WAD_PG = 10
 
@@ -5250,68 +5293,135 @@ function getWAAnPrevData() {
   return data
 }
 
+// ── Pricing data helpers ──
+function getPricingFiltered() {
+  const days = wadS.anDateRange==='7d'?7:wadS.anDateRange==='14d'?14:30
+  const cutoff = new Date(); cutoff.setDate(cutoff.getDate()-days)
+  const cs = cutoff.toISOString().slice(0,10)
+  let pts = (wadS.pricingData||[]).filter(d=>d.date>=cs)
+  if (wadS.anSegment==='paid')     pts=pts.filter(d=>d.pricing_type==='REGULAR')
+  if (wadS.anSegment==='response') pts=pts.filter(d=>d.pricing_type==='FREE_CUSTOMER_SERVICE'||d.pricing_type==='FREE_ENTRY_POINT')
+  return pts
+}
+
+function getPricingPrevFiltered() {
+  const days = wadS.anDateRange==='7d'?7:wadS.anDateRange==='14d'?14:30
+  const end=new Date(); end.setDate(end.getDate()-days)
+  const start=new Date(end); start.setDate(start.getDate()-days)
+  const es=end.toISOString().slice(0,10), ss=start.toISOString().slice(0,10)
+  let pts = (wadS.pricingData||[]).filter(d=>d.date>=ss&&d.date<es)
+  if (wadS.anSegment==='paid')     pts=pts.filter(d=>d.pricing_type==='REGULAR')
+  if (wadS.anSegment==='response') pts=pts.filter(d=>d.pricing_type==='FREE_CUSTOMER_SERVICE'||d.pricing_type==='FREE_ENTRY_POINT')
+  return pts
+}
+
 function renderWAAn() {
-  const kpiEl=document.getElementById('wad-kpis')
-  // response segment: handle missing conv data
-  if (wadS.anSegment==='response') {
-    const hasCredentials = !!(localStorage.getItem('wa_access_token')&&localStorage.getItem('wa_waba_id'))
-    if (wadS.anConvData===null) {
-      // Never loaded — credentials not set or first load
-      const msg = hasCredentials
-        ? `API returned an error loading conversation data.${wadS.anConvError?`<br><code style="font-size:11px;color:#dc2626">${wadS.anConvError}</code>`:''}<br><button class="wad-btn wad-btn-primary" style="margin-top:10px" onclick="wadReloadAnalytics()">Retry</button>`
-        : `Enter your WhatsApp credentials in the <strong>Settings</strong> tab to load live data.`
-      if(kpiEl) kpiEl.innerHTML=`<div style="grid-column:1/-1;padding:24px;text-align:center;color:#92400e;background:#fef9c3;border-radius:8px;font-size:13px;line-height:1.6">${msg}</div>`
-      renderWAVolChart([]); renderWARateChart([]); renderWABreakdown([]); renderWAMsDropdown()
-      return
-    }
-    if (Object.keys(wadS.anConvData).length===0) {
-      if(kpiEl) kpiEl.innerHTML=`<div style="grid-column:1/-1;padding:24px;text-align:center;color:#374151;background:#f3f4f6;border-radius:8px;font-size:13px">No user-initiated conversation data found for this period.<br><span style="font-size:12px;color:#6b7280">This may mean all conversations in this period were business-initiated (template messages).</span></div>`
-      renderWAVolChart([]); renderWARateChart([]); renderWABreakdown([]); renderWAMsDropdown()
-      return
-    }
-  }
-  const data=getWAAnData(), prev=getWAAnPrevData()
-  renderWAKPIs(data,prev)
-  renderWAVolChart(data)
-  renderWARateChart(data)
-  renderWABreakdown(data)
-  renderWAErrors(data)
+  const pts = getPricingFiltered()
+  const prevPts = getPricingPrevFiltered()
+  renderWAKPIs(pts, prevPts)
+  renderWAVolChart(pts)
+  renderWARateChart(pts)
+  renderWACostChart(pts)
+  const tplData = getWAAnData()
+  renderWABreakdown(tplData)
+  renderWAErrors(tplData)
   if (wadS.anDetailOpen) renderWADetail()
   renderWAMsDropdown()
 }
 
-function renderWAKPIs(data,prev) {
-  const sum = k => data.reduce((a,d)=>a+d[k],0)
-  const psum = k => prev.reduce((a,d)=>a+d[k],0)
-  const sent=sum('sent'), delivered=sum('delivered'), read=sum('read'), failed=sum('failed'), succ=sum('successful')
-  const psent=psum('sent'), psucc=psum('successful')
-  const rate = sent?(succ/sent*100):0
-  const prevRate = psent?(psucc/psent*100):0
-  const chg=(a,b)=>b?((a-b)/b*100):0
+function renderWAKPIs(pts, prevPts) {
+  const sumVol    = arr => arr.reduce((s,d)=>s+(d.volume||0),0)
+  const sumCost   = arr => arr.reduce((s,d)=>s+(d.cost||0),0)
+  const paidPts   = pts.filter(d=>d.pricing_type==='REGULAR')
+  const freePts   = pts.filter(d=>d.pricing_type==='FREE_CUSTOMER_SERVICE'||d.pricing_type==='FREE_ENTRY_POINT')
+  const prevPaid  = prevPts.filter(d=>d.pricing_type==='REGULAR')
+  const prevFree  = prevPts.filter(d=>d.pricing_type==='FREE_CUSTOMER_SERVICE'||d.pricing_type==='FREE_ENTRY_POINT')
 
-  const byDate = {}; data.forEach(d=>{ if(!byDate[d.date])byDate[d.date]={sent:0,successful:0,failed:0,delivered:0,read:0}; Object.keys(byDate[d.date]).forEach(k=>byDate[d.date][k]+=d[k]) })
+  const totalVol  = sumVol(pts)
+  const paidVol   = sumVol(paidPts)
+  const freeVol   = sumVol(freePts)
+  const totalCost = sumCost(paidPts)
+  const prevTot   = sumVol(prevPts), prevPaidV=sumVol(prevPaid), prevFreeV=sumVol(prevFree), prevCost=sumCost(prevPaid)
 
+  const chgPct=(a,b)=>b?((a-b)/b*100):0
   const trend=(pct,inv=false)=>{
-    if(Math.abs(pct)<.05) return `<span class="wad-trend nt">No change</span>`
+    if(Math.abs(pct)<.1) return `<span class="wad-trend nt">Sin cambio</span>`
     const up=pct>0; const good=inv?!up:up
     return `<span class="wad-trend ${good?'up':'dn'}">${up?'↑':'↓'} ${Math.abs(pct).toFixed(1)}% vs prev</span>`
   }
-  const rateCls = rate>=95?'rate-good':rate>=80?'rate-warn':'rate-bad'
 
-  document.getElementById('wad-kpis').innerHTML = [
-    { label:'Total Messages Sent', val:sent.toLocaleString(), trend:trend(chg(sent,psent)), spark:wadSpk(byDate,'sent','#40d99d') },
-    { label:'Total Delivered', val:delivered.toLocaleString(), trend:trend(chg(delivered,psum('delivered'))), spark:wadSpk(byDate,'delivered','#40d99d') },
-    { label:'Total Read', val:read.toLocaleString(), trend:trend(0), spark:wadSpk(byDate,'read','#6b7280') },
-    { label:'Successful', val:succ.toLocaleString(), sub:`${sent?(succ/sent*100).toFixed(1):0}% of sent`, extra:'success', spark:wadSpk(byDate,'successful','#40d99d') },
-    { label:'Failed', val:failed.toLocaleString(), sub:`${sent?(failed/sent*100).toFixed(1):0}% of sent`, extra:'danger', spark:wadSpk(byDate,'failed','#dc2626') },
-    { label:'Delivery Rate', val:`${rate.toFixed(1)}%`, valCls:rateCls, trend:trend(rate-prevRate) },
-  ].map(k=>`<div class="wad-kpi${k.extra?' '+k.extra:''}">
-    <div class="wad-kpi-label">${k.label}</div>
-    <div class="wad-kpi-value${k.valCls?' '+k.valCls:''}">${k.val}</div>
-    ${k.sub?`<div class="wad-trend nt">${k.sub}</div>`:''}
-    ${k.trend||''}
-    ${k.spark||''}
-  </div>`).join('')
+  // Paid breakdown by category (only REGULAR)
+  const paidByCat={}
+  paidPts.forEach(d=>{
+    if(!paidByCat[d.pricing_category]) paidByCat[d.pricing_category]={vol:0,cost:0}
+    paidByCat[d.pricing_category].vol+=d.volume||0
+    paidByCat[d.pricing_category].cost+=d.cost||0
+  })
+  const paidBreakdown = Object.entries(paidByCat)
+    .filter(([,v])=>v.vol>0)
+    .sort((a,b)=>b[1].vol-a[1].vol)
+    .map(([cat,v])=>{
+      const meta=WAD_PRICE_CATS[cat]||{label:cat,color:'#9ca3af'}
+      return `<div style="display:flex;align-items:center;justify-content:space-between;margin-top:4px;font-size:11px">
+        <span style="display:flex;align-items:center;gap:4px"><span style="width:8px;height:8px;border-radius:2px;background:${meta.color};display:inline-block"></span>${meta.label}</span>
+        <span style="font-weight:600">${v.vol.toLocaleString()}</span>
+      </div>`
+    }).join('')
+
+  // Free breakdown
+  const fcsPts = freePts.filter(d=>d.pricing_type==='FREE_CUSTOMER_SERVICE')
+  const fepPts = freePts.filter(d=>d.pricing_type==='FREE_ENTRY_POINT')
+
+  // Messaging analytics (sent/delivered totals from API or derived)
+  const msgSent = wadS.messagingData?.sent ?? totalVol
+  const msgDel  = wadS.messagingData?.delivered ?? totalVol
+
+  // Daily sparkline for total
+  const byDay={}; pts.forEach(d=>{if(!byDay[d.date])byDay[d.date]=0;byDay[d.date]+=d.volume||0})
+  const spkVals=Object.keys(byDay).sort().slice(-7).map(d=>byDay[d])
+  const spk=(vals,color)=>{
+    if(vals.length<2) return ''
+    const max=Math.max(...vals)||1,min=Math.min(...vals),W=64,H=24
+    const pts2=vals.map((v,i)=>`${(i/(vals.length-1)*W).toFixed(1)},${(H-((v-min)/(max-min||1)*H)).toFixed(1)}`).join(' ')
+    return `<div class="wad-sparkline"><svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}"><polyline points="${pts2}" fill="none" stroke="${color}" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" opacity=".8"/></svg></div>`
+  }
+
+  document.getElementById('wad-kpis').innerHTML = `
+  <div class="wad-kpi">
+    <div class="wad-kpi-label">Todos los Mensajes</div>
+    <div class="wad-kpi-value">${msgSent.toLocaleString()}</div>
+    <div style="font-size:11px;color:#6b7280;margin-top:2px">Entregados: ${msgDel.toLocaleString()}</div>
+    ${trend(chgPct(totalVol,prevTot))}
+    ${spk(spkVals,'#6366f1')}
+  </div>
+  <div class="wad-kpi">
+    <div class="wad-kpi-label">Entregados por Categoría</div>
+    <div class="wad-kpi-value">${totalVol.toLocaleString()}</div>
+    ${paidBreakdown||'<div style="font-size:11px;color:#9ca3af;margin-top:4px">Sin datos</div>'}
+  </div>
+  <div class="wad-kpi success">
+    <div class="wad-kpi-label">Mensajes Gratuitos</div>
+    <div class="wad-kpi-value">${freeVol.toLocaleString()}</div>
+    <div style="font-size:11px;color:#6b7280;margin-top:4px">
+      <div style="display:flex;justify-content:space-between"><span>Atención cliente</span><strong>${sumVol(fcsPts).toLocaleString()}</strong></div>
+      <div style="display:flex;justify-content:space-between"><span>Punto de acceso</span><strong>${sumVol(fepPts).toLocaleString()}</strong></div>
+    </div>
+    ${trend(chgPct(freeVol,prevFreeV))}
+    ${spk(Object.keys(byDay).sort().slice(-7).map(d=>(wadS.pricingData||[]).filter(x=>x.date===d&&(x.pricing_type==='FREE_CUSTOMER_SERVICE'||x.pricing_type==='FREE_ENTRY_POINT')).reduce((s,x)=>s+x.volume,0)),'#40d99d')}
+  </div>
+  <div class="wad-kpi" style="border-left:3px solid #6366f1">
+    <div class="wad-kpi-label">Mensajes Pagados</div>
+    <div class="wad-kpi-value">${paidVol.toLocaleString()}</div>
+    <div style="font-size:11px;color:#6b7280;margin-top:2px">${totalVol?((paidVol/totalVol)*100).toFixed(1):0}% del total</div>
+    ${trend(chgPct(paidVol,prevPaidV))}
+    ${spk(Object.keys(byDay).sort().slice(-7).map(d=>(wadS.pricingData||[]).filter(x=>x.date===d&&x.pricing_type==='REGULAR').reduce((s,x)=>s+x.volume,0)),'#6366f1')}
+  </div>
+  <div class="wad-kpi danger">
+    <div class="wad-kpi-label">Costo Total (USD)</div>
+    <div class="wad-kpi-value">$${totalCost.toFixed(2)}</div>
+    <div style="font-size:11px;color:#6b7280;margin-top:2px">${paidVol?'$'+(totalCost/paidVol*1000).toFixed(3)+' / 1k msgs':''}</div>
+    ${trend(chgPct(totalCost,prevCost),true)}
+  </div>`
 }
 
 function wadSpk(byDate,key,color) {
@@ -5323,48 +5433,83 @@ function wadSpk(byDate,key,color) {
   return `<div class="wad-sparkline"><svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}"><polyline points="${pts}" fill="none" stroke="${color}" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" opacity=".75"/></svg></div>`
 }
 
-function renderWAVolChart(data) {
-  const bd={}; data.forEach(d=>{ if(!bd[d.date])bd[d.date]={s:0,f:0}; bd[d.date].s+=d.successful; bd[d.date].f+=d.failed })
-  const labels=Object.keys(bd).sort()
-  const sd=labels.map(d=>bd[d].s), fd=labels.map(d=>bd[d].f)
-  const t=wadS.anVolToggle
+function renderWAVolChart(pts) {
+  // Stacked bar chart: volume per day per pricing_category
+  const allDates=[...new Set((pts).map(d=>d.date))].sort()
+  const allCats=[...new Set((wadS.pricingData||[]).map(d=>d.pricing_category))].filter(c=>WAD_PRICE_CATS[c])
   if (wadS.charts.vol) { wadS.charts.vol.destroy(); wadS.charts.vol=null }
   const ctx=document.getElementById('wad-vol-chart'); if(!ctx)return
-  const ds=[]
-  if(t==='all'||t==='success') ds.push({label:'Successful',data:sd,backgroundColor:'#40d99d',borderRadius:3,stack:'s'})
-  if(t==='all'||t==='failed')  ds.push({label:'Failed',data:fd,backgroundColor:'#dc2626',borderRadius:3,stack:'s'})
-  wadS.charts.vol = new Chart(ctx,{
-    type:'bar', data:{labels:labels.map(d=>d.slice(5)), datasets:ds},
+  if(!allDates.length){
+    wadS.charts.vol=new Chart(ctx,{type:'bar',data:{labels:[],datasets:[]},options:{responsive:true,maintainAspectRatio:false}})
+    return
+  }
+  const datasets=allCats.map(cat=>{
+    const meta=WAD_PRICE_CATS[cat]||{label:cat,color:'#9ca3af'}
+    return {
+      label:meta.label, backgroundColor:meta.color+'cc', borderColor:meta.color, borderWidth:0,
+      borderRadius:2, stack:'s',
+      data:allDates.map(dt=>pts.filter(d=>d.date===dt&&d.pricing_category===cat).reduce((s,d)=>s+(d.volume||0),0))
+    }
+  }).filter(ds=>ds.data.some(v=>v>0))
+
+  wadS.charts.vol=new Chart(ctx,{
+    type:'bar',
+    data:{labels:allDates.map(d=>d.slice(5)), datasets},
     options:{animation:{duration:400},responsive:true,maintainAspectRatio:false,
-      scales:{x:{grid:{color:'#e5e5e5'},ticks:{color:'#6b7280',font:{family:'Inter',size:11},maxTicksLimit:10},stacked:true},y:{grid:{color:'#e5e5e5'},ticks:{color:'#6b7280',font:{family:'Inter',size:11}},stacked:true,beginAtZero:true}},
-      plugins:{legend:{labels:{color:'#6b7280',font:{family:'Inter',size:12},boxWidth:12}},
-        tooltip:{callbacks:{afterBody:items=>{const i=items[0].dataIndex;const s=sd[i]||0;const f=fd[i]||0;const tt=s+f;return[`Rate: ${tt?(s/tt*100).toFixed(1):0}%`]}}}}}
+      scales:{x:{grid:{color:'#f0f0f0'},ticks:{color:'#6b7280',font:{family:'Inter',size:10},maxTicksLimit:10},stacked:true},
+              y:{grid:{color:'#f0f0f0'},ticks:{color:'#6b7280',font:{family:'Inter',size:11}},stacked:true,beginAtZero:true}},
+      plugins:{legend:{labels:{color:'#374151',font:{family:'Inter',size:11},boxWidth:10,padding:8}},
+        tooltip:{callbacks:{afterTitle:items=>{
+          const dt=allDates[items[0].dataIndex]
+          const dayTotal=pts.filter(d=>d.date===dt).reduce((s,d)=>s+(d.volume||0),0)
+          const dayCost=pts.filter(d=>d.date===dt&&d.pricing_type==='REGULAR').reduce((s,d)=>s+(d.cost||0),0)
+          return [`Total: ${dayTotal.toLocaleString()}`, `Costo: $${dayCost.toFixed(3)}`]
+        }}}}}
   })
 }
 
-function setVolToggle(val,btn) {
-  wadS.anVolToggle=val
-  document.querySelectorAll('.wad-ctoggle').forEach(b=>b.classList.remove('active'))
-  btn.classList.add('active')
-  renderWAVolChart(getWAAnData())
-}
-
-function renderWARateChart(data) {
-  const bd={}; data.forEach(d=>{ if(!bd[d.date])bd[d.date]={sent:0,succ:0}; bd[d.date].sent+=d.sent; bd[d.date].succ+=d.successful })
-  const labels=Object.keys(bd).sort()
-  const rates=labels.map(d=>bd[d].sent?+(bd[d].succ/bd[d].sent*100).toFixed(2):0)
+function renderWARateChart(pts) {
+  // Donut: paid vs free breakdown by category
+  const byCat={}
+  pts.forEach(d=>{ if(!byCat[d.pricing_category])byCat[d.pricing_category]=0; byCat[d.pricing_category]+=d.volume||0 })
+  const entries=Object.entries(byCat).filter(([,v])=>v>0).sort((a,b)=>b[1]-a[1])
   if (wadS.charts.rate) { wadS.charts.rate.destroy(); wadS.charts.rate=null }
   const ctx=document.getElementById('wad-rate-chart'); if(!ctx)return
-  wadS.charts.rate = new Chart(ctx,{
+  if(!entries.length){
+    wadS.charts.rate=new Chart(ctx,{type:'doughnut',data:{labels:[],datasets:[{data:[]}]},options:{responsive:true,maintainAspectRatio:false}})
+    return
+  }
+  wadS.charts.rate=new Chart(ctx,{
+    type:'doughnut',
+    data:{
+      labels:entries.map(([c])=>(WAD_PRICE_CATS[c]||{label:c}).label),
+      datasets:[{data:entries.map(([,v])=>v),backgroundColor:entries.map(([c])=>(WAD_PRICE_CATS[c]||{color:'#9ca3af'}).color+'cc'),borderColor:entries.map(([c])=>(WAD_PRICE_CATS[c]||{color:'#9ca3af'}).color),borderWidth:1.5}]
+    },
+    options:{animation:{duration:400},responsive:true,maintainAspectRatio:false,cutout:'60%',
+      plugins:{legend:{position:'bottom',labels:{color:'#374151',font:{family:'Inter',size:10},boxWidth:10,padding:6}},
+        tooltip:{callbacks:{label:c=>{const total=entries.reduce((s,[,v])=>s+v,0);return ` ${c.label}: ${c.raw.toLocaleString()} (${total?(c.raw/total*100).toFixed(1):0}%)`}}}}}
+  })
+}
+
+function renderWACostChart(pts) {
+  const paidByDay={}
+  pts.filter(d=>d.pricing_type==='REGULAR').forEach(d=>{
+    if(!paidByDay[d.date])paidByDay[d.date]=0; paidByDay[d.date]+=d.cost||0
+  })
+  const labels=Object.keys(paidByDay).sort()
+  const costs=labels.map(d=>+paidByDay[d].toFixed(4))
+  if (wadS.charts.cost) { wadS.charts.cost.destroy(); wadS.charts.cost=null }
+  const ctx=document.getElementById('wad-cost-chart'); if(!ctx)return
+  wadS.charts.cost=new Chart(ctx,{
     type:'line',
     data:{labels:labels.map(d=>d.slice(5)), datasets:[
-      {label:'Success Rate %',data:rates,borderColor:'#40d99d',backgroundColor:'rgba(64,217,157,.08)',fill:true,tension:.35,borderWidth:2,pointRadius:2,pointBackgroundColor:'#40d99d'},
-      {label:'Target (95%)',data:labels.map(()=>95),borderColor:'#9ca3af',borderDash:[5,4],borderWidth:1.5,pointRadius:0,fill:false}
+      {label:'Costo USD',data:costs,borderColor:'#6366f1',backgroundColor:'rgba(99,102,241,.08)',fill:true,tension:.4,pointRadius:2,borderWidth:2}
     ]},
     options:{animation:{duration:400},responsive:true,maintainAspectRatio:false,
-      scales:{x:{grid:{color:'#e5e5e5'},ticks:{color:'#6b7280',font:{family:'Inter',size:11},maxTicksLimit:10}},y:{grid:{color:'#e5e5e5'},ticks:{color:'#6b7280',font:{family:'Inter',size:11},callback:v=>v+'%'},min:70,max:100}},
-      plugins:{legend:{labels:{color:'#6b7280',font:{family:'Inter',size:12},boxWidth:12}},
-        tooltip:{callbacks:{label:c=>c.datasetIndex===0?[` Rate: ${c.raw}%`,...(()=>{const dd=bd[Object.keys(bd).sort()[c.dataIndex]];return dd?[` Sent: ${dd.sent.toLocaleString()}`,` Succ: ${dd.succ.toLocaleString()}`]:[]})()] :` Target: ${c.raw}%`}}}}
+      scales:{x:{grid:{color:'#f0f0f0'},ticks:{color:'#6b7280',font:{family:'Inter',size:10},maxTicksLimit:10}},
+              y:{grid:{color:'#f0f0f0'},ticks:{color:'#6b7280',font:{family:'Inter',size:11},callback:v=>'$'+v.toFixed(2)},beginAtZero:true}},
+      plugins:{legend:{display:false},
+        tooltip:{callbacks:{label:c=>`Costo: $${c.raw}`}}}}
   })
 }
 
@@ -5747,32 +5892,75 @@ function closeWAPreview() {
 // ─────────────────────────────────────────────
 async function fetchWARealAnalytics(token, wabaId) {
   const days = wadS.anDateRange==='7d'?7:wadS.anDateRange==='14d'?14:30
-  const endTs = Math.floor(Date.now()/1000)
+  // Always past timestamps
+  const endTs   = Math.floor(Date.now()/1000) - 3600        // 1 hour ago to ensure past
   const startTs = endTs - days*86400
   const headers = {'Authorization': `Bearer ${token}`}
-  const base = `https://graph.facebook.com/v21.0`
+  const ver = 'v21.0'
+  const base = `https://graph.facebook.com/${ver}`
+  let anyRealData = false
 
-  // ── 1. Enable insights on WABA (best-effort, ignore errors) ──
+  // ── 1. Enable insights (best-effort) ──
   try { await fetch(`${base}/${wabaId}?is_enabled_for_insights=true`, {method:'POST', headers}) } catch(e) {}
 
-  // ── 2. Template Analytics — correct dot-notation syntax ──
-  // GET /{WABA_ID}?fields=template_analytics.start(X).end(Y).granularity(DAILY).template_ids([ID1,ID2]).metric_types([SENT,DELIVERED,READ])
+  // ── 2. Pricing Analytics — PRIMARY source for paid/free breakdown ──
+  // CRITICAL: arrays MUST have quoted strings, granularity=DAILY (not DAY)
+  // GET /{WABA_ID}?fields=pricing_analytics.start(X).end(Y).granularity(DAILY).dimensions(["PRICING_CATEGORY","PRICING_TYPE"]).metric_types(["COST","VOLUME"])
+  try {
+    const url = `${base}/${wabaId}?fields=pricing_analytics.start(${startTs}).end(${endTs}).granularity(DAILY).dimensions(["PRICING_CATEGORY","PRICING_TYPE"]).metric_types(["COST","VOLUME"])`
+    const res = await fetch(url, {headers})
+    const json = await res.json()
+    // Response: { "pricing_analytics": { "data": [{ "data_points": [{ "start":..., "pricing_type":..., "pricing_category":..., "volume":..., "cost":... }] }] } }
+    if (!json.error && json.pricing_analytics?.data) {
+      const pricingRows = []
+      json.pricing_analytics.data.forEach(block => {
+        ;(block.data_points||[]).forEach(dp => {
+          if ((dp.volume||0) === 0 && (dp.cost||0) === 0) return  // skip zero rows
+          const date = new Date(dp.start*1000).toISOString().slice(0,10)
+          pricingRows.push({ date, pricing_type:dp.pricing_type, pricing_category:dp.pricing_category, volume:dp.volume||0, cost:dp.cost||0 })
+        })
+      })
+      if (pricingRows.length > 0) {
+        wadS.pricingData = pricingRows
+        anyRealData = true
+      }
+    }
+  } catch(e) {}
+
+  // ── 3. Messaging Analytics — for KPI card "Todos los Mensajes" ──
+  // analytics uses granularity DAY (not DAILY), product_types are integers (no quotes)
+  try {
+    const url = `${base}/${wabaId}?fields=analytics.start(${startTs}).end(${endTs}).granularity(DAY).product_types([0,2,100])`
+    const res = await fetch(url, {headers})
+    const json = await res.json()
+    // Response: { "analytics": { "data_points": [{ "start":..., "sent":..., "delivered":..., "product_type":... }] }, "id": "..." }
+    if (!json.error && json.analytics?.data_points) {
+      const pts = json.analytics.data_points
+      // product_type 0=template sent, 2=non-template sent, 100=incoming
+      const sentTotal    = pts.filter(p=>[0,2].includes(p.product_type)).reduce((s,p)=>s+(p.sent||0),0)
+      const delivTotal   = pts.filter(p=>[0,2].includes(p.product_type)).reduce((s,p)=>s+(p.delivered||0),0)
+      const recvTotal    = pts.filter(p=>p.product_type===100).reduce((s,p)=>s+(p.sent||0),0)
+      wadS.messagingData = { sent:sentTotal, delivered:delivTotal, received:recvTotal }
+    }
+  } catch(e) {}
+
+  // ── 4. Template Analytics — per-template daily breakdown for the breakdown table ──
+  // template_ids array: no quotes needed for IDs; metric_types: quoted strings
   const daily = []
   const realTpls = wadS.templates.filter(t => t.id && !/^t\d+$/.test(String(t.id)))
   if (realTpls.length > 0) {
     try {
       const ids = realTpls.map(t=>t.id).join(',')
-      const url = `${base}/${wabaId}?fields=template_analytics.start(${startTs}).end(${endTs}).granularity(DAILY).template_ids([${ids}]).metric_types([SENT,DELIVERED,READ,CLICKED])`
+      const url = `${base}/${wabaId}?fields=template_analytics.start(${startTs}).end(${endTs}).granularity(DAILY).template_ids([${ids}]).metric_types(["SENT","DELIVERED","READ","CLICKED"])`
       const res = await fetch(url, {headers})
       const json = await res.json()
-      // Response: { "data": [{ "granularity": "DAILY", "data_points": [{ "template_id": "...", "start": ..., "sent": ..., "delivered": ..., "read": ... }] }] }
       if (!json.error && Array.isArray(json.data)) {
         json.data.forEach(block => {
           ;(block.data_points||[]).forEach(dp => {
             const tpl = realTpls.find(t => String(t.id) === String(dp.template_id))
             if (!tpl) return
             const date = new Date(dp.start*1000).toISOString().slice(0,10)
-            const sent = dp.sent||0, delivered = dp.delivered||0, read = dp.read||0
+            const sent=dp.sent||0, delivered=dp.delivered||0, read=dp.read||0
             daily.push({ date, templateId:String(dp.template_id), templateName:tpl.name,
               category:tpl.category||'UTILITY', sent, delivered, read,
               failed:Math.max(0,sent-delivered), successful:delivered })
@@ -5781,67 +5969,36 @@ async function fetchWARealAnalytics(token, wabaId) {
       }
     } catch(e) {}
   }
+  if (daily.length > 0) { wadS.daily = daily; anyRealData = true }
 
-  // ── 3. Messaging Analytics (aggregate fallback for sent/delivered totals) ──
-  // GET /{WABA_ID}?fields=analytics.start(X).end(Y).granularity(DAY)   ← note: DAY not DAILY
-  let messagingDaily = []
-  try {
-    const url = `${base}/${wabaId}?fields=analytics.start(${startTs}).end(${endTs}).granularity(DAY)`
-    const res = await fetch(url, {headers})
-    const json = await res.json()
-    // Response: { "analytics": { "data_points": [{ "start": ..., "sent": ..., "delivered": ... }] }, "id": "..." }
-    if (!json.error && json.analytics?.data_points) {
-      messagingDaily = json.analytics.data_points.map(dp => ({
-        date: new Date(dp.start*1000).toISOString().slice(0,10),
-        sent: dp.sent||0, delivered: dp.delivered||0,
-        failed: Math.max(0,(dp.sent||0)-(dp.delivered||0))
-      }))
-    }
-  } catch(e) {}
-
-  // If template analytics returned no data but messaging analytics did, build aggregate rows
-  if (daily.length === 0 && messagingDaily.length > 0) {
-    messagingDaily.forEach(d => {
-      daily.push({ date:d.date, templateId:'__agg__', templateName:'All Messages',
-        category:'UTILITY', sent:d.sent, delivered:d.delivered, read:0,
-        failed:d.failed, successful:d.delivered })
-    })
-  }
-
-  // ── 4. Conversation Analytics — correct dot-notation syntax ──
-  // GET /{WABA_ID}?fields=conversation_analytics.start(X).end(Y).granularity(DAILY).dimensions([CONVERSATION_DIRECTION])
+  // ── 5. Conversation Analytics — user responses segment ──
+  // dimensions: quoted strings, granularity: DAILY
   wadS.anConvError = null
   try {
-    const url = `${base}/${wabaId}?fields=conversation_analytics.start(${startTs}).end(${endTs}).granularity(DAILY).dimensions([CONVERSATION_DIRECTION])`
+    const url = `${base}/${wabaId}?fields=conversation_analytics.start(${startTs}).end(${endTs}).granularity(DAILY).dimensions(["CONVERSATION_DIRECTION"])`
     const res = await fetch(url, {headers})
     const json = await res.json()
     if (json.error) {
       wadS.anConvError = `[${json.error.code}] ${json.error.message}`
       wadS.anConvData = null
     } else {
-      // Always set anConvData — empty {} means API ok but no data
       const byDate = {}
       ;(json.conversation_analytics?.data||[]).forEach(block => {
         ;(block.data_points||[]).forEach(dp => {
           const date = new Date(dp.start*1000).toISOString().slice(0,10)
           if (!byDate[date]) byDate[date] = {paid:0, response:0, cost:0}
           const dir = (dp.conversation_direction||'').toUpperCase()
-          if (dir==='BUSINESS_INITIATED') {
-            byDate[date].paid += dp.conversation||0
-            byDate[date].cost += (typeof dp.cost==='number' ? dp.cost : 0)
-          } else if (dir==='USER_INITIATED') {
-            byDate[date].response += dp.conversation||0
-          }
+          if (dir==='BUSINESS_INITIATED') { byDate[date].paid+=dp.conversation||0; byDate[date].cost+=dp.cost||0 }
+          else if (dir==='USER_INITIATED') byDate[date].response+=dp.conversation||0
         })
       })
-      wadS.anConvData = byDate  // {} = no data points returned, still valid
+      wadS.anConvData = byDate
     }
   } catch(e) { wadS.anConvError = e.message; wadS.anConvData = null }
 
-  // ── 5. Update state and badge ──
+  // ── 6. Update badge ──
   const badge = document.getElementById('wad-datasource-badge')
-  if (daily.length > 0) {
-    wadS.daily = daily
+  if (anyRealData) {
     wadS.anDataSource = 'api'
     if (badge) { badge.textContent='Live API'; badge.style.background='#f0fdf4'; badge.style.color='#16a34a'; badge.style.borderColor='#86efac' }
   } else {
@@ -5862,7 +6019,7 @@ async function wadReloadAnalytics() {
 
 function initWATab() {
   loadWASettingsForm()
-  wadS.templates=[...WAD_TEMPLATES]; wadS.daily=WAD_DAILY; wadS.anDataSource='mock'; wadS.anConvData=WAD_CONV_DATA; wadS.anConvError=null
+  wadS.templates=[...WAD_TEMPLATES]; wadS.daily=WAD_DAILY; wadS.pricingData=WAD_PRICING; wadS.messagingData=null; wadS.anDataSource='mock'; wadS.anConvData=WAD_CONV_DATA; wadS.anConvError=null
   switchWASubTab('analytics')
   const token=localStorage.getItem('wa_access_token'), wabaId=localStorage.getItem('wa_waba_id')
   if(token&&wabaId)(async()=>{
