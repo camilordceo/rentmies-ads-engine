@@ -5564,58 +5564,99 @@ async function fetchWARealAnalytics(token, wabaId) {
   const days = wadS.anDateRange==='7d'?7:wadS.anDateRange==='14d'?14:30
   const endTs = Math.floor(Date.now()/1000)
   const startTs = endTs - days*86400
+  const headers = {'Authorization': `Bearer ${token}`}
+  const base = `https://graph.facebook.com/v21.0`
 
-  // Fetch per-template analytics for real templates
+  // ── 1. Enable insights on WABA (best-effort, ignore errors) ──
+  try { await fetch(`${base}/${wabaId}?is_enabled_for_insights=true`, {method:'POST', headers}) } catch(e) {}
+
+  // ── 2. Template Analytics — correct dot-notation syntax ──
+  // GET /{WABA_ID}?fields=template_analytics.start(X).end(Y).granularity(DAILY).template_ids([ID1,ID2]).metric_types([SENT,DELIVERED,READ])
   const daily = []
   const realTpls = wadS.templates.filter(t => t.id && !/^t\d+$/.test(String(t.id)))
-  for (const tpl of realTpls) {
+  if (realTpls.length > 0) {
     try {
-      const res = await fetch(`https://graph.facebook.com/v21.0/${tpl.id}/analytics?start=${startTs}&end=${endTs}&granularity=DAILY`,
-        {headers:{'Authorization':`Bearer ${token}`}})
+      const ids = realTpls.map(t=>t.id).join(',')
+      const url = `${base}/${wabaId}?fields=template_analytics.start(${startTs}).end(${endTs}).granularity(DAILY).template_ids([${ids}]).metric_types([SENT,DELIVERED,READ,CLICKED])`
+      const res = await fetch(url, {headers})
       const json = await res.json()
-      if (json.error || !json.data) continue
-      const pts = json.data[0]?.data_points || json.data?.data_points || []
-      pts.forEach(dp => {
-        const date = new Date((dp.start||dp.start_time)*1000).toISOString().slice(0,10)
-        const sent = dp.sent||0, delivered = dp.delivered||0, read = dp.read||0
-        daily.push({ date, templateId:String(tpl.id), templateName:tpl.name, category:tpl.category||'UTILITY',
-          sent, delivered, read, failed:Math.max(0,sent-delivered), successful:delivered })
-      })
-    } catch(e) { /* skip this template */ }
+      // Response: { "data": [{ "granularity": "DAILY", "data_points": [{ "template_id": "...", "start": ..., "sent": ..., "delivered": ..., "read": ... }] }] }
+      if (!json.error && Array.isArray(json.data)) {
+        json.data.forEach(block => {
+          ;(block.data_points||[]).forEach(dp => {
+            const tpl = realTpls.find(t => String(t.id) === String(dp.template_id))
+            if (!tpl) return
+            const date = new Date(dp.start*1000).toISOString().slice(0,10)
+            const sent = dp.sent||0, delivered = dp.delivered||0, read = dp.read||0
+            daily.push({ date, templateId:String(dp.template_id), templateName:tpl.name,
+              category:tpl.category||'UTILITY', sent, delivered, read,
+              failed:Math.max(0,sent-delivered), successful:delivered })
+          })
+        })
+      }
+    } catch(e) {}
   }
 
-  // Fetch conversation analytics (paid vs user-initiated)
+  // ── 3. Messaging Analytics (aggregate fallback for sent/delivered totals) ──
+  // GET /{WABA_ID}?fields=analytics.start(X).end(Y).granularity(DAY)   ← note: DAY not DAILY
+  let messagingDaily = []
   try {
-    const res = await fetch(
-      `https://graph.facebook.com/v21.0/${wabaId}/conversation_analytics?start=${startTs}&end=${endTs}&granularity=DAILY&dimensions=["CONVERSATION_DIRECTION"]`,
-      {headers:{'Authorization':`Bearer ${token}`}})
+    const url = `${base}/${wabaId}?fields=analytics.start(${startTs}).end(${endTs}).granularity(DAY)`
+    const res = await fetch(url, {headers})
     const json = await res.json()
-    if (!json.error && json.data) {
-      const byDate = {}
-      const pts = json.data[0]?.data_points || json.data?.data_points || []
-      pts.forEach(dp => {
-        const date = new Date((dp.start||dp.start_time)*1000).toISOString().slice(0,10)
-        if (!byDate[date]) byDate[date] = {paid:0, response:0, cost:0}
-        const dir = dp.conversation_direction||dp.type||''
-        if (dir==='business_initiated'||dir==='BUSINESS_INITIATED') {
-          byDate[date].paid += dp.conversation||dp.count||0
-          byDate[date].cost += dp.cost||0
-        } else {
-          byDate[date].response += dp.conversation||dp.count||0
-        }
-      })
-      wadS.anConvData = byDate
+    // Response: { "analytics": { "data_points": [{ "start": ..., "sent": ..., "delivered": ... }] }, "id": "..." }
+    if (!json.error && json.analytics?.data_points) {
+      messagingDaily = json.analytics.data_points.map(dp => ({
+        date: new Date(dp.start*1000).toISOString().slice(0,10),
+        sent: dp.sent||0, delivered: dp.delivered||0,
+        failed: Math.max(0,(dp.sent||0)-(dp.delivered||0))
+      }))
     }
   } catch(e) {}
 
+  // If template analytics returned no data but messaging analytics did, build aggregate rows
+  if (daily.length === 0 && messagingDaily.length > 0) {
+    messagingDaily.forEach(d => {
+      daily.push({ date:d.date, templateId:'__agg__', templateName:'All Messages',
+        category:'UTILITY', sent:d.sent, delivered:d.delivered, read:0,
+        failed:d.failed, successful:d.delivered })
+    })
+  }
+
+  // ── 4. Conversation Analytics — correct dot-notation syntax ──
+  // GET /{WABA_ID}?fields=conversation_analytics.start(X).end(Y).granularity(DAILY).dimensions([CONVERSATION_DIRECTION])
+  try {
+    const url = `${base}/${wabaId}?fields=conversation_analytics.start(${startTs}).end(${endTs}).granularity(DAILY).dimensions([CONVERSATION_DIRECTION])`
+    const res = await fetch(url, {headers})
+    const json = await res.json()
+    // Response: { "conversation_analytics": { "data": [{ "data_points": [{ "start": ..., "conversation": ..., "conversation_direction": "...", "cost": ... }] }] }, "id": "..." }
+    if (!json.error && json.conversation_analytics?.data) {
+      const byDate = {}
+      json.conversation_analytics.data.forEach(block => {
+        ;(block.data_points||[]).forEach(dp => {
+          const date = new Date(dp.start*1000).toISOString().slice(0,10)
+          if (!byDate[date]) byDate[date] = {paid:0, response:0, cost:0}
+          const dir = (dp.conversation_direction||'').toUpperCase()
+          if (dir==='BUSINESS_INITIATED') {
+            byDate[date].paid += dp.conversation||0
+            byDate[date].cost += (typeof dp.cost==='number' ? dp.cost : 0)
+          } else if (dir==='USER_INITIATED') {
+            byDate[date].response += dp.conversation||0
+          }
+        })
+      })
+      if (Object.keys(byDate).length > 0) wadS.anConvData = byDate
+    }
+  } catch(e) {}
+
+  // ── 5. Update state and badge ──
+  const badge = document.getElementById('wad-datasource-badge')
   if (daily.length > 0) {
     wadS.daily = daily
     wadS.anDataSource = 'api'
-    const badge = document.getElementById('wad-datasource-badge')
     if (badge) { badge.textContent='Live API'; badge.style.background='#f0fdf4'; badge.style.color='#16a34a'; badge.style.borderColor='#86efac' }
   } else {
     wadS.anDataSource = 'mock'
-    const badge = document.getElementById('wad-datasource-badge')
     if (badge) { badge.textContent='Mock Data'; badge.style.background='#fef9c3'; badge.style.color='#92400e'; badge.style.borderColor='#fde68a' }
   }
 }
