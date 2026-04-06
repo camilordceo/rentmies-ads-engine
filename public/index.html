@@ -4772,10 +4772,22 @@ async function fetchWATemplates() {
   document.getElementById('waSummaryCards').style.display = 'none'
 
   try {
-    const url = `https://graph.facebook.com/v19.0/${wabaId}/message_templates?access_token=${token}&fields=name,status,category,language,quality_score,components&limit=100`
-    const res = await fetch(url)
+    const url = `https://graph.facebook.com/v21.0/${wabaId}/message_templates?fields=name,status,category,language,quality_score,components&limit=100`
+    const res = await fetch(url, {
+      headers: { 'Authorization': `Bearer ${token}` }
+    })
     const json = await res.json()
-    if (json.error) throw new Error(`[${json.error.code}] ${json.error.message}`)
+    if (json.error) {
+      let msg = `[${json.error.code}] ${json.error.message}`
+      if (json.error.code === 100) {
+        msg += '\n\n→ Causa probable: el WABA ID ingresado no es un WhatsApp Business Account ID válido.\n  Encuéntralo en Meta Business Suite → Business Settings → WhatsApp Accounts.'
+      } else if (json.error.code === 190) {
+        msg += '\n\n→ El Access Token expiró o es inválido. Genera uno nuevo en Meta for Developers.'
+      } else if (json.error.code === 200 || json.error.code === 10) {
+        msg += '\n\n→ El token no tiene permiso whatsapp_business_management. Verifica los scopes del token.'
+      }
+      throw new Error(msg)
+    }
     waTemplatesData = json.data || []
     renderWATemplates(waTemplatesData)
   } catch(err) {
