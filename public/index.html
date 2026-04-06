@@ -5086,18 +5086,20 @@ function wadGenConvData() {
 }
 const WAD_CONV_DATA = wadGenConvData()
 
+// ── Client rate: $0.016 per paid message delivered ──
+const WAD_CLIENT_RATE = 0.016
+
 // ── Mock pricing data (per-day, per category/type) ──
 function wadGenPricingData() {
   const today = new Date()
-  // Realistic Rentmies Colombia mix
   const categories = [
-    { type:'REGULAR',              cat:'MARKETING_LITE',              baseVol:1800, baseCost:0.0045 },
-    { type:'REGULAR',              cat:'UTILITY',                     baseVol:1200, baseCost:0.0030 },
-    { type:'FREE_CUSTOMER_SERVICE',cat:'SERVICE',                     baseVol:900,  baseCost:0 },
-    { type:'REGULAR',              cat:'MARKETING',                   baseVol:400,  baseCost:0.0065 },
-    { type:'FREE_ENTRY_POINT',     cat:'REFERRAL_CONVERSION',         baseVol:120,  baseCost:0 },
-    { type:'REGULAR',              cat:'AUTHENTICATION',               baseVol:80,   baseCost:0.0050 },
-    { type:'REGULAR',              cat:'AUTHENTICATION_INTERNATIONAL', baseVol:15,   baseCost:0.0120 },
+    { type:'REGULAR',              cat:'MARKETING_LITE',              baseVol:1800 },
+    { type:'REGULAR',              cat:'UTILITY',                     baseVol:1200 },
+    { type:'FREE_CUSTOMER_SERVICE',cat:'SERVICE',                     baseVol:900  },
+    { type:'REGULAR',              cat:'MARKETING',                   baseVol:400  },
+    { type:'FREE_ENTRY_POINT',     cat:'REFERRAL_CONVERSION',         baseVol:120  },
+    { type:'REGULAR',              cat:'AUTHENTICATION',               baseVol:80   },
+    { type:'REGULAR',              cat:'AUTHENTICATION_INTERNATIONAL', baseVol:15   },
   ]
   const rows = []
   for (let d=29; d>=0; d--) {
@@ -5106,7 +5108,8 @@ function wadGenPricingData() {
     const wknd = dt.getDay()===0||dt.getDay()===6
     categories.forEach(c => {
       const vol = Math.max(0, Math.round(c.baseVol*(0.6+Math.random()*.8)*(wknd?.55:1)))
-      const cost = +(vol*c.baseCost).toFixed(4)
+      // Cost = volume × client rate (only for paid/REGULAR messages)
+      const cost = c.type==='REGULAR' ? +(vol*WAD_CLIENT_RATE).toFixed(4) : 0
       rows.push({ date:ds, pricing_type:c.type, pricing_category:c.cat, volume:vol, cost })
     })
   }
@@ -5359,7 +5362,6 @@ function renderWAAn() {
 
 function renderWAKPIs(pts, prevPts) {
   const sumVol    = arr => arr.reduce((s,d)=>s+(d.volume||0),0)
-  const sumCost   = arr => arr.reduce((s,d)=>s+(d.cost||0),0)
   const paidPts   = pts.filter(d=>d.pricing_type==='REGULAR')
   const freePts   = pts.filter(d=>d.pricing_type==='FREE_CUSTOMER_SERVICE'||d.pricing_type==='FREE_ENTRY_POINT')
   const prevPaid  = prevPts.filter(d=>d.pricing_type==='REGULAR')
@@ -5368,8 +5370,11 @@ function renderWAKPIs(pts, prevPts) {
   const totalVol  = sumVol(pts)
   const paidVol   = sumVol(paidPts)
   const freeVol   = sumVol(freePts)
-  const totalCost = sumCost(paidPts)
-  const prevTot   = sumVol(prevPts), prevPaidV=sumVol(prevPaid), prevFreeV=sumVol(prevFree), prevCost=sumCost(prevPaid)
+  // Cost = paid volume × $0.016 per message
+  const totalCost = paidVol * WAD_CLIENT_RATE
+  const prevPaidV = sumVol(prevPaid), prevFreeV=sumVol(prevFree)
+  const prevCost  = prevPaidV * WAD_CLIENT_RATE
+  const prevTot   = sumVol(prevPts)
 
   const chgPct=(a,b)=>b?((a-b)/b*100):0
   const trend=(pct,inv=false)=>{
@@ -5383,7 +5388,7 @@ function renderWAKPIs(pts, prevPts) {
   paidPts.forEach(d=>{
     if(!paidByCat[d.pricing_category]) paidByCat[d.pricing_category]={vol:0,cost:0}
     paidByCat[d.pricing_category].vol+=d.volume||0
-    paidByCat[d.pricing_category].cost+=d.cost||0
+    paidByCat[d.pricing_category].cost+=d.volume*WAD_CLIENT_RATE
   })
   const paidBreakdown = Object.entries(paidByCat)
     .filter(([,v])=>v.vol>0)
@@ -5447,7 +5452,7 @@ function renderWAKPIs(pts, prevPts) {
   <div class="wad-kpi danger">
     <div class="wad-kpi-label">Costo Total (USD)</div>
     <div class="wad-kpi-value">$${totalCost.toFixed(2)}</div>
-    <div style="font-size:11px;color:#6b7280;margin-top:2px">${paidVol?'$'+(totalCost/paidVol*1000).toFixed(3)+' / 1k msgs':''}</div>
+    <div style="font-size:11px;color:#6b7280;margin-top:2px">@ $${WAD_CLIENT_RATE}/msg · ${paidVol.toLocaleString()} msgs pagados</div>
     ${trend(chgPct(totalCost,prevCost),true)}
   </div>`
 }
@@ -5490,8 +5495,9 @@ function renderWAVolChart(pts) {
         tooltip:{callbacks:{afterTitle:items=>{
           const dt=allDates[items[0].dataIndex]
           const dayTotal=pts.filter(d=>d.date===dt).reduce((s,d)=>s+(d.volume||0),0)
-          const dayCost=pts.filter(d=>d.date===dt&&d.pricing_type==='REGULAR').reduce((s,d)=>s+(d.cost||0),0)
-          return [`Total: ${dayTotal.toLocaleString()}`, `Costo: $${dayCost.toFixed(3)}`]
+          const dayPaidVol=pts.filter(d=>d.date===dt&&d.pricing_type==='REGULAR').reduce((s,d)=>s+(d.volume||0),0)
+          const dayCost = dayPaidVol * WAD_CLIENT_RATE
+          return [`Total: ${dayTotal.toLocaleString()}`, `Costo: $${dayCost.toFixed(2)}`]
         }}}}}
   })
 }
@@ -5522,7 +5528,7 @@ function renderWARateChart(pts) {
 function renderWACostChart(pts) {
   const paidByDay={}
   pts.filter(d=>d.pricing_type==='REGULAR').forEach(d=>{
-    if(!paidByDay[d.date])paidByDay[d.date]=0; paidByDay[d.date]+=d.cost||0
+    if(!paidByDay[d.date])paidByDay[d.date]=0; paidByDay[d.date]+=(d.volume||0)*WAD_CLIENT_RATE
   })
   const labels=Object.keys(paidByDay).sort()
   const costs=labels.map(d=>+paidByDay[d].toFixed(4))
@@ -6018,7 +6024,10 @@ async function fetchWARealAnalytics(token, wabaId) {
         ;(block.data_points||[]).forEach(dp => {
           if ((dp.volume||0) === 0 && (dp.cost||0) === 0) return  // skip zero rows
           const date = new Date(dp.start*1000).toISOString().slice(0,10)
-          pricingRows.push({ date, pricing_type:dp.pricing_type, pricing_category:dp.pricing_category, volume:dp.volume||0, cost:dp.cost||0 })
+          const vol = dp.volume||0
+          // Always compute client cost as volume × $0.016 (overrides Meta's raw cost)
+          const cost = dp.pricing_type==='REGULAR' ? +(vol*WAD_CLIENT_RATE).toFixed(4) : 0
+          pricingRows.push({ date, pricing_type:dp.pricing_type, pricing_category:dp.pricing_category, volume:vol, cost })
         })
       })
       if (pricingRows.length > 0) {
