@@ -1156,6 +1156,7 @@
 .wad-badge-rg{background:rgba(64,217,157,.12);color:#40d99d}
 .wad-badge-rw{background:rgba(245,158,11,.1);color:#d97706}
 .wad-badge-rb{background:rgba(220,38,38,.1);color:#dc2626}
+.wad-badge-cat{background:#f3f4f6;color:#374151;border:1px solid #e5e7eb}
 /* Quality bar */
 .wad-quality{display:flex;align-items:center;gap:8px}
 .wad-quality-bar{flex:1;max-width:56px;height:4px;background:#e5e5e5;border-radius:2px;overflow:hidden}
@@ -2268,6 +2269,44 @@
             <thead><tr><th>Date</th><th>Template</th><th>Sent</th><th>Successful</th><th>Failed</th><th>Rate %</th></tr></thead>
             <tbody id="wad-detail-tbody"></tbody>
           </table>
+        </div>
+      </div>
+
+      <!-- ── ERRORS SECTION ── -->
+      <div class="wad-expand-hdr" id="wad-err-hdr" onclick="toggleWAErrors()" style="margin-top:16px;background:#fff5f5;border-color:#fee2e2">
+        <span style="color:#dc2626">Failed Messages Analysis</span>
+        <span id="wad-err-badge" style="font-size:11px;padding:2px 8px;border-radius:20px;background:#fee2e2;color:#dc2626;font-weight:600;margin-left:8px"></span>
+        <svg id="wad-err-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#dc2626" stroke-width="2.5" style="margin-left:auto;transition:transform 200ms ease"><path d="m6 9 6 6 6-6"/></svg>
+      </div>
+      <div class="wad-expand-body" id="wad-err-body">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:12px">
+          <div class="wad-chart-card">
+            <div class="wad-chart-title">Failed Messages by Template</div>
+            <div class="wad-chart-sub">Total failed in selected period</div>
+            <div class="wad-chart-canvas" style="height:220px"><canvas id="wad-err-chart"></canvas></div>
+          </div>
+          <div class="wad-chart-card">
+            <div class="wad-chart-title">Daily Failure Rate</div>
+            <div class="wad-chart-sub">% failed per day across all templates</div>
+            <div class="wad-chart-canvas" style="height:220px"><canvas id="wad-err-rate-chart"></canvas></div>
+          </div>
+        </div>
+        <div style="margin-top:16px">
+          <div style="font-size:13px;font-weight:600;color:#1a1a1a;margin-bottom:8px">Error Breakdown by Template</div>
+          <div class="wad-table-wrap">
+            <table class="wad-table">
+              <thead><tr>
+                <th>Template</th>
+                <th>Category</th>
+                <th>Total Sent</th>
+                <th style="color:#dc2626">Total Failed</th>
+                <th style="color:#dc2626">Failure Rate</th>
+                <th>Worst Day</th>
+                <th>Status</th>
+              </tr></thead>
+              <tbody id="wad-err-tbody"></tbody>
+            </table>
+          </div>
         </div>
       </div>
     </div>
@@ -5015,6 +5054,23 @@ function wadGenDailyData() {
 
 const WAD_DAILY = wadGenDailyData()
 
+function wadGenConvData() {
+  const byDate = {}, today = new Date()
+  for (let d=29; d>=0; d--) {
+    const dt = new Date(today); dt.setDate(dt.getDate()-d)
+    const ds = dt.toISOString().slice(0,10)
+    const wknd = dt.getDay()===0||dt.getDay()===6
+    const base = wknd ? 18 : 42
+    byDate[ds] = {
+      paid: Math.round(base*(0.8+Math.random()*0.4)),
+      response: Math.round(base*0.45*(0.5+Math.random()*0.9)),
+      cost: +((Math.random()*4+1.5)).toFixed(2)
+    }
+  }
+  return byDate
+}
+const WAD_CONV_DATA = wadGenConvData()
+
 // ── State ──
 const wadS = {
   activeTab: 'analytics',
@@ -5027,11 +5083,13 @@ const wadS = {
   anSelTpls: [],
   anVolToggle: 'all',
   anDetailOpen: false,
-  charts: { donut:null, vol:null, rate:null },
+  errOpen: false,
+  charts: { donut:null, vol:null, rate:null, err:null, errRate:null },
   arInterval: null,
   anSegment: 'all',
   anDataSource: 'mock',
-  anConvData: null,
+  anConvData: WAD_CONV_DATA,  // null=never loaded, {}=api ok but empty, {date:{paid,response,cost}}=has data
+  anConvError: null, // stores last API error message for conv analytics
 }
 const WAD_PG = 10
 
@@ -5140,20 +5198,35 @@ function renderWADonut(tpls) {
 // ─────────────────────────────────────────────
 // ANALYTICS TAB
 // ─────────────────────────────────────────────
+function convToRows(convData, fromDate, toDate) {
+  // Convert anConvData entries to synthetic rows for mixing into data
+  return Object.entries(convData)
+    .filter(([dt]) => dt >= fromDate && (toDate ? dt < toDate : true))
+    .filter(([,d]) => (d.response||0) > 0)
+    .map(([dt,d]) => ({ date:dt, templateId:'__response__', templateName:'User Responses (free)',
+      category:'RESPONSE', sent:d.response, delivered:d.response, read:0, failed:0, successful:d.response, cost:0 }))
+}
+
 function getWAAnData() {
   const days = wadS.anDateRange==='7d'?7:wadS.anDateRange==='14d'?14:30
   const cutoff = new Date(); cutoff.setDate(cutoff.getDate()-days)
   const cs = cutoff.toISOString().slice(0,10)
-  // For 'response' segment use conversation data
-  if (wadS.anSegment==='response' && wadS.anConvData) {
-    return Object.entries(wadS.anConvData)
-      .filter(([date])=>date>=cs)
-      .map(([date,d])=>({date,templateId:'__conv__',templateName:'User Responses',category:'RESPONSE',sent:d.response,delivered:d.response,read:0,failed:0,successful:d.response,cost:0}))
+
+  // response segment: only user-initiated conversations
+  if (wadS.anSegment==='response') {
+    if (!wadS.anConvData) return []
+    return convToRows(wadS.anConvData, cs)
   }
-  let data = wadS.daily.filter(d=>d.date>=cs)
-  // Paid = business-initiated templates (MARKETING, UTILITY, AUTHENTICATION)
-  if (wadS.anSegment==='paid') data=data.filter(d=>['MARKETING','UTILITY','AUTHENTICATION'].includes((d.category||'').toUpperCase()))
+
+  // paid segment: template messages only (all templates are business-initiated = paid)
+  // Filter out any synthetic response rows that may exist in daily
+  let data = wadS.daily.filter(d=>d.date>=cs && d.templateId!=='__response__')
   if (wadS.anSelTpls.length) data=data.filter(d=>wadS.anSelTpls.includes(d.templateId))
+
+  // all segment: templates + free responses combined
+  if (wadS.anSegment==='all' && wadS.anConvData) {
+    data = [...data, ...convToRows(wadS.anConvData, cs)]
+  }
   return data
 }
 
@@ -5162,35 +5235,47 @@ function getWAAnPrevData() {
   const end=new Date(); end.setDate(end.getDate()-days)
   const start=new Date(end); start.setDate(start.getDate()-days)
   const es=end.toISOString().slice(0,10), ss=start.toISOString().slice(0,10)
-  if (wadS.anSegment==='response' && wadS.anConvData) {
-    return Object.entries(wadS.anConvData)
-      .filter(([date])=>date>=ss&&date<es)
-      .map(([date,d])=>({date,templateId:'__conv__',templateName:'User Responses',category:'RESPONSE',sent:d.response,delivered:d.response,read:0,failed:0,successful:d.response,cost:0}))
+
+  if (wadS.anSegment==='response') {
+    if (!wadS.anConvData) return []
+    return convToRows(wadS.anConvData, ss, es)
   }
-  let data = wadS.daily.filter(d=>d.date>=ss&&d.date<es)
-  if (wadS.anSegment==='paid') data=data.filter(d=>['MARKETING','UTILITY','AUTHENTICATION'].includes((d.category||'').toUpperCase()))
+
+  let data = wadS.daily.filter(d=>d.date>=ss&&d.date<es && d.templateId!=='__response__')
   if (wadS.anSelTpls.length) data=data.filter(d=>wadS.anSelTpls.includes(d.templateId))
+
+  if (wadS.anSegment==='all' && wadS.anConvData) {
+    data = [...data, ...convToRows(wadS.anConvData, ss, es)]
+  }
   return data
 }
 
 function renderWAAn() {
-  // Show warning if response segment selected but no conversation data available
   const kpiEl=document.getElementById('wad-kpis')
-  if (wadS.anSegment==='response' && !wadS.anConvData) {
-    if(kpiEl) kpiEl.innerHTML=`<div style="grid-column:1/-1;padding:24px;text-align:center;color:#92400e;background:#fef9c3;border-radius:8px;font-size:13px">
-      No conversation analytics data available. Enter your WhatsApp credentials in the <strong>Settings</strong> tab to load live data.
-    </div>`
-    renderWAVolChart([])
-    renderWARateChart([])
-    renderWABreakdown([])
-    renderWAMsDropdown()
-    return
+  // response segment: handle missing conv data
+  if (wadS.anSegment==='response') {
+    const hasCredentials = !!(localStorage.getItem('wa_access_token')&&localStorage.getItem('wa_waba_id'))
+    if (wadS.anConvData===null) {
+      // Never loaded — credentials not set or first load
+      const msg = hasCredentials
+        ? `API returned an error loading conversation data.${wadS.anConvError?`<br><code style="font-size:11px;color:#dc2626">${wadS.anConvError}</code>`:''}<br><button class="wad-btn wad-btn-primary" style="margin-top:10px" onclick="wadReloadAnalytics()">Retry</button>`
+        : `Enter your WhatsApp credentials in the <strong>Settings</strong> tab to load live data.`
+      if(kpiEl) kpiEl.innerHTML=`<div style="grid-column:1/-1;padding:24px;text-align:center;color:#92400e;background:#fef9c3;border-radius:8px;font-size:13px;line-height:1.6">${msg}</div>`
+      renderWAVolChart([]); renderWARateChart([]); renderWABreakdown([]); renderWAMsDropdown()
+      return
+    }
+    if (Object.keys(wadS.anConvData).length===0) {
+      if(kpiEl) kpiEl.innerHTML=`<div style="grid-column:1/-1;padding:24px;text-align:center;color:#374151;background:#f3f4f6;border-radius:8px;font-size:13px">No user-initiated conversation data found for this period.<br><span style="font-size:12px;color:#6b7280">This may mean all conversations in this period were business-initiated (template messages).</span></div>`
+      renderWAVolChart([]); renderWARateChart([]); renderWABreakdown([]); renderWAMsDropdown()
+      return
+    }
   }
   const data=getWAAnData(), prev=getWAAnPrevData()
   renderWAKPIs(data,prev)
   renderWAVolChart(data)
   renderWARateChart(data)
   renderWABreakdown(data)
+  renderWAErrors(data)
   if (wadS.anDetailOpen) renderWADetail()
   renderWAMsDropdown()
 }
@@ -5299,13 +5384,17 @@ function renderWABreakdown(data) {
   const tbody=document.getElementById('wad-an-tbody')
   if(!paged.length){tbody.innerHTML='<tr><td colspan="7" style="text-align:center;padding:32px;color:#9ca3af">No data for selected filters</td></tr>';return}
   tbody.innerHTML=paged.map(t=>{
+    const isResp = t.id==='__response__'
     const bc=t.rate>=95?'wad-badge-rg':t.rate>=80?'wad-badge-rw':'wad-badge-rb'
     const spk=wadMiniSpk(t.daily.slice(-7))
-    return `<tr>
-      <td style="font-weight:500;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${t.name}">${t.name}</td>
+    const nameBadge = isResp
+      ? `<span style="font-size:10px;padding:1px 6px;border-radius:4px;background:#dbeafe;color:#1d4ed8;font-weight:600;margin-left:6px">FREE</span>`
+      : `<span style="font-size:10px;padding:1px 6px;border-radius:4px;background:#fef3c7;color:#92400e;font-weight:600;margin-left:6px">PAID</span>`
+    return `<tr${isResp?' style="background:#f8faff"':''}>
+      <td style="font-weight:500;max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${t.name}">${t.name}${nameBadge}</td>
       <td>${t.sent.toLocaleString()}</td><td>${t.delivered.toLocaleString()}</td><td>${t.read.toLocaleString()}</td>
-      <td style="color:#dc2626;font-weight:500">${t.failed.toLocaleString()}</td>
-      <td><span class="wad-badge ${bc}">${t.rate.toFixed(1)}%</span></td>
+      <td style="color:${isResp?'#6b7280':'#dc2626'};font-weight:500">${isResp?'—':t.failed.toLocaleString()}</td>
+      <td><span class="wad-badge ${isResp?'wad-badge-rg':bc}">${isResp?'Free':t.rate.toFixed(1)+'%'}</span></td>
       <td>${spk}</td>
     </tr>`
   }).join('')
@@ -5370,6 +5459,102 @@ function toggleWADetail() {
   const ch=document.getElementById('wad-exp-chevron')
   if(ch) ch.style.transform=wadS.anDetailOpen?'rotate(180deg)':'rotate(0)'
   if(wadS.anDetailOpen) renderWADetail()
+}
+
+function toggleWAErrors() {
+  wadS.errOpen=!wadS.errOpen
+  document.getElementById('wad-err-body')?.classList.toggle('open',wadS.errOpen)
+  const ch=document.getElementById('wad-err-chevron')
+  if(ch) ch.style.transform=wadS.errOpen?'rotate(180deg)':'rotate(0)'
+  if(wadS.errOpen) renderWAErrors(getWAAnData())
+}
+
+function renderWAErrors(data) {
+  // Only show failures from template rows (not free response rows)
+  const tplData = data.filter(d=>d.templateId!=='__response__'&&d.templateId!=='__conv__')
+  // Aggregate by template
+  const byT = {}
+  tplData.forEach(d => {
+    if (!byT[d.templateId]) byT[d.templateId]={name:d.templateName,category:d.category||'',sent:0,failed:0,days:{}}
+    byT[d.templateId].sent+=d.sent; byT[d.templateId].failed+=d.failed
+    byT[d.templateId].days[d.date]=(byT[d.templateId].days[d.date]||0)+d.failed
+  })
+  const rows = Object.values(byT).filter(t=>t.sent>0).map(t=>({
+    ...t, rate: t.sent?t.failed/t.sent*100:0,
+    worstDay: Object.entries(t.days).sort((a,b)=>b[1]-a[1])[0]
+  })).sort((a,b)=>b.failed-a.failed)
+
+  const totalFailed = rows.reduce((s,r)=>s+r.failed,0)
+  const totalSent = rows.reduce((s,r)=>s+r.sent,0)
+
+  // Update badge
+  const badge = document.getElementById('wad-err-badge')
+  if(badge) badge.textContent = totalSent ? `${totalFailed.toLocaleString()} failed (${(totalFailed/totalSent*100).toFixed(1)}%)` : 'No failures'
+
+  if(!wadS.errOpen) return
+
+  // ── Bar chart: failed by template ──
+  if(wadS.charts.err){wadS.charts.err.destroy();wadS.charts.err=null}
+  const errCtx=document.getElementById('wad-err-chart')
+  if(errCtx && rows.length>0) {
+    const top=rows.slice(0,8)
+    wadS.charts.err=new Chart(errCtx,{
+      type:'bar',
+      data:{
+        labels:top.map(r=>r.name.length>18?r.name.slice(0,16)+'…':r.name),
+        datasets:[{label:'Failed',data:top.map(r=>r.failed),backgroundColor:'#fca5a5',borderColor:'#dc2626',borderWidth:1,borderRadius:4}]
+      },
+      options:{indexAxis:'y',animation:{duration:400},responsive:true,maintainAspectRatio:false,
+        plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>`${c.raw.toLocaleString()} failed (${rows[c.dataIndex]?((rows[c.dataIndex].rate).toFixed(1)):'0'}%)`}}},
+        scales:{x:{grid:{color:'#fef2f2'},ticks:{color:'#6b7280',font:{family:'Inter',size:11}}},
+                y:{grid:{display:false},ticks:{color:'#374151',font:{family:'Inter',size:11}}}}}
+    })
+  }
+
+  // ── Line chart: daily failure rate ──
+  if(wadS.charts.errRate){wadS.charts.errRate.destroy();wadS.charts.errRate=null}
+  const rrCtx=document.getElementById('wad-err-rate-chart')
+  if(rrCtx) {
+    const byDay={}
+    tplData.forEach(d=>{
+      if(!byDay[d.date]) byDay[d.date]={sent:0,failed:0}
+      byDay[d.date].sent+=d.sent; byDay[d.date].failed+=d.failed
+    })
+    const labels=Object.keys(byDay).sort()
+    const rates=labels.map(d=>byDay[d].sent?(byDay[d].failed/byDay[d].sent*100):0)
+    wadS.charts.errRate=new Chart(rrCtx,{
+      type:'line',
+      data:{labels:labels.map(d=>d.slice(5)),datasets:[
+        {label:'Failure Rate %',data:rates,borderColor:'#dc2626',backgroundColor:'rgba(220,38,38,.08)',fill:true,tension:.4,pointRadius:2,borderWidth:2}
+      ]},
+      options:{animation:{duration:400},responsive:true,maintainAspectRatio:false,
+        plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>`${c.raw.toFixed(2)}% failure rate`}}},
+        scales:{
+          x:{grid:{color:'#fef2f2'},ticks:{color:'#6b7280',font:{family:'Inter',size:11},maxTicksLimit:10}},
+          y:{grid:{color:'#fef2f2'},ticks:{color:'#6b7280',font:{family:'Inter',size:11},callback:v=>v.toFixed(1)+'%'},beginAtZero:true}
+        }}
+    })
+  }
+
+  // ── Table ──
+  const tbody=document.getElementById('wad-err-tbody')
+  if(!tbody) return
+  if(!rows.length){tbody.innerHTML='<tr><td colspan="7" style="text-align:center;padding:24px;color:#9ca3af">No failed messages in this period</td></tr>';return}
+  tbody.innerHTML=rows.map(r=>{
+    const rateCls=r.rate<2?'color:#16a34a':r.rate<5?'color:#d97706':'color:#dc2626'
+    const wd=r.worstDay?`${r.worstDay[0].slice(5)} (${r.worstDay[1].toLocaleString()})`:'—'
+    const statusIcon=r.rate<1?'✓':r.rate<5?'⚠':'✕'
+    const statusCls=r.rate<1?'color:#16a34a':r.rate<5?'color:#d97706':'color:#dc2626'
+    return `<tr>
+      <td style="font-weight:500;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${r.name}</td>
+      <td><span class="wad-badge wad-badge-cat">${r.category}</span></td>
+      <td>${r.sent.toLocaleString()}</td>
+      <td style="color:#dc2626;font-weight:600">${r.failed.toLocaleString()}</td>
+      <td style="${rateCls};font-weight:600">${r.rate.toFixed(2)}%</td>
+      <td style="font-size:12px;color:#6b7280">${wd}</td>
+      <td style="${statusCls};font-weight:700;font-size:16px">${statusIcon}</td>
+    </tr>`
+  }).join('')
 }
 
 // ── Filters ──
@@ -5625,14 +5810,18 @@ async function fetchWARealAnalytics(token, wabaId) {
 
   // ── 4. Conversation Analytics — correct dot-notation syntax ──
   // GET /{WABA_ID}?fields=conversation_analytics.start(X).end(Y).granularity(DAILY).dimensions([CONVERSATION_DIRECTION])
+  wadS.anConvError = null
   try {
     const url = `${base}/${wabaId}?fields=conversation_analytics.start(${startTs}).end(${endTs}).granularity(DAILY).dimensions([CONVERSATION_DIRECTION])`
     const res = await fetch(url, {headers})
     const json = await res.json()
-    // Response: { "conversation_analytics": { "data": [{ "data_points": [{ "start": ..., "conversation": ..., "conversation_direction": "...", "cost": ... }] }] }, "id": "..." }
-    if (!json.error && json.conversation_analytics?.data) {
+    if (json.error) {
+      wadS.anConvError = `[${json.error.code}] ${json.error.message}`
+      wadS.anConvData = null
+    } else {
+      // Always set anConvData — empty {} means API ok but no data
       const byDate = {}
-      json.conversation_analytics.data.forEach(block => {
+      ;(json.conversation_analytics?.data||[]).forEach(block => {
         ;(block.data_points||[]).forEach(dp => {
           const date = new Date(dp.start*1000).toISOString().slice(0,10)
           if (!byDate[date]) byDate[date] = {paid:0, response:0, cost:0}
@@ -5645,9 +5834,9 @@ async function fetchWARealAnalytics(token, wabaId) {
           }
         })
       })
-      if (Object.keys(byDate).length > 0) wadS.anConvData = byDate
+      wadS.anConvData = byDate  // {} = no data points returned, still valid
     }
-  } catch(e) {}
+  } catch(e) { wadS.anConvError = e.message; wadS.anConvData = null }
 
   // ── 5. Update state and badge ──
   const badge = document.getElementById('wad-datasource-badge')
@@ -5673,7 +5862,7 @@ async function wadReloadAnalytics() {
 
 function initWATab() {
   loadWASettingsForm()
-  wadS.templates=[...WAD_TEMPLATES]; wadS.daily=WAD_DAILY; wadS.anDataSource='mock'; wadS.anConvData=null
+  wadS.templates=[...WAD_TEMPLATES]; wadS.daily=WAD_DAILY; wadS.anDataSource='mock'; wadS.anConvData=WAD_CONV_DATA; wadS.anConvError=null
   switchWASubTab('analytics')
   const token=localStorage.getItem('wa_access_token'), wabaId=localStorage.getItem('wa_waba_id')
   if(token&&wabaId)(async()=>{
