@@ -2182,9 +2182,17 @@
     <div class="wad-panel active" id="wad-panel-analytics">
       <div class="wad-filters">
         <div class="wad-date-pills" id="wad-dpills">
-          <button class="wad-dpill" onclick="setWADate('7d',this)">Last 7 days</button>
-          <button class="wad-dpill active" onclick="setWADate('30d',this)">Last 30 days</button>
-          <button class="wad-dpill" onclick="setWADate('14d',this)">Last 14 days</button>
+          <button class="wad-dpill" onclick="setWADate('7d',this)">Últimos 7 días</button>
+          <button class="wad-dpill active" onclick="setWADate('30d',this)">Últimos 30 días</button>
+          <button class="wad-dpill" onclick="setWADate('90d',this)">Últimos 90 días</button>
+          <button class="wad-dpill" onclick="setWADate('custom',this)">Personalizado</button>
+        </div>
+        <div id="wad-custom-range" style="display:none;align-items:center;gap:8px;margin-top:8px;flex-wrap:wrap">
+          <span style="font-size:12px;color:#6b7280;font-weight:500">Desde:</span>
+          <input type="date" id="wad-date-from" style="padding:4px 8px;border:1px solid #e5e5e5;border-radius:6px;font-size:12px;font-family:inherit;color:#1a1a1a;background:#fff;outline:none" onchange="applyWACustomRange()">
+          <span style="font-size:12px;color:#6b7280;font-weight:500">Hasta:</span>
+          <input type="date" id="wad-date-to" style="padding:4px 8px;border:1px solid #e5e5e5;border-radius:6px;font-size:12px;font-family:inherit;color:#1a1a1a;background:#fff;outline:none" onchange="applyWACustomRange()">
+          <span id="wad-custom-days" style="font-size:11px;color:#9ca3af"></span>
         </div>
         <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;width:100%;margin-top:8px">
           <span style="font-size:12px;color:#6b7280;font-weight:500">Segment:</span>
@@ -2283,31 +2291,36 @@
       <div class="wad-expand-body" id="wad-err-body">
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:12px">
           <div class="wad-chart-card">
-            <div class="wad-chart-title">Failed Messages by Template</div>
-            <div class="wad-chart-sub">Total failed in selected period</div>
-            <div class="wad-chart-canvas" style="height:220px"><canvas id="wad-err-chart"></canvas></div>
+            <div class="wad-chart-title">Daily Failure Rate</div>
+            <div class="wad-chart-sub">% no entregados por día (sent − delivered)</div>
+            <div class="wad-chart-canvas" style="height:220px"><canvas id="wad-err-rate-chart"></canvas></div>
           </div>
           <div class="wad-chart-card">
-            <div class="wad-chart-title">Daily Failure Rate</div>
-            <div class="wad-chart-sub">% failed per day across all templates</div>
-            <div class="wad-chart-canvas" style="height:220px"><canvas id="wad-err-rate-chart"></canvas></div>
+            <div class="wad-chart-title">Mensajes No Entregados por Día</div>
+            <div class="wad-chart-sub">Cantidad absoluta: sent − delivered</div>
+            <div class="wad-chart-canvas" style="height:220px"><canvas id="wad-err-chart"></canvas></div>
           </div>
         </div>
         <div style="margin-top:16px">
-          <div style="font-size:13px;font-weight:600;color:#1a1a1a;margin-bottom:8px">Error Breakdown by Template</div>
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+            <div style="font-size:13px;font-weight:600;color:#1a1a1a">Daily Failed Summary</div>
+            <span style="font-size:11px;color:#9ca3af;background:#f3f4f6;padding:3px 10px;border-radius:20px">Fuente: analytics API · sent − delivered</span>
+          </div>
           <div class="wad-table-wrap">
             <table class="wad-table">
               <thead><tr>
-                <th>Template</th>
-                <th>Category</th>
+                <th>Fecha</th>
                 <th>Total Sent</th>
-                <th style="color:#dc2626">Total Failed</th>
+                <th>Delivered</th>
+                <th style="color:#dc2626">Failed</th>
                 <th style="color:#dc2626">Failure Rate</th>
-                <th>Worst Day</th>
                 <th>Status</th>
               </tr></thead>
               <tbody id="wad-err-tbody"></tbody>
             </table>
+          </div>
+          <div style="margin-top:12px;padding:10px 14px;background:#f8faff;border-radius:8px;border:1px solid #e0e7ff;font-size:12px;color:#6b7280">
+            <strong style="color:#6366f1">ℹ️ Breakdown por plantilla:</strong> La API de Meta analytics solo devuelve totales por día. Para desglose por template se requiere webhook listener. <em>Coming soon.</em>
           </div>
         </div>
       </div>
@@ -5129,8 +5142,11 @@ const wadS = {
   arInterval: null,
   anSegment: 'all',
   anDataSource: 'mock',
-  pricingData: WAD_PRICING,      // array of {date, pricing_type, pricing_category, volume, cost}
-  messagingData: null,           // {sent, delivered, received} from analytics API
+  pricingData: WAD_PRICING,
+  messagingData: null,           // {sent, delivered, received} totals from analytics API
+  messagingDailyData: [],        // [{date, sent, delivered, failed, failureRate}] for error analysis
+  anCustomStart: null,           // YYYY-MM-DD for custom range
+  anCustomEnd: null,
   anConvData: WAD_CONV_DATA,
   anConvError: null,
 }
@@ -5251,32 +5267,30 @@ function convToRows(convData, fromDate, toDate) {
 }
 
 function getWAAnData() {
-  const days = wadS.anDateRange==='7d'?7:wadS.anDateRange==='14d'?14:30
-  const cutoff = new Date(); cutoff.setDate(cutoff.getDate()-days)
-  const cs = cutoff.toISOString().slice(0,10)
+  const {startDate, endDate} = getWADateRange()
 
-  // response segment: only user-initiated conversations
   if (wadS.anSegment==='response') {
     if (!wadS.anConvData) return []
-    return convToRows(wadS.anConvData, cs)
+    return convToRows(wadS.anConvData, startDate, endDate)
   }
 
-  // paid segment: template messages only (all templates are business-initiated = paid)
-  // Filter out any synthetic response rows that may exist in daily
-  let data = wadS.daily.filter(d=>d.date>=cs && d.templateId!=='__response__')
-  if (wadS.anSelTpls.length) data=data.filter(d=>wadS.anSelTpls.includes(d.templateId))
+  let data = wadS.daily.filter(d=>d.date>=startDate&&d.date<=endDate && d.templateId!=='__response__')
+  if (wadS.anSelTpls.length) data=data.filter(d=>wadS.anSelTpls.includes(String(d.templateId)))
 
-  // all segment: templates + free responses combined
   if (wadS.anSegment==='all' && wadS.anConvData) {
-    data = [...data, ...convToRows(wadS.anConvData, cs)]
+    data = [...data, ...convToRows(wadS.anConvData, startDate, endDate)]
   }
   return data
 }
 
 function getWAAnPrevData() {
-  const days = wadS.anDateRange==='7d'?7:wadS.anDateRange==='14d'?14:30
-  const end=new Date(); end.setDate(end.getDate()-days)
-  const start=new Date(end); start.setDate(start.getDate()-days)
+  const {startDate} = getWADateRange()
+  const daysMap = {'7d':7,'30d':30,'90d':90,'14d':14}
+  const days = wadS.anDateRange==='custom'
+    ? Math.round((new Date(wadS.anCustomEnd)-new Date(wadS.anCustomStart))/86400000)
+    : (daysMap[wadS.anDateRange]||30)
+  const end = new Date(startDate)
+  const start = new Date(startDate); start.setDate(start.getDate()-days)
   const es=end.toISOString().slice(0,10), ss=start.toISOString().slice(0,10)
 
   if (wadS.anSegment==='response') {
@@ -5285,7 +5299,7 @@ function getWAAnPrevData() {
   }
 
   let data = wadS.daily.filter(d=>d.date>=ss&&d.date<es && d.templateId!=='__response__')
-  if (wadS.anSelTpls.length) data=data.filter(d=>wadS.anSelTpls.includes(d.templateId))
+  if (wadS.anSelTpls.length) data=data.filter(d=>wadS.anSelTpls.includes(String(d.templateId)))
 
   if (wadS.anSegment==='all' && wadS.anConvData) {
     data = [...data, ...convToRows(wadS.anConvData, ss, es)]
@@ -5293,21 +5307,35 @@ function getWAAnPrevData() {
   return data
 }
 
+// ── Date range helper ──
+function getWADateRange() {
+  if (wadS.anDateRange==='custom' && wadS.anCustomStart && wadS.anCustomEnd) {
+    return { startDate: wadS.anCustomStart, endDate: wadS.anCustomEnd }
+  }
+  const daysMap = {'7d':7,'30d':30,'90d':90,'14d':14}
+  const days = daysMap[wadS.anDateRange] || 30
+  const end = new Date(); const start = new Date()
+  start.setDate(start.getDate()-days)
+  return { startDate: start.toISOString().slice(0,10), endDate: end.toISOString().slice(0,10) }
+}
+
 // ── Pricing data helpers ──
 function getPricingFiltered() {
-  const days = wadS.anDateRange==='7d'?7:wadS.anDateRange==='14d'?14:30
-  const cutoff = new Date(); cutoff.setDate(cutoff.getDate()-days)
-  const cs = cutoff.toISOString().slice(0,10)
-  let pts = (wadS.pricingData||[]).filter(d=>d.date>=cs)
+  const {startDate, endDate} = getWADateRange()
+  let pts = (wadS.pricingData||[]).filter(d=>d.date>=startDate&&d.date<=endDate)
   if (wadS.anSegment==='paid')     pts=pts.filter(d=>d.pricing_type==='REGULAR')
   if (wadS.anSegment==='response') pts=pts.filter(d=>d.pricing_type==='FREE_CUSTOMER_SERVICE'||d.pricing_type==='FREE_ENTRY_POINT')
   return pts
 }
 
 function getPricingPrevFiltered() {
-  const days = wadS.anDateRange==='7d'?7:wadS.anDateRange==='14d'?14:30
-  const end=new Date(); end.setDate(end.getDate()-days)
-  const start=new Date(end); start.setDate(start.getDate()-days)
+  const {startDate} = getWADateRange()
+  const daysMap = {'7d':7,'30d':30,'90d':90,'14d':14}
+  const days = wadS.anDateRange==='custom'
+    ? Math.round((new Date(wadS.anCustomEnd)-new Date(wadS.anCustomStart))/86400000)
+    : (daysMap[wadS.anDateRange]||30)
+  const end = new Date(startDate)
+  const start = new Date(startDate); start.setDate(start.getDate()-days)
   const es=end.toISOString().slice(0,10), ss=start.toISOString().slice(0,10)
   let pts = (wadS.pricingData||[]).filter(d=>d.date>=ss&&d.date<es)
   if (wadS.anSegment==='paid')     pts=pts.filter(d=>d.pricing_type==='REGULAR')
@@ -5324,7 +5352,7 @@ function renderWAAn() {
   renderWACostChart(pts)
   const tplData = getWAAnData()
   renderWABreakdown(tplData)
-  renderWAErrors(tplData)
+  renderWAErrors()
   if (wadS.anDetailOpen) renderWADetail()
   renderWAMsDropdown()
 }
@@ -5645,93 +5673,96 @@ function toggleWAErrors() {
   document.getElementById('wad-err-body')?.classList.toggle('open',wadS.errOpen)
   const ch=document.getElementById('wad-err-chevron')
   if(ch) ch.style.transform=wadS.errOpen?'rotate(180deg)':'rotate(0)'
-  if(wadS.errOpen) renderWAErrors(getWAAnData())
+  if(wadS.errOpen) renderWAErrors()
 }
 
-function renderWAErrors(data) {
-  // Only show failures from template rows (not free response rows)
-  const tplData = data.filter(d=>d.templateId!=='__response__'&&d.templateId!=='__conv__')
-  // Aggregate by template
-  const byT = {}
-  tplData.forEach(d => {
-    if (!byT[d.templateId]) byT[d.templateId]={name:d.templateName,category:d.category||'',sent:0,failed:0,days:{}}
-    byT[d.templateId].sent+=d.sent; byT[d.templateId].failed+=d.failed
-    byT[d.templateId].days[d.date]=(byT[d.templateId].days[d.date]||0)+d.failed
-  })
-  const rows = Object.values(byT).filter(t=>t.sent>0).map(t=>({
-    ...t, rate: t.sent?t.failed/t.sent*100:0,
-    worstDay: Object.entries(t.days).sort((a,b)=>b[1]-a[1])[0]
-  })).sort((a,b)=>b.failed-a.failed)
+function renderWAErrors() {
+  // Use messagingDailyData from analytics API (sent − delivered = failed per day)
+  // Fall back to mock daily data if API data not available
+  const {startDate, endDate} = getWADateRange()
+  let daily = wadS.messagingDailyData.filter(d=>d.date>=startDate&&d.date<=endDate)
 
-  const totalFailed = rows.reduce((s,r)=>s+r.failed,0)
-  const totalSent = rows.reduce((s,r)=>s+r.sent,0)
+  // If no API data, synthesize from mock template data
+  if (!daily.length && wadS.daily.length) {
+    const byDay={}
+    wadS.daily.filter(d=>d.date>=startDate&&d.date<=endDate).forEach(d=>{
+      if(!byDay[d.date])byDay[d.date]={date:d.date,sent:0,delivered:0}
+      byDay[d.date].sent+=d.sent; byDay[d.date].delivered+=d.delivered
+    })
+    daily = Object.values(byDay).map(d=>({...d,failed:Math.max(0,d.sent-d.delivered),failureRate:d.sent?(Math.max(0,d.sent-d.delivered)/d.sent*100):0})).sort((a,b)=>a.date.localeCompare(b.date))
+  }
+
+  const totalSent = daily.reduce((s,d)=>s+d.sent,0)
+  const totalDelivered = daily.reduce((s,d)=>s+d.delivered,0)
+  const totalFailed = Math.max(0,totalSent-totalDelivered)
+  const failureRate = totalSent?(totalFailed/totalSent*100):0
+  const worstDay = daily.reduce((w,d)=>d.failed>w.failed?d:w,{failed:0,date:''})
 
   // Update badge
   const badge = document.getElementById('wad-err-badge')
-  if(badge) badge.textContent = totalSent ? `${totalFailed.toLocaleString()} failed (${(totalFailed/totalSent*100).toFixed(1)}%)` : 'No failures'
+  if(badge) badge.textContent = totalSent ? `${totalFailed.toLocaleString()} no entregados (${failureRate.toFixed(1)}%)` : 'Sin datos'
 
   if(!wadS.errOpen) return
 
-  // ── Bar chart: failed by template ──
-  if(wadS.charts.err){wadS.charts.err.destroy();wadS.charts.err=null}
-  const errCtx=document.getElementById('wad-err-chart')
-  if(errCtx && rows.length>0) {
-    const top=rows.slice(0,8)
-    wadS.charts.err=new Chart(errCtx,{
-      type:'bar',
-      data:{
-        labels:top.map(r=>r.name.length>18?r.name.slice(0,16)+'…':r.name),
-        datasets:[{label:'Failed',data:top.map(r=>r.failed),backgroundColor:'#fca5a5',borderColor:'#dc2626',borderWidth:1,borderRadius:4}]
-      },
-      options:{indexAxis:'y',animation:{duration:400},responsive:true,maintainAspectRatio:false,
-        plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>`${c.raw.toLocaleString()} failed (${rows[c.dataIndex]?((rows[c.dataIndex].rate).toFixed(1)):'0'}%)`}}},
-        scales:{x:{grid:{color:'#fef2f2'},ticks:{color:'#6b7280',font:{family:'Inter',size:11}}},
-                y:{grid:{display:false},ticks:{color:'#374151',font:{family:'Inter',size:11}}}}}
-    })
-  }
+  const labels = daily.map(d=>d.date.slice(5))
+  const rates  = daily.map(d=>+d.failureRate.toFixed(2))
+  const failed = daily.map(d=>d.failed)
 
-  // ── Line chart: daily failure rate ──
+  // ── Chart 1: Daily Failure Rate (line) ──
   if(wadS.charts.errRate){wadS.charts.errRate.destroy();wadS.charts.errRate=null}
   const rrCtx=document.getElementById('wad-err-rate-chart')
   if(rrCtx) {
-    const byDay={}
-    tplData.forEach(d=>{
-      if(!byDay[d.date]) byDay[d.date]={sent:0,failed:0}
-      byDay[d.date].sent+=d.sent; byDay[d.date].failed+=d.failed
-    })
-    const labels=Object.keys(byDay).sort()
-    const rates=labels.map(d=>byDay[d].sent?(byDay[d].failed/byDay[d].sent*100):0)
     wadS.charts.errRate=new Chart(rrCtx,{
       type:'line',
-      data:{labels:labels.map(d=>d.slice(5)),datasets:[
-        {label:'Failure Rate %',data:rates,borderColor:'#dc2626',backgroundColor:'rgba(220,38,38,.08)',fill:true,tension:.4,pointRadius:2,borderWidth:2}
+      data:{labels, datasets:[
+        {label:'Failure Rate %',data:rates,borderColor:'#dc2626',backgroundColor:'rgba(220,38,38,.08)',fill:true,tension:.4,pointRadius:3,borderWidth:2,pointBackgroundColor:'#dc2626'}
       ]},
       options:{animation:{duration:400},responsive:true,maintainAspectRatio:false,
-        plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>`${c.raw.toFixed(2)}% failure rate`}}},
+        plugins:{legend:{display:false},tooltip:{callbacks:{label:(c)=>{const d=daily[c.dataIndex];return[` ${c.raw.toFixed(2)}% no entregados`,` Sent: ${(d?.sent||0).toLocaleString()}`,` Failed: ${(d?.failed||0).toLocaleString()}`]}}}},
         scales:{
-          x:{grid:{color:'#fef2f2'},ticks:{color:'#6b7280',font:{family:'Inter',size:11},maxTicksLimit:10}},
+          x:{grid:{color:'#fef2f2'},ticks:{color:'#6b7280',font:{family:'Inter',size:10},maxTicksLimit:12}},
           y:{grid:{color:'#fef2f2'},ticks:{color:'#6b7280',font:{family:'Inter',size:11},callback:v=>v.toFixed(1)+'%'},beginAtZero:true}
         }}
     })
   }
 
-  // ── Table ──
+  // ── Chart 2: Failed Messages by Day (bars) ──
+  if(wadS.charts.err){wadS.charts.err.destroy();wadS.charts.err=null}
+  const errCtx=document.getElementById('wad-err-chart')
+  if(errCtx) {
+    wadS.charts.err=new Chart(errCtx,{
+      type:'bar',
+      data:{labels, datasets:[
+        {label:'No Entregados',data:failed,backgroundColor:'rgba(220,38,38,.7)',borderColor:'#dc2626',borderWidth:0,borderRadius:3}
+      ]},
+      options:{animation:{duration:400},responsive:true,maintainAspectRatio:false,
+        plugins:{legend:{display:false},tooltip:{callbacks:{label:(c)=>{const d=daily[c.dataIndex];return[` ${c.raw.toLocaleString()} no entregados`,` Rate: ${(d?.failureRate||0).toFixed(2)}%`]}}}},
+        scales:{
+          x:{grid:{color:'#fef2f2'},ticks:{color:'#6b7280',font:{family:'Inter',size:10},maxTicksLimit:12}},
+          y:{grid:{color:'#fef2f2'},ticks:{color:'#6b7280',font:{family:'Inter',size:11}},beginAtZero:true}
+        }}
+    })
+  }
+
+  // ── Table: Daily Failed Summary ──
   const tbody=document.getElementById('wad-err-tbody')
   if(!tbody) return
-  if(!rows.length){tbody.innerHTML='<tr><td colspan="7" style="text-align:center;padding:24px;color:#9ca3af">No failed messages in this period</td></tr>';return}
-  tbody.innerHTML=rows.map(r=>{
-    const rateCls=r.rate<2?'color:#16a34a':r.rate<5?'color:#d97706':'color:#dc2626'
-    const wd=r.worstDay?`${r.worstDay[0].slice(5)} (${r.worstDay[1].toLocaleString()})`:'—'
-    const statusIcon=r.rate<1?'✓':r.rate<5?'⚠':'✕'
-    const statusCls=r.rate<1?'color:#16a34a':r.rate<5?'color:#d97706':'color:#dc2626'
+  if(!daily.length){tbody.innerHTML='<tr><td colspan="6" style="text-align:center;padding:24px;color:#9ca3af">Sin datos para el período</td></tr>';return}
+
+  // Show worst day note
+  let worstNote = ''
+  if(worstDay.date) worstNote=`<tr style="background:#fff5f5"><td colspan="6" style="padding:8px 12px;font-size:12px;color:#dc2626">⚠️ Peor día: ${worstDay.date} — ${worstDay.failed.toLocaleString()} no entregados (${worstDay.failureRate?.toFixed(2)||0}%)</td></tr>`
+
+  tbody.innerHTML = worstNote + [...daily].reverse().map(d=>{
+    const rateCls=d.failureRate<2?'color:#16a34a':d.failureRate<5?'color:#d97706':'color:#dc2626'
+    const icon=d.failureRate<2?'✅':d.failureRate<5?'⚠️':'❌'
     return `<tr>
-      <td style="font-weight:500;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${r.name}</td>
-      <td><span class="wad-badge wad-badge-cat">${r.category}</span></td>
-      <td>${r.sent.toLocaleString()}</td>
-      <td style="color:#dc2626;font-weight:600">${r.failed.toLocaleString()}</td>
-      <td style="${rateCls};font-weight:600">${r.rate.toFixed(2)}%</td>
-      <td style="font-size:12px;color:#6b7280">${wd}</td>
-      <td style="${statusCls};font-weight:700;font-size:16px">${statusIcon}</td>
+      <td style="color:#6b7280;font-size:12px;white-space:nowrap">${d.date}</td>
+      <td>${d.sent.toLocaleString()}</td>
+      <td>${d.delivered.toLocaleString()}</td>
+      <td style="color:#dc2626;font-weight:600">${d.failed.toLocaleString()}</td>
+      <td style="${rateCls};font-weight:600">${d.failureRate.toFixed(2)}%</td>
+      <td style="font-size:16px">${icon}</td>
     </tr>`
   }).join('')
 }
@@ -5741,14 +5772,46 @@ function setWADate(r,btn) {
   wadS.anDateRange=r
   document.querySelectorAll('#wad-dpills .wad-dpill').forEach(b=>b.classList.remove('active'))
   btn.classList.add('active')
+  // Show/hide custom range inputs
+  const cr=document.getElementById('wad-custom-range')
+  if(cr) cr.style.display = r==='custom'?'flex':'none'
+  if(r!=='custom') { wadS.anCustomStart=null; wadS.anCustomEnd=null }
+  else {
+    // Pre-fill with last 30 days as default
+    const today=new Date(), prev=new Date(); prev.setDate(prev.getDate()-30)
+    const toEl=document.getElementById('wad-date-to'), frEl=document.getElementById('wad-date-from')
+    if(toEl&&!toEl.value) toEl.value=today.toISOString().slice(0,10)
+    if(frEl&&!frEl.value) frEl.value=prev.toISOString().slice(0,10)
+    wadS.anCustomStart=frEl?.value||null; wadS.anCustomEnd=toEl?.value||null
+    updateWACustomDays()
+  }
+}
+
+function applyWACustomRange() {
+  const from=document.getElementById('wad-date-from')?.value
+  const to=document.getElementById('wad-date-to')?.value
+  if(!from||!to) return
+  if(from>to){toast('La fecha inicial debe ser anterior a la final','error');return}
+  wadS.anCustomStart=from; wadS.anCustomEnd=to; wadS.anPage=1
+  updateWACustomDays()
+  renderWAAn()
+}
+
+function updateWACustomDays() {
+  const from=wadS.anCustomStart, to=wadS.anCustomEnd; if(!from||!to)return
+  const days=Math.round((new Date(to)-new Date(from))/86400000)
+  const el=document.getElementById('wad-custom-days')
+  if(el) el.textContent=`(${days} días)`
 }
 
 function applyWAFilters(){wadS.anPage=1;renderWAAn()}
 
 function resetWAFilters() {
   wadS.anDateRange='30d'; wadS.anSelTpls=[]; wadS.anPage=1; wadS.anSegment='all'
+  wadS.anCustomStart=null; wadS.anCustomEnd=null
   document.querySelectorAll('#wad-dpills .wad-dpill').forEach((b,i)=>b.classList.toggle('active',i===1))
   document.querySelectorAll('#wad-seg-pills .wad-dpill').forEach((b,i)=>b.classList.toggle('active',i===0))
+  const cr=document.getElementById('wad-custom-range'); if(cr)cr.style.display='none'
   updateWAMsLabel()
   document.querySelectorAll('#wad-ms-dd input[type=checkbox]').forEach(c=>c.checked=false)
   renderWAAn()
@@ -5929,10 +5992,10 @@ function closeWAPreview() {
 // INIT
 // ─────────────────────────────────────────────
 async function fetchWARealAnalytics(token, wabaId) {
-  const days = wadS.anDateRange==='7d'?7:wadS.anDateRange==='14d'?14:30
-  // Always past timestamps
-  const endTs   = Math.floor(Date.now()/1000) - 3600        // 1 hour ago to ensure past
-  const startTs = endTs - days*86400
+  const {startDate, endDate} = getWADateRange()
+  // Always past UNIX timestamps (seconds)
+  const endTs   = Math.min(Math.floor(new Date(endDate).getTime()/1000)+86399, Math.floor(Date.now()/1000)-60)
+  const startTs = Math.floor(new Date(startDate).getTime()/1000)
   const headers = {'Authorization': `Bearer ${token}`}
   const ver = 'v21.0'
   const base = `https://graph.facebook.com/${ver}`
@@ -5965,20 +6028,34 @@ async function fetchWARealAnalytics(token, wabaId) {
     }
   } catch(e) {}
 
-  // ── 3. Messaging Analytics — for KPI card "Todos los Mensajes" ──
-  // analytics uses granularity DAY (not DAILY), product_types are integers (no quotes)
+  // ── 3. Messaging Analytics — aggregate (no product_types = all sent/delivered) for error analysis ──
+  // analytics uses granularity DAY (not DAILY), NEVER DAILY
   try {
-    const url = `${base}/${wabaId}?fields=analytics.start(${startTs}).end(${endTs}).granularity(DAY).product_types([0,2,100])`
+    // Aggregate call (no product_types filter) = total sent/delivered per day → used for failed calc
+    const url = `${base}/${wabaId}?fields=analytics.start(${startTs}).end(${endTs}).granularity(DAY)`
     const res = await fetch(url, {headers})
     const json = await res.json()
-    // Response: { "analytics": { "data_points": [{ "start":..., "sent":..., "delivered":..., "product_type":... }] }, "id": "..." }
     if (!json.error && json.analytics?.data_points) {
       const pts = json.analytics.data_points
-      // product_type 0=template sent, 2=non-template sent, 100=incoming
-      const sentTotal    = pts.filter(p=>[0,2].includes(p.product_type)).reduce((s,p)=>s+(p.sent||0),0)
-      const delivTotal   = pts.filter(p=>[0,2].includes(p.product_type)).reduce((s,p)=>s+(p.delivered||0),0)
-      const recvTotal    = pts.filter(p=>p.product_type===100).reduce((s,p)=>s+(p.sent||0),0)
-      wadS.messagingData = { sent:sentTotal, delivered:delivTotal, received:recvTotal }
+      wadS.messagingDailyData = pts.map(dp => {
+        const date = new Date(dp.start*1000).toISOString().slice(0,10)
+        const sent=dp.sent||0, delivered=dp.delivered||0, failed=Math.max(0,sent-delivered)
+        return { date, sent, delivered, failed, failureRate: sent?(failed/sent*100):0 }
+      })
+      const sentTotal  = pts.reduce((s,p)=>s+(p.sent||0),0)
+      const delivTotal = pts.reduce((s,p)=>s+(p.delivered||0),0)
+      wadS.messagingData = { sent:sentTotal, delivered:delivTotal, received:0 }
+      if(sentTotal>0) anyRealData = true
+    }
+  } catch(e) {}
+
+  // Also fetch with product_types for received count
+  try {
+    const url2 = `${base}/${wabaId}?fields=analytics.start(${startTs}).end(${endTs}).granularity(DAY).product_types([100])`
+    const res2 = await fetch(url2, {headers})
+    const json2 = await res2.json()
+    if (!json2.error && json2.analytics?.data_points && wadS.messagingData) {
+      wadS.messagingData.received = json2.analytics.data_points.reduce((s,p)=>s+(p.sent||0),0)
     }
   } catch(e) {}
 
@@ -6057,7 +6134,7 @@ async function wadReloadAnalytics() {
 
 function initWATab() {
   loadWASettingsForm()
-  wadS.templates=[...WAD_TEMPLATES]; wadS.daily=WAD_DAILY; wadS.pricingData=WAD_PRICING; wadS.messagingData=null; wadS.anDataSource='mock'; wadS.anConvData=WAD_CONV_DATA; wadS.anConvError=null
+  wadS.templates=[...WAD_TEMPLATES]; wadS.daily=WAD_DAILY; wadS.pricingData=WAD_PRICING; wadS.messagingData=null; wadS.messagingDailyData=[]; wadS.anDataSource='mock'; wadS.anConvData=WAD_CONV_DATA; wadS.anConvError=null
   switchWASubTab('analytics')
   const token=localStorage.getItem('wa_access_token'), wabaId=localStorage.getItem('wa_waba_id')
   if(token&&wabaId)(async()=>{
