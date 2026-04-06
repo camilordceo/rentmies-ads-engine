@@ -2191,7 +2191,7 @@
           <div id="wad-seg-pills" style="display:flex;gap:4px">
             <button class="wad-dpill active" onclick="setWASeg('all',this)">All Messages</button>
             <button class="wad-dpill" onclick="setWASeg('paid',this)">Paid Outbound</button>
-            <button class="wad-dpill" onclick="setWASeg('response',this)">User Responses</button>
+            <button class="wad-dpill" onclick="setWASeg('response',this)">Respuestas 24h Gratis</button>
           </div>
           <span id="wad-datasource-badge" style="font-size:11px;padding:2px 8px;border-radius:20px;background:#fef9c3;color:#92400e;border:1px solid #fde68a;font-weight:600;margin-left:auto">Mock Data</span>
           <button onclick="wadReloadAnalytics()" style="font-size:11px;padding:2px 8px;border-radius:6px;background:none;border:1px solid #e5e5e5;color:#6b7280;cursor:pointer;font-family:inherit" title="Reload data from API">↻ Reload</button>
@@ -5246,7 +5246,7 @@ function convToRows(convData, fromDate, toDate) {
   return Object.entries(convData)
     .filter(([dt]) => dt >= fromDate && (toDate ? dt < toDate : true))
     .filter(([,d]) => (d.response||0) > 0)
-    .map(([dt,d]) => ({ date:dt, templateId:'__response__', templateName:'User Responses (free)',
+    .map(([dt,d]) => ({ date:dt, templateId:'__response__', templateName:'Respuestas 24h Gratis',
       category:'RESPONSE', sent:d.response, delivered:d.response, read:0, failed:0, successful:d.response, cost:0 }))
 }
 
@@ -5513,10 +5513,45 @@ function renderWACostChart(pts) {
   })
 }
 
+function isMockDailyData() {
+  // Returns true if wadS.daily still contains mock template IDs (t1-t8)
+  return wadS.daily.length > 0 && /^t\d+$/.test(String(wadS.daily[0]?.templateId))
+}
+
 function renderWABreakdown(data) {
+  const tbody=document.getElementById('wad-an-tbody')
+  const pagesEl=document.getElementById('wad-an-pages')
+
+  // If data is only response rows, skip template breakdown
+  const tplRows = data.filter(d=>d.templateId!=='__response__'&&d.templateId!=='__conv__')
+
+  // Detect: real templates loaded but daily data is still mock → show real template list with notice
+  const hasRealTemplates = wadS.templates.length && !/^t\d+$/.test(String(wadS.templates[0]?.id))
+  if (hasRealTemplates && isMockDailyData() && tplRows.length && /^t\d+$/.test(String(tplRows[0]?.templateId))) {
+    // Show real template names with a "no per-template analytics" notice
+    if(tbody) tbody.innerHTML = wadS.templates.slice(0,(wadS.anPage-1)*WAD_PG+WAD_PG).map(t=>{
+      const cat = t.category||'UTILITY'
+      const statusMeta = {APPROVED:'wad-badge-approved',REJECTED:'wad-badge-rejected',PENDING:'wad-badge-pending'}
+      const bc = statusMeta[t.status]||'wad-badge-pending'
+      return `<tr>
+        <td style="font-weight:500;max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${t.name}">${t.name}
+          <span style="font-size:10px;padding:1px 6px;border-radius:4px;background:#fef3c7;color:#92400e;font-weight:600;margin-left:6px">PAID</span>
+        </td>
+        <td colspan="5" style="color:#9ca3af;font-size:12px;text-align:center">
+          <span class="wad-badge ${bc}" style="margin-right:8px">${t.status}</span>
+          ${cat} — datos por plantilla no disponibles
+          <a style="color:#6366f1;margin-left:6px;font-size:11px;cursor:pointer" onclick="toast('Activa insights: POST /${localStorage.getItem('wa_waba_id')}?is_enabled_for_insights=true','success')">¿Cómo activar?</a>
+        </td>
+        <td>—</td>
+      </tr>`
+    }).join('')
+    if(pagesEl) pagesEl.innerHTML=`<span style="font-size:12px;color:#6b7280">${wadS.templates.length} plantillas de tu cuenta — activa template analytics para ver métricas</span>`
+    return
+  }
+
   const byT={}
   data.forEach(d=>{
-    if(!byT[d.templateId]) byT[d.templateId]={name:d.templateName,sent:0,delivered:0,read:0,failed:0,successful:0,daily:[]}
+    if(!byT[d.templateId]) byT[d.templateId]={id:d.templateId,name:d.templateName,sent:0,delivered:0,read:0,failed:0,successful:0,daily:[]}
     byT[d.templateId].sent+=d.sent; byT[d.templateId].delivered+=d.delivered; byT[d.templateId].read+=d.read
     byT[d.templateId].failed+=d.failed; byT[d.templateId].successful+=d.successful
     byT[d.templateId].daily.push(d.successful/(d.sent||1)*100)
@@ -5526,9 +5561,8 @@ function renderWABreakdown(data) {
   rows.sort((a,b)=>col==='name'?dd*a.name.localeCompare(b.name):dd*(a[col]-b[col]))
   const total=rows.length, pg=wadS.anPage, st=(pg-1)*WAD_PG
   const paged=rows.slice(st,st+WAD_PG)
-  const tbody=document.getElementById('wad-an-tbody')
-  if(!paged.length){tbody.innerHTML='<tr><td colspan="7" style="text-align:center;padding:32px;color:#9ca3af">No data for selected filters</td></tr>';return}
-  tbody.innerHTML=paged.map(t=>{
+  if(!paged.length){if(tbody)tbody.innerHTML='<tr><td colspan="7" style="text-align:center;padding:32px;color:#9ca3af">No data for selected filters</td></tr>';return}
+  if(tbody) tbody.innerHTML=paged.map(t=>{
     const isResp = t.id==='__response__'
     const bc=t.rate>=95?'wad-badge-rg':t.rate>=80?'wad-badge-rw':'wad-badge-rb'
     const spk=wadMiniSpk(t.daily.slice(-7))
@@ -5539,13 +5573,13 @@ function renderWABreakdown(data) {
       <td style="font-weight:500;max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${t.name}">${t.name}${nameBadge}</td>
       <td>${t.sent.toLocaleString()}</td><td>${t.delivered.toLocaleString()}</td><td>${t.read.toLocaleString()}</td>
       <td style="color:${isResp?'#6b7280':'#dc2626'};font-weight:500">${isResp?'—':t.failed.toLocaleString()}</td>
-      <td><span class="wad-badge ${isResp?'wad-badge-rg':bc}">${isResp?'Free':t.rate.toFixed(1)+'%'}</span></td>
+      <td><span class="wad-badge ${isResp?'wad-badge-rg':bc}">${isResp?'Gratis':t.rate.toFixed(1)+'%'}</span></td>
       <td>${spk}</td>
     </tr>`
   }).join('')
   const pages=Math.ceil(total/WAD_PG)
-  document.getElementById('wad-an-pages').innerHTML=`
-    <span>${st+1}–${Math.min(st+WAD_PG,total)} of ${total} templates</span>
+  if(pagesEl) pagesEl.innerHTML=`
+    <span>${st+1}–${Math.min(st+WAD_PG,total)} de ${total} plantillas</span>
     <div class="wad-pagination-btns">
       <button class="wad-page-btn" onclick="setWAPage(${pg-1})" ${pg<=1?'disabled':''}>
         <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m15 18-6-6 6-6"/></svg>
@@ -5733,8 +5767,10 @@ function setWASeg(seg, btn) {
 // ── Multi-select ──
 function renderWAMsDropdown() {
   const dd=document.getElementById('wad-ms-dd'); if(!dd)return
-  dd.innerHTML=`<div class="wad-ms-item" onclick="event.stopPropagation()"><input type="checkbox" id="wad-ms-all" ${!wadS.anSelTpls.length?'checked':''} onchange="toggleWAMsAll(this)"><label for="wad-ms-all" style="cursor:pointer">All Templates</label></div>`
-    +WAD_TEMPLATES.map(t=>`<div class="wad-ms-item" onclick="event.stopPropagation()"><input type="checkbox" id="wad-ms-${t.id}" value="${t.id}" ${wadS.anSelTpls.includes(t.id)?'checked':''} onchange="toggleWAMsTpl(this)"><label for="wad-ms-${t.id}" style="cursor:pointer;font-size:12px">${t.name}</label></div>`).join('')
+  // Always use wadS.templates (real API templates when loaded, mock otherwise)
+  const tpls = wadS.templates.length ? wadS.templates : WAD_TEMPLATES
+  dd.innerHTML=`<div class="wad-ms-item" onclick="event.stopPropagation()"><input type="checkbox" id="wad-ms-all" ${!wadS.anSelTpls.length?'checked':''} onchange="toggleWAMsAll(this)"><label for="wad-ms-all" style="cursor:pointer">Todas las plantillas</label></div>`
+    +tpls.map(t=>`<div class="wad-ms-item" onclick="event.stopPropagation()"><input type="checkbox" id="wad-ms-${t.id}" value="${String(t.id)}" ${wadS.anSelTpls.includes(String(t.id))?'checked':''} onchange="toggleWAMsTpl(this)"><label for="wad-ms-${t.id}" style="cursor:pointer;font-size:12px">${t.name}</label></div>`).join('')
 }
 
 function toggleWAMs() {
@@ -5749,16 +5785,18 @@ function toggleWAMsAll(cb) {
 }
 
 function toggleWAMsTpl(cb) {
-  if(cb.checked){if(!wadS.anSelTpls.includes(cb.value))wadS.anSelTpls.push(cb.value);const a=document.getElementById('wad-ms-all');if(a)a.checked=false}
-  else{wadS.anSelTpls=wadS.anSelTpls.filter(id=>id!==cb.value);if(!wadS.anSelTpls.length){const a=document.getElementById('wad-ms-all');if(a)a.checked=true}}
+  const val=cb.value
+  if(cb.checked){if(!wadS.anSelTpls.includes(val))wadS.anSelTpls.push(val);const a=document.getElementById('wad-ms-all');if(a)a.checked=false}
+  else{wadS.anSelTpls=wadS.anSelTpls.filter(id=>id!==val);if(!wadS.anSelTpls.length){const a=document.getElementById('wad-ms-all');if(a)a.checked=true}}
   updateWAMsLabel()
 }
 
 function updateWAMsLabel() {
   const el=document.getElementById('wad-ms-label'); if(!el)return
-  if(!wadS.anSelTpls.length) el.textContent='All Templates'
-  else if(wadS.anSelTpls.length===1){const t=WAD_TEMPLATES.find(t=>t.id===wadS.anSelTpls[0]);el.textContent=t?t.name.slice(0,22)+(t.name.length>22?'…':''):'1 selected'}
-  else el.textContent=`${wadS.anSelTpls.length} selected`
+  const tpls = wadS.templates.length ? wadS.templates : WAD_TEMPLATES
+  if(!wadS.anSelTpls.length) el.textContent='Todas las plantillas'
+  else if(wadS.anSelTpls.length===1){const t=tpls.find(t=>String(t.id)===String(wadS.anSelTpls[0]));el.textContent=t?t.name.slice(0,22)+(t.name.length>22?'…':''):'1 seleccionada'}
+  else el.textContent=`${wadS.anSelTpls.length} seleccionadas`
 }
 
 // ── CSV Export ──
