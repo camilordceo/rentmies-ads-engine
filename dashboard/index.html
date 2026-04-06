@@ -295,7 +295,7 @@
     display: none;
     padding: 14px 20px;
     overflow-y: auto;
-    max-height: 320px;
+    max-height: 480px;
   }
 
   .tab-content.active { display: block; }
@@ -889,6 +889,260 @@
     .main { grid-template-columns: 1fr; grid-template-rows: auto 1fr; }
     .panel-left { display: none; }
   }
+
+  /* ══════════════════════════════════════
+     WHATSAPP TEMPLATES TAB
+  ══════════════════════════════════════ */
+  .wa-settings-card {
+    background: var(--gray-card);
+    border: 1px solid var(--gray-border);
+    border-radius: var(--radius-card);
+    padding: 18px 20px 14px;
+    margin-bottom: 16px;
+  }
+  .wa-settings-title {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 1.1px;
+    margin-bottom: 14px;
+  }
+  .wa-settings-fields {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    align-items: flex-end;
+  }
+  .wa-field-group {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    flex: 1;
+    min-width: 200px;
+  }
+  .wa-label {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    letter-spacing: 0.3px;
+  }
+  .wa-input {
+    background: var(--gray-mid);
+    border: 1px solid var(--gray-border);
+    border-radius: 8px;
+    color: var(--text);
+    font-family: 'Inter', sans-serif;
+    font-size: 13px;
+    height: 36px;
+    outline: none;
+    padding: 0 12px;
+    transition: border-color 0.2s;
+  }
+  .wa-input:focus { border-color: var(--green); }
+  .wa-settings-actions {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+  }
+  .wa-credentials-note {
+    font-size: 11px;
+    color: var(--text-muted);
+    margin-top: 10px;
+  }
+
+  /* Summary cards */
+  .wa-summary-cards {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+    margin-bottom: 16px;
+  }
+  .wa-stat-card {
+    background: var(--gray-card);
+    border: 1px solid var(--gray-border);
+    border-radius: var(--radius-card);
+    padding: 16px;
+    text-align: center;
+  }
+  .wa-stat-card.wa-stat-approved { border-color: rgba(29,158,117,0.4); }
+  .wa-stat-card.wa-stat-rejected { border-color: rgba(239,68,68,0.4); }
+  .wa-stat-card.wa-stat-rate { border-color: rgba(59,130,246,0.4); }
+  .wa-stat-value {
+    font-size: 26px;
+    font-weight: 700;
+    color: var(--white);
+    line-height: 1;
+    margin-bottom: 4px;
+  }
+  .wa-stat-card.wa-stat-approved .wa-stat-value { color: var(--green); }
+  .wa-stat-card.wa-stat-rejected .wa-stat-value { color: var(--red); }
+  .wa-stat-card.wa-stat-rate .wa-stat-value { color: var(--blue); }
+  .wa-stat-label {
+    font-size: 11px;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    font-weight: 600;
+  }
+
+  /* Status / loading */
+  .wa-status-msg {
+    text-align: center;
+    color: var(--text-muted);
+    font-size: 13px;
+    padding: 28px 0;
+  }
+  .wa-spinner {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    padding: 28px 0;
+    color: var(--text-secondary);
+    font-size: 13px;
+  }
+  .wa-spinner-ring {
+    width: 22px;
+    height: 22px;
+    border: 3px solid var(--gray-border);
+    border-top-color: var(--green);
+    border-radius: 50%;
+    animation: wa-spin 0.8s linear infinite;
+  }
+  @keyframes wa-spin { to { transform: rotate(360deg); } }
+  .wa-error {
+    background: rgba(239,68,68,0.08);
+    border: 1px solid rgba(239,68,68,0.3);
+    border-radius: 8px;
+    color: #f87171;
+    font-size: 12px;
+    font-family: monospace;
+    padding: 12px 16px;
+    margin-bottom: 14px;
+    white-space: pre-wrap;
+    word-break: break-all;
+  }
+
+  /* Status badges */
+  .wa-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 600;
+    padding: 3px 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  .wa-badge-approved { background: rgba(29,158,117,0.15); color: var(--green); }
+  .wa-badge-rejected { background: rgba(239,68,68,0.15); color: var(--red); }
+  .wa-badge-pending  { background: rgba(245,158,11,0.15); color: var(--yellow); }
+
+  /* Charts */
+  .wa-charts-wrap {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-top: 16px;
+  }
+  .wa-chart-card {
+    background: var(--gray-card);
+    border: 1px solid var(--gray-border);
+    border-radius: var(--radius-card);
+    padding: 18px;
+  }
+  .wa-chart-title {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 1.1px;
+    margin-bottom: 14px;
+  }
+  .wa-chart-container {
+    position: relative;
+    height: 220px;
+  }
+
+  /* Preview Modal */
+  .wa-preview-modal {
+    max-width: 520px;
+    width: 100%;
+  }
+  .wa-preview-body {
+    padding: 4px 0 8px;
+    color: var(--text);
+    font-size: 13px;
+  }
+  .wa-preview-section {
+    background: var(--gray-mid);
+    border: 1px solid var(--gray-border);
+    border-radius: 8px;
+    padding: 12px 14px;
+    margin-bottom: 10px;
+  }
+  .wa-preview-section-label {
+    font-size: 10px;
+    font-weight: 700;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 6px;
+  }
+  .wa-preview-section-text {
+    font-size: 13px;
+    color: var(--text);
+    line-height: 1.5;
+    white-space: pre-wrap;
+  }
+  .wa-preview-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 6px;
+  }
+  .wa-preview-btn-chip {
+    background: var(--green-light);
+    color: var(--green);
+    border-radius: 6px;
+    padding: 4px 10px;
+    font-size: 12px;
+    font-weight: 600;
+  }
+
+  .btn-outline {
+    background: transparent;
+    border: 1px solid var(--gray-border);
+    border-radius: var(--radius-btn);
+    color: var(--text-secondary);
+    cursor: pointer;
+    font-family: 'Inter', sans-serif;
+    font-size: 13px;
+    font-weight: 500;
+    height: 36px;
+    padding: 0 14px;
+    transition: border-color 0.2s, color 0.2s;
+  }
+  .btn-outline:hover { border-color: var(--green); color: var(--green); }
+
+  .btn-green {
+    background: var(--green);
+    border: none;
+    border-radius: var(--radius-btn);
+    color: white;
+    cursor: pointer;
+    font-family: 'Inter', sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    height: 36px;
+    padding: 0 16px;
+    transition: background 0.2s, transform 0.15s, box-shadow 0.15s;
+    white-space: nowrap;
+  }
+  .btn-green:hover { background: var(--green-dark); transform: translateY(-1px); box-shadow: 0 4px 12px var(--green-glow); }
+  .btn-green:active { transform: none; box-shadow: none; }
 </style>
 </head>
 <body>
@@ -1051,6 +1305,7 @@
         <button class="tab-btn" onclick="switchTab('campanas', this)">🎯 Por Campaña</button>
         <button class="tab-btn" onclick="switchTab('creativos', this)">🎨 Creativos</button>
         <button class="tab-btn" onclick="switchTab('log', this)">🤖 Log IA</button>
+        <button class="tab-btn" onclick="switchTab('whatsapp', this)">💬 WhatsApp Templates</button>
       </div>
 
       <!-- Tab: Por Canal -->
@@ -1110,6 +1365,105 @@
             <p>Las decisiones automáticas aparecerán aquí</p>
           </div>
         </div>
+      </div>
+
+      <!-- Tab: WhatsApp Templates -->
+      <div id="tab-whatsapp" class="tab-content">
+        <!-- Settings Section -->
+        <div class="wa-settings-card">
+          <div class="wa-settings-title">API Credentials</div>
+          <div class="wa-settings-fields">
+            <div class="wa-field-group">
+              <label class="wa-label">Access Token</label>
+              <input type="password" id="waAccessToken" class="wa-input" placeholder="EAAxxxxxxxxxxxxxxx..." />
+            </div>
+            <div class="wa-field-group">
+              <label class="wa-label">WABA ID</label>
+              <input type="text" id="waWabaId" class="wa-input" placeholder="123456789012345" />
+            </div>
+            <div class="wa-settings-actions">
+              <button class="btn-green" onclick="saveWACredentials()">Save Credentials</button>
+              <button class="btn-outline" onclick="fetchWATemplates()">↻ Refresh</button>
+            </div>
+          </div>
+          <div class="wa-credentials-note">Credentials saved locally in your browser</div>
+        </div>
+
+        <!-- Summary Cards -->
+        <div class="wa-summary-cards" id="waSummaryCards" style="display:none">
+          <div class="wa-stat-card">
+            <div class="wa-stat-value" id="waTotalTemplates">—</div>
+            <div class="wa-stat-label">Total Templates</div>
+          </div>
+          <div class="wa-stat-card wa-stat-approved">
+            <div class="wa-stat-value" id="waApprovedTemplates">—</div>
+            <div class="wa-stat-label">Approved</div>
+          </div>
+          <div class="wa-stat-card wa-stat-rejected">
+            <div class="wa-stat-value" id="waRejectedTemplates">—</div>
+            <div class="wa-stat-label">Rejected</div>
+          </div>
+          <div class="wa-stat-card wa-stat-rate">
+            <div class="wa-stat-value" id="waSuccessRate">—</div>
+            <div class="wa-stat-label">Success Rate</div>
+          </div>
+        </div>
+
+        <!-- Status Message -->
+        <div id="waStatusMsg" class="wa-status-msg">Enter your credentials above to load templates</div>
+
+        <!-- Loading Spinner -->
+        <div id="waSpinner" class="wa-spinner" style="display:none">
+          <div class="wa-spinner-ring"></div>
+          <span>Fetching templates from Meta API...</span>
+        </div>
+
+        <!-- Error Message -->
+        <div id="waError" class="wa-error" style="display:none"></div>
+
+        <!-- Templates Table -->
+        <div id="waTableWrap" style="display:none">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Template Name</th>
+                <th>Category</th>
+                <th>Language</th>
+                <th>Status</th>
+                <th>Quality Score</th>
+                <th>Preview</th>
+              </tr>
+            </thead>
+            <tbody id="waTableBody"></tbody>
+          </table>
+        </div>
+
+        <!-- Charts -->
+        <div id="waChartsWrap" class="wa-charts-wrap" style="display:none">
+          <div class="wa-chart-card">
+            <div class="wa-chart-title">Templates by Status</div>
+            <div class="wa-chart-container">
+              <canvas id="waStatusChart"></canvas>
+            </div>
+          </div>
+          <div class="wa-chart-card">
+            <div class="wa-chart-title">Templates by Category</div>
+            <div class="wa-chart-container">
+              <canvas id="waCategoryChart"></canvas>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- WhatsApp Template Preview Modal -->
+    <div id="waPreviewModal" class="modal-overlay" style="display:none" onclick="if(event.target===this)closeWAPreview()">
+      <div class="modal wa-preview-modal">
+        <div class="modal-header">
+          <h3 id="waPreviewTitle">Template Preview</h3>
+          <button class="modal-close" onclick="closeWAPreview()">✕</button>
+        </div>
+        <div id="waPreviewBody" class="modal-body wa-preview-body"></div>
       </div>
     </div>
   </div>
@@ -1215,6 +1569,7 @@
 <div class="toast-container" id="toastContainer"></div>
 
 <!-- ═══════════════════ JAVASCRIPT ═══════════════════ -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
 <script>
 // ══════════════════════════════════════════════════════
 // STATE
@@ -1824,6 +2179,7 @@ function switchTab(tab, btn) {
   document.getElementById(`tab-${tab}`).classList.add('active')
 
   if (tab === 'log' && state.logsData.length === 0) loadLogs()
+  if (tab === 'whatsapp') initWATab()
 }
 
 // ══════════════════════════════════════════════════════
@@ -1894,6 +2250,202 @@ function startMockSimulation() {
 }
 
 // ══════════════════════════════════════════════════════
+// WHATSAPP TEMPLATES
+// ══════════════════════════════════════════════════════
+const WA_MOCK_TEMPLATES = [
+  { id: 'm1', name: 'bienvenida_arrendatario', category: 'UTILITY', language: 'es', status: 'APPROVED', quality_score: { score: 'HIGH' }, components: [{ type: 'HEADER', format: 'TEXT', text: '¡Bienvenido a Rentmies! 🏠' }, { type: 'BODY', text: 'Hola {{1}}, gracias por contactarnos. Estamos listos para ayudarte a encontrar tu próximo hogar en {{2}}. ¿En qué ciudad estás buscando?' }, { type: 'FOOTER', text: 'Rentmies — Arrienda fácil' }, { type: 'BUTTONS', buttons: [{ type: 'QUICK_REPLY', text: 'Bogotá' }, { type: 'QUICK_REPLY', text: 'Medellín' }, { type: 'QUICK_REPLY', text: 'Cali' }] }] },
+  { id: 'm2', name: 'oferta_apartamento_marketing', category: 'MARKETING', language: 'es', status: 'APPROVED', quality_score: { score: 'HIGH' }, components: [{ type: 'HEADER', format: 'IMAGE' }, { type: 'BODY', text: '✨ Apartamento disponible en {{1}}\n\n📍 {{2}}\n🛏 {{3}} habitaciones | 🚿 {{4}} baños\n💵 ${{5}}/mes\n\n¿Te interesa agendar una visita?' }, { type: 'BUTTONS', buttons: [{ type: 'QUICK_REPLY', text: 'Ver más detalles' }, { type: 'QUICK_REPLY', text: 'Agendar visita' }] }] },
+  { id: 'm3', name: 'recordatorio_pago', category: 'UTILITY', language: 'es', status: 'APPROVED', quality_score: { score: 'MEDIUM' }, components: [{ type: 'BODY', text: 'Hola {{1}}, te recordamos que tu pago de arriendo por ${{2}} vence el {{3}}. Puedes pagar en línea en rentmies.co/pagar' }, { type: 'FOOTER', text: 'Rentmies — Tu hogar, nuestra prioridad' }] },
+  { id: 'm4', name: 'confirmacion_visita', category: 'UTILITY', language: 'es', status: 'APPROVED', quality_score: { score: 'HIGH' }, components: [{ type: 'BODY', text: '✅ Visita confirmada\n\nHola {{1}}, tu visita está confirmada para el {{2}} a las {{3}} en {{4}}.\n\nTe esperamos. ¡Nos vemos pronto!' }] },
+  { id: 'm5', name: 'promo_descuento_octubre', category: 'MARKETING', language: 'es', status: 'REJECTED', quality_score: { score: 'LOW' }, components: [{ type: 'BODY', text: '🔥 OFERTA ESPECIAL 🔥 Arrienda HOY y obtén 15% de descuento en tu primer mes. ¡Aplica ya!' }] },
+  { id: 'm6', name: 'verificacion_identidad', category: 'AUTHENTICATION', language: 'es', status: 'APPROVED', quality_score: { score: 'HIGH' }, components: [{ type: 'BODY', text: 'Tu código de verificación de Rentmies es: {{1}}. Válido por 10 minutos. No lo compartas con nadie.' }] },
+  { id: 'm7', name: 'seguimiento_lead', category: 'MARKETING', language: 'es', status: 'PENDING', quality_score: { score: 'MEDIUM' }, components: [{ type: 'BODY', text: 'Hola {{1}}, hace unos días estuviste buscando apartamentos en {{2}}. ¿Encontraste lo que buscabas? Tenemos nuevas opciones disponibles.' }, { type: 'BUTTONS', buttons: [{ type: 'QUICK_REPLY', text: 'Ver opciones' }, { type: 'QUICK_REPLY', text: 'No, gracias' }] }] },
+  { id: 'm8', name: 'contrato_listo', category: 'UTILITY', language: 'es', status: 'APPROVED', quality_score: { score: 'HIGH' }, components: [{ type: 'BODY', text: '📄 Tu contrato de arrendamiento está listo para firmar, {{1}}. Ingresa a rentmies.co/contrato/{{2}} para revisarlo y firmarlo digitalmente.' }] },
+]
+
+let waCharts = { status: null, category: null }
+let waTemplatesData = []
+
+function saveWACredentials() {
+  const token = document.getElementById('waAccessToken').value.trim()
+  const wabaId = document.getElementById('waWabaId').value.trim()
+  if (!token || !wabaId) { toast('Completa ambos campos', 'error'); return }
+  localStorage.setItem('wa_access_token', token)
+  localStorage.setItem('wa_waba_id', wabaId)
+  toast('Credenciales guardadas', 'success')
+  fetchWATemplates()
+}
+
+async function fetchWATemplates() {
+  const token = localStorage.getItem('wa_access_token')
+  const wabaId = localStorage.getItem('wa_waba_id')
+
+  document.getElementById('waStatusMsg').style.display = 'none'
+  document.getElementById('waError').style.display = 'none'
+
+  if (!token || !wabaId) {
+    document.getElementById('waStatusMsg').style.display = 'block'
+    document.getElementById('waStatusMsg').textContent = 'Enter your credentials above to load templates'
+    return
+  }
+
+  document.getElementById('waSpinner').style.display = 'flex'
+  document.getElementById('waTableWrap').style.display = 'none'
+  document.getElementById('waChartsWrap').style.display = 'none'
+  document.getElementById('waSummaryCards').style.display = 'none'
+
+  try {
+    const url = `https://graph.facebook.com/v19.0/${wabaId}/message_templates?access_token=${token}&fields=name,status,category,language,quality_score,components&limit=100`
+    const res = await fetch(url)
+    const json = await res.json()
+
+    if (json.error) throw new Error(`[${json.error.code}] ${json.error.message}`)
+
+    waTemplatesData = json.data || []
+    renderWATemplates(waTemplatesData)
+  } catch (err) {
+    // Fallback to mock data
+    if (err.message.includes('Failed to fetch') || err.message.includes('NetworkError') || err.message.includes('CORS')) {
+      waTemplatesData = WA_MOCK_TEMPLATES
+      renderWATemplates(waTemplatesData, true)
+    } else {
+      document.getElementById('waError').style.display = 'block'
+      document.getElementById('waError').textContent = 'API Error: ' + err.message
+    }
+  } finally {
+    document.getElementById('waSpinner').style.display = 'none'
+  }
+}
+
+function renderWATemplates(templates, isMock = false) {
+  if (isMock) {
+    toast('Usando datos de muestra (API no conectada)', 'info')
+  }
+
+  // Summary cards
+  const approved = templates.filter(t => t.status === 'APPROVED').length
+  const rejected = templates.filter(t => t.status === 'REJECTED').length
+  const rate = templates.length ? Math.round((approved / templates.length) * 100) : 0
+
+  document.getElementById('waTotalTemplates').textContent = templates.length
+  document.getElementById('waApprovedTemplates').textContent = approved
+  document.getElementById('waRejectedTemplates').textContent = rejected
+  document.getElementById('waSuccessRate').textContent = rate + '%'
+  document.getElementById('waSummaryCards').style.display = 'grid'
+
+  // Table
+  const tbody = document.getElementById('waTableBody')
+  if (!templates.length) {
+    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:20px;color:var(--text-muted)">No templates found</td></tr>'
+  } else {
+    tbody.innerHTML = templates.map((t, i) => {
+      const badge = waStatusBadge(t.status)
+      const score = t.quality_score ? (t.quality_score.score || '—') : '—'
+      return `<tr>
+        <td style="font-weight:500;color:var(--white)">${t.name}</td>
+        <td><span style="font-size:11px;font-weight:600;color:var(--text-secondary)">${t.category || '—'}</span></td>
+        <td>${t.language || '—'}</td>
+        <td>${badge}</td>
+        <td>${waQualityBadge(score)}</td>
+        <td><button class="btn-outline" style="height:28px;font-size:11px;padding:0 10px" onclick="openWAPreview(${i})">Preview</button></td>
+      </tr>`
+    }).join('')
+  }
+  document.getElementById('waTableWrap').style.display = 'block'
+
+  // Charts
+  renderWACharts(templates)
+  document.getElementById('waChartsWrap').style.display = 'grid'
+}
+
+function waStatusBadge(status) {
+  const map = { APPROVED: ['wa-badge-approved', '🟢'], REJECTED: ['wa-badge-rejected', '🔴'], PENDING: ['wa-badge-pending', '🟡'] }
+  const [cls, dot] = map[status] || ['wa-badge-pending', '🟡']
+  return `<span class="wa-badge ${cls}">${dot} ${status}</span>`
+}
+
+function waQualityBadge(score) {
+  const colors = { HIGH: 'var(--green)', MEDIUM: 'var(--yellow)', LOW: 'var(--red)' }
+  const color = colors[score] || 'var(--text-muted)'
+  return `<span style="font-size:12px;font-weight:600;color:${color}">${score}</span>`
+}
+
+function renderWACharts(templates) {
+  const statusCounts = { APPROVED: 0, REJECTED: 0, PENDING: 0 }
+  const catCounts = { MARKETING: 0, UTILITY: 0, AUTHENTICATION: 0 }
+
+  templates.forEach(t => {
+    if (statusCounts[t.status] !== undefined) statusCounts[t.status]++
+    if (catCounts[t.category] !== undefined) catCounts[t.category]++
+    else catCounts['OTHER'] = (catCounts['OTHER'] || 0) + 1
+  })
+
+  // Destroy old charts
+  if (waCharts.status) { waCharts.status.destroy(); waCharts.status = null }
+  if (waCharts.category) { waCharts.category.destroy(); waCharts.category = null }
+
+  const chartDefaults = {
+    plugins: { legend: { labels: { color: '#a0a0c0', font: { family: 'Inter', size: 12 }, boxWidth: 14 } } }
+  }
+
+  waCharts.status = new Chart(document.getElementById('waStatusChart'), {
+    type: 'doughnut',
+    data: {
+      labels: ['Approved', 'Rejected', 'Pending'],
+      datasets: [{ data: [statusCounts.APPROVED, statusCounts.REJECTED, statusCounts.PENDING], backgroundColor: ['#1D9E75', '#e74c3c', '#f39c12'], borderWidth: 0, hoverOffset: 8 }]
+    },
+    options: { ...chartDefaults, cutout: '65%', plugins: { ...chartDefaults.plugins, tooltip: { callbacks: { label: ctx => ` ${ctx.label}: ${ctx.raw}` } } } }
+  })
+
+  const catLabels = Object.keys(catCounts)
+  waCharts.category = new Chart(document.getElementById('waCategoryChart'), {
+    type: 'bar',
+    data: {
+      labels: catLabels,
+      datasets: [{ label: 'Templates', data: catLabels.map(k => catCounts[k]), backgroundColor: '#1D9E75', borderRadius: 6, borderSkipped: false }]
+    },
+    options: {
+      ...chartDefaults,
+      scales: {
+        x: { ticks: { color: '#a0a0c0', font: { family: 'Inter', size: 11 } }, grid: { color: 'rgba(50,50,77,0.5)' } },
+        y: { ticks: { color: '#a0a0c0', font: { family: 'Inter', size: 11 }, stepSize: 1 }, grid: { color: 'rgba(50,50,77,0.5)' } }
+      },
+      plugins: { ...chartDefaults.plugins, legend: { display: false } }
+    }
+  })
+}
+
+function openWAPreview(idx) {
+  const t = waTemplatesData[idx]
+  if (!t) return
+  document.getElementById('waPreviewTitle').textContent = t.name
+  const comps = t.components || []
+  let html = `<div style="margin-bottom:10px;display:flex;gap:8px;flex-wrap:wrap">${waStatusBadge(t.status)}<span class="wa-badge" style="background:var(--gray-card);color:var(--text-secondary)">${t.category}</span><span class="wa-badge" style="background:var(--gray-card);color:var(--text-secondary)">${t.language}</span></div>`
+  comps.forEach(c => {
+    if (c.type === 'BUTTONS') {
+      html += `<div class="wa-preview-section"><div class="wa-preview-section-label">Buttons</div><div class="wa-preview-buttons">${(c.buttons||[]).map(b => `<span class="wa-preview-btn-chip">${b.text}</span>`).join('')}</div></div>`
+    } else {
+      const text = c.text || (c.format ? `[${c.type} — ${c.format}]` : '')
+      if (text) html += `<div class="wa-preview-section"><div class="wa-preview-section-label">${c.type}</div><div class="wa-preview-section-text">${text}</div></div>`
+    }
+  })
+  document.getElementById('waPreviewBody').innerHTML = html
+  document.getElementById('waPreviewModal').style.display = 'flex'
+}
+
+function closeWAPreview() {
+  document.getElementById('waPreviewModal').style.display = 'none'
+}
+
+function initWATab() {
+  const token = localStorage.getItem('wa_access_token')
+  const wabaId = localStorage.getItem('wa_waba_id')
+  if (token) document.getElementById('waAccessToken').value = token
+  if (wabaId) document.getElementById('waWabaId').value = wabaId
+  if (token && wabaId) fetchWATemplates()
+}
+
+// ══════════════════════════════════════════════════════
 // INIT
 // ══════════════════════════════════════════════════════
 async function init() {
@@ -1912,7 +2464,7 @@ async function init() {
 
 // Cerrar modal con Escape
 document.addEventListener('keydown', (e) => {
-  if (e.key === 'Escape') closePromptsModal()
+  if (e.key === 'Escape') { closePromptsModal(); closeWAPreview() }
 })
 
 // Click fuera del modal lo cierra
