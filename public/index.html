@@ -1076,58 +1076,157 @@
 .chart-wrap-lg{position:relative;height:280px}
 @media(max-width:1100px){.an-kpi-grid{grid-template-columns:repeat(3,1fr)}.an-row2,.an-row3{grid-template-columns:1fr}}
 
-/* ── WHATSAPP TEMPLATES VIEW ── */
-.wa-settings-card{background:var(--surface);border:1px solid var(--gray-border);border-radius:var(--radius);padding:18px 20px 16px;margin-bottom:16px}
-.wa-settings-title{font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:1.1px;margin-bottom:14px}
-.wa-settings-fields{display:flex;flex-wrap:wrap;gap:12px;align-items:flex-end}
-.wa-field-group{display:flex;flex-direction:column;gap:5px;flex:1;min-width:200px}
-.wa-label{font-size:11px;font-weight:600;color:var(--text-muted);letter-spacing:.3px}
-.wa-input{background:var(--bg);border:1px solid var(--gray-border);border-radius:var(--radius);color:var(--text);font-family:inherit;font-size:13px;height:36px;outline:none;padding:0 12px;transition:border-color .2s;width:100%}
-.wa-input:focus{border-color:var(--green)}
-.wa-settings-actions{display:flex;gap:8px;align-items:center;flex-shrink:0}
-.wa-credentials-note{font-size:11px;color:var(--text-muted);margin-top:10px}
-.wa-summary-cards{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px}
-.wa-stat-card{background:var(--surface);border:1px solid var(--gray-border);border-radius:var(--radius);padding:16px;text-align:center}
-.wa-stat-card.wa-approved{border-color:rgba(29,158,117,.4)}
-.wa-stat-card.wa-rejected{border-color:rgba(239,68,68,.4)}
-.wa-stat-card.wa-rate{border-color:rgba(59,130,246,.4)}
-.wa-stat-value{font-size:26px;font-weight:700;color:var(--text);line-height:1;margin-bottom:4px}
-.wa-stat-card.wa-approved .wa-stat-value{color:var(--green)}
-.wa-stat-card.wa-rejected .wa-stat-value{color:var(--red)}
-.wa-stat-card.wa-rate .wa-stat-value{color:#3b82f6}
-.wa-stat-label{font-size:11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.8px;font-weight:600}
-.wa-status-msg{text-align:center;color:var(--text-muted);font-size:13px;padding:32px 0}
-.wa-spinner{display:flex;align-items:center;justify-content:center;gap:12px;padding:32px 0;color:var(--text-muted);font-size:13px}
-.wa-spinner-ring{width:22px;height:22px;border:3px solid var(--gray-border);border-top-color:var(--green);border-radius:50%;animation:wa-spin .8s linear infinite;flex-shrink:0}
-@keyframes wa-spin{to{transform:rotate(360deg)}}
-.wa-error{background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.3);border-radius:var(--radius);color:#f87171;font-size:12px;font-family:monospace;padding:12px 16px;margin-bottom:14px;white-space:pre-wrap;word-break:break-all}
-.wa-badge{display:inline-flex;align-items:center;gap:5px;border-radius:20px;font-size:11px;font-weight:600;padding:3px 10px;text-transform:uppercase;letter-spacing:.5px}
-.wa-badge-approved{background:rgba(29,158,117,.15);color:var(--green)}
-.wa-badge-rejected{background:rgba(239,68,68,.15);color:var(--red)}
-.wa-badge-pending{background:rgba(245,158,11,.15);color:#f59e0b}
-.wa-charts-wrap{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:16px}
-.wa-chart-card{background:var(--surface);border:1px solid var(--gray-border);border-radius:var(--radius);padding:18px}
-.wa-chart-title{font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:1.1px;margin-bottom:14px}
-.wa-chart-container{position:relative;height:220px}
-.wa-preview-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);backdrop-filter:blur(4px);z-index:200;align-items:center;justify-content:center;padding:24px}
-.wa-preview-overlay.open{display:flex}
-.wa-preview-modal{background:var(--surface);border:1px solid var(--gray-border);border-radius:12px;width:100%;max-width:520px;max-height:85vh;display:flex;flex-direction:column;overflow:hidden;animation:modalIn .18s ease;box-shadow:0 24px 80px rgba(0,0,0,.5)}
-@keyframes modalIn{from{opacity:0;transform:scale(.96) translateY(4px)}to{opacity:1;transform:scale(1) translateY(0)}}
-.wa-preview-header{padding:16px 20px;border-bottom:1px solid var(--gray-border);display:flex;align-items:center;justify-content:space-between}
-.wa-preview-header h3{font-size:14px;font-weight:700}
-.wa-preview-close{width:28px;height:28px;background:var(--bg);border:1px solid var(--gray-border);border-radius:6px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:15px;color:var(--text-muted);transition:border-color .15s,color .15s}
-.wa-preview-close:hover{border-color:rgba(239,68,68,.4);color:var(--red)}
-.wa-preview-body{padding:16px 20px;overflow-y:auto;flex:1;display:flex;flex-direction:column;gap:10px}
-.wa-preview-section{background:var(--bg);border:1px solid var(--gray-border);border-radius:8px;padding:12px 14px}
-.wa-preview-section-label{font-size:10px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px}
-.wa-preview-section-text{font-size:13px;color:var(--text);line-height:1.5;white-space:pre-wrap}
-.wa-preview-buttons{display:flex;flex-wrap:wrap;gap:6px;margin-top:4px}
-.wa-preview-btn-chip{background:rgba(29,158,117,.12);color:var(--green);border-radius:6px;padding:4px 10px;font-size:12px;font-weight:600}
-.btn-wa-save{background:var(--green);border:none;border-radius:var(--radius);color:#fff;cursor:pointer;font-family:inherit;font-size:13px;font-weight:600;height:36px;padding:0 16px;transition:background .2s,transform .15s;white-space:nowrap}
-.btn-wa-save:hover{background:var(--green-dark);transform:translateY(-1px)}
-.btn-wa-outline{background:transparent;border:1px solid var(--gray-border);border-radius:var(--radius);color:var(--text-muted);cursor:pointer;font-family:inherit;font-size:13px;font-weight:500;height:36px;padding:0 14px;transition:border-color .2s,color .2s;white-space:nowrap}
-.btn-wa-outline:hover{border-color:var(--green);color:var(--green)}
-@media(max-width:900px){.wa-summary-cards{grid-template-columns:repeat(2,1fr)}.wa-charts-wrap{grid-template-columns:1fr}}
+/* ── WHATSAPP ANALYTICS DASHBOARD ── */
+.wad-wrap{background:#fff;border-radius:12px;border:1px solid #e5e5e5;overflow:visible;font-family:'Inter',sans-serif;color:#1a1a1a;box-shadow:0 1px 3px rgba(0,0,0,.06)}
+.wad-subtabs{display:flex;gap:4px;padding:16px 20px 0;background:#fff;border-bottom:1px solid #e5e5e5;border-radius:12px 12px 0 0;overflow-x:auto}
+.wad-stab{padding:8px 18px;border-radius:8px 8px 0 0;border:1px solid transparent;border-bottom:none;font-size:13px;font-weight:500;color:#6b7280;cursor:pointer;background:transparent;transition:all 200ms ease;font-family:inherit;min-height:36px;white-space:nowrap;outline:none;margin-bottom:-1px;position:relative}
+.wad-stab:hover{color:#1a1a1a;background:#f8f8f8}
+.wad-stab.active{background:#fff;border-color:#e5e5e5;border-bottom-color:#fff;color:#40d99d;font-weight:600}
+.wad-stab:focus{box-shadow:0 0 0 2px rgba(64,217,157,.3)}
+.wad-panel{display:none;padding:20px;animation:wad-in 200ms ease}
+.wad-panel.active{display:block}
+@keyframes wad-in{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}
+/* Filters */
+.wad-filters{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:16px}
+.wad-search{height:36px;padding:0 12px 0 32px;border:1px solid #e5e5e5;border-radius:8px;font-family:inherit;font-size:13px;color:#1a1a1a;background:#f8f8f8;outline:none;transition:border-color 200ms,box-shadow 200ms ease}
+.wad-search:focus{border-color:#40d99d;box-shadow:0 0 0 2px rgba(64,217,157,.15);background:#fff}
+.wad-select{height:36px;padding:0 10px;border:1px solid #e5e5e5;border-radius:8px;font-family:inherit;font-size:13px;color:#1a1a1a;background:#f8f8f8;outline:none;cursor:pointer;transition:border-color 200ms ease;min-width:130px}
+.wad-select:focus{border-color:#40d99d;box-shadow:0 0 0 2px rgba(64,217,157,.15)}
+.wad-btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;height:36px;padding:0 14px;border-radius:8px;font-family:inherit;font-size:13px;font-weight:500;cursor:pointer;transition:all 200ms ease;outline:none;min-width:44px;white-space:nowrap}
+.wad-btn:focus-visible{box-shadow:0 0 0 2px #40d99d,0 0 0 4px rgba(64,217,157,.2)}
+.wad-btn-primary{background:#40d99d;color:#fff;border:none;font-weight:600}
+.wad-btn-primary:hover{background:#36c48d;box-shadow:0 2px 8px rgba(64,217,157,.35)}
+.wad-btn-secondary{background:#fff;color:#1a1a1a;border:1px solid #e5e5e5}
+.wad-btn-secondary:hover{border-color:#40d99d;color:#40d99d}
+.wad-btn-ghost{background:transparent;color:#6b7280;border:1px solid #e5e5e5}
+.wad-btn-ghost:hover{color:#1a1a1a;border-color:#c0c0c0}
+.wad-spin{animation:wad-spin-a .7s linear infinite}
+@keyframes wad-spin-a{to{transform:rotate(360deg)}}
+/* Summary cards */
+.wad-summary{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px}
+.wad-sumcard{background:#f8f8f8;border:1px solid #e5e5e5;border-radius:12px;padding:16px;transition:border-color 200ms ease}
+.wad-sumcard:hover{border-color:#40d99d}
+.wad-sumcard.approved{border-left:3px solid #40d99d}
+.wad-sumcard.rejected{border-left:3px solid #dc2626}
+.wad-sumcard-val{font-size:24px;font-weight:500;color:#1a1a1a;line-height:1;margin-bottom:4px}
+.wad-sumcard.approved .wad-sumcard-val{color:#40d99d}
+.wad-sumcard.rejected .wad-sumcard-val{color:#dc2626}
+.wad-sumcard-label{font-size:13px;color:#6b7280}
+.wad-sumcard-sub{font-size:12px;color:#9ca3af;margin-top:2px}
+/* KPI cards */
+.wad-kpi-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:20px}
+.wad-kpi{background:#f8f8f8;border:1px solid #e5e5e5;border-radius:12px;padding:16px;transition:border-color 200ms ease;position:relative}
+.wad-kpi:hover{border-color:#40d99d}
+.wad-kpi.success{border-left:3px solid #40d99d}
+.wad-kpi.danger{border-left:3px solid #dc2626}
+.wad-kpi-label{font-size:13px;color:#6b7280;margin-bottom:8px;font-weight:500}
+.wad-kpi-value{font-size:24px;font-weight:600;color:#1a1a1a;line-height:1;margin-bottom:6px}
+.wad-kpi-value.rate-good{color:#40d99d}
+.wad-kpi-value.rate-warn{color:#f59e0b}
+.wad-kpi-value.rate-bad{color:#dc2626}
+.wad-trend{display:flex;align-items:center;gap:4px;font-size:12px;font-weight:500}
+.wad-trend.up{color:#40d99d}.wad-trend.dn{color:#dc2626}.wad-trend.nt{color:#9ca3af}
+.wad-sparkline{margin-top:8px;height:28px}
+/* Charts */
+.wad-chart-row{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px}
+.wad-chart-card{background:#f8f8f8;border:1px solid #e5e5e5;border-radius:12px;padding:18px}
+.wad-chart-title{font-size:14px;font-weight:600;color:#1a1a1a;margin-bottom:2px}
+.wad-chart-sub{font-size:12px;color:#6b7280;margin-bottom:14px}
+.wad-chart-canvas{position:relative;height:240px}
+.wad-chart-controls{display:flex;gap:6px;margin-bottom:12px}
+.wad-ctoggle{padding:5px 12px;border-radius:6px;font-size:12px;font-weight:500;cursor:pointer;border:1px solid #e5e5e5;background:#fff;color:#6b7280;transition:all 200ms ease;font-family:inherit}
+.wad-ctoggle.active{background:rgba(64,217,157,.1);border-color:#40d99d;color:#40d99d}
+.wad-chart-legend{display:flex;gap:14px;flex-wrap:wrap;margin-top:12px}
+.wad-legend-item{display:flex;align-items:center;gap:6px;font-size:12px;color:#6b7280}
+.wad-legend-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+/* Tables */
+.wad-table-wrap{overflow-x:auto;border-radius:8px;border:1px solid #e5e5e5;margin-bottom:8px}
+.wad-table{width:100%;border-collapse:collapse;font-size:13px}
+.wad-table th{padding:10px 14px;text-align:left;font-size:11px;font-weight:600;color:#6b7280;text-transform:uppercase;letter-spacing:.6px;background:#f8f8f8;border-bottom:1px solid #e5e5e5;white-space:nowrap;cursor:pointer;user-select:none;transition:color 200ms ease}
+.wad-table th:hover{color:#1a1a1a}.wad-table th.sorted{color:#40d99d}
+.wad-table td{padding:10px 14px;border-bottom:1px solid #f0f0f0;vertical-align:middle;color:#1a1a1a}
+.wad-table tr:last-child td{border-bottom:none}
+.wad-table tr:nth-child(even) td{background:#f8f8f8}
+.wad-table tr:hover td{background:rgba(240,240,240,.5);transition:background 200ms ease}
+/* Badges */
+.wad-badge{display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.4px;white-space:nowrap}
+.wad-badge-approved{background:rgba(64,217,157,.12);color:#40d99d}
+.wad-badge-rejected{background:rgba(220,38,38,.1);color:#dc2626}
+.wad-badge-pending{background:rgba(245,158,11,.1);color:#d97706}
+.wad-badge-rg{background:rgba(64,217,157,.12);color:#40d99d}
+.wad-badge-rw{background:rgba(245,158,11,.1);color:#d97706}
+.wad-badge-rb{background:rgba(220,38,38,.1);color:#dc2626}
+/* Quality bar */
+.wad-quality{display:flex;align-items:center;gap:8px}
+.wad-quality-bar{flex:1;max-width:56px;height:4px;background:#e5e5e5;border-radius:2px;overflow:hidden}
+.wad-quality-fill{height:100%;background:#40d99d;border-radius:2px}
+.wad-quality-num{font-size:12px;font-weight:500;color:#1a1a1a;min-width:24px}
+/* Pagination */
+.wad-pagination{display:flex;align-items:center;justify-content:space-between;padding:10px 0 4px;font-size:13px;color:#6b7280}
+.wad-pagination-btns{display:flex;gap:4px}
+.wad-page-btn{width:32px;height:32px;border-radius:6px;border:1px solid #e5e5e5;background:#fff;color:#6b7280;cursor:pointer;font-family:inherit;font-size:13px;display:flex;align-items:center;justify-content:center;transition:all 200ms ease}
+.wad-page-btn:hover:not(:disabled){border-color:#40d99d;color:#40d99d}
+.wad-page-btn:disabled{opacity:.4;cursor:not-allowed}
+/* Settings */
+.wad-settings-sec{margin-bottom:28px}
+.wad-settings-sec-title{font-size:14px;font-weight:600;color:#1a1a1a;margin-bottom:14px;padding-bottom:8px;border-bottom:1px solid #e5e5e5}
+.wad-form-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.wad-field{display:flex;flex-direction:column;gap:5px}
+.wad-field label{font-size:13px;font-weight:500;color:#1a1a1a}
+.wad-input{height:40px;padding:0 12px;border:1px solid #e5e5e5;border-radius:8px;background:#f0f0f0;font-family:inherit;font-size:13px;color:#1a1a1a;outline:none;transition:border-color 200ms,box-shadow 200ms ease;width:100%}
+.wad-input:focus{border-color:#40d99d;box-shadow:0 0 0 2px rgba(64,217,157,.2);background:#fff}
+.wad-input-wrap{position:relative;display:flex;align-items:center}
+.wad-input-wrap .wad-input{padding-right:42px}
+.wad-eye-btn{position:absolute;right:10px;background:none;border:none;cursor:pointer;color:#9ca3af;padding:4px;display:flex;transition:color 200ms ease;outline:none}
+.wad-eye-btn:hover{color:#1a1a1a}
+.wad-toggle-row{display:flex;align-items:center;justify-content:space-between;padding:10px 0}
+.wad-toggle-label{font-size:13px;color:#1a1a1a;font-weight:500}
+.wad-toggle{position:relative;width:40px;height:22px;cursor:pointer;flex-shrink:0}
+.wad-toggle input{opacity:0;width:0;height:0}
+.wad-toggle-track{position:absolute;inset:0;background:#e5e5e5;border-radius:11px;transition:background 200ms ease}
+.wad-toggle input:checked+.wad-toggle-track{background:#40d99d}
+.wad-toggle-track::before{content:'';position:absolute;left:3px;top:3px;width:16px;height:16px;border-radius:50%;background:#fff;transition:transform 200ms ease;box-shadow:0 1px 3px rgba(0,0,0,.15)}
+.wad-toggle input:checked+.wad-toggle-track::before{transform:translateX(18px)}
+.wad-note{font-size:12px;color:#9ca3af;margin-top:4px;line-height:1.4}
+/* Error banner */
+.wad-error{background:rgba(220,38,38,.06);border:1px solid rgba(220,38,38,.2);border-radius:8px;color:#dc2626;font-size:12px;font-family:monospace;padding:12px 16px;margin-bottom:16px;white-space:pre-wrap;word-break:break-all;display:none}
+/* Skeleton */
+.wad-skel{background:linear-gradient(90deg,#e5e5e5 25%,#efefef 50%,#e5e5e5 75%);background-size:200% 100%;border-radius:8px;animation:wad-shimmer 1.4s infinite linear}
+@keyframes wad-shimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
+/* Date pills */
+.wad-date-pills{display:flex;gap:4px;flex-wrap:wrap}
+.wad-dpill{padding:5px 12px;border-radius:6px;font-size:12px;font-weight:500;cursor:pointer;border:1px solid #e5e5e5;background:#fff;color:#6b7280;transition:all 200ms ease;font-family:inherit}
+.wad-dpill.active{background:rgba(64,217,157,.1);border-color:#40d99d;color:#40d99d}
+.wad-dpill:hover:not(.active){background:#f8f8f8}
+/* Multi-select */
+.wad-ms{position:relative}
+.wad-ms-btn{height:36px;padding:0 12px;border:1px solid #e5e5e5;border-radius:8px;font-family:inherit;font-size:13px;color:#1a1a1a;background:#f8f8f8;cursor:pointer;display:flex;align-items:center;gap:8px;white-space:nowrap;min-width:160px;justify-content:space-between;transition:border-color 200ms ease;outline:none}
+.wad-ms-btn.open,.wad-ms-btn:focus{border-color:#40d99d;background:#fff}
+.wad-ms-dd{position:absolute;top:calc(100% + 4px);left:0;right:0;background:#fff;border:1px solid #e5e5e5;border-radius:8px;box-shadow:0 4px 16px rgba(0,0,0,.1);z-index:50;max-height:220px;overflow-y:auto;display:none}
+.wad-ms-dd.open{display:block}
+.wad-ms-item{display:flex;align-items:center;gap:8px;padding:8px 12px;cursor:pointer;font-size:13px;color:#1a1a1a;transition:background 150ms ease}
+.wad-ms-item:hover{background:#f8f8f8}
+.wad-ms-item input[type=checkbox]{width:14px;height:14px;accent-color:#40d99d;cursor:pointer;flex-shrink:0}
+/* Expand */
+.wad-expand-hdr{display:flex;align-items:center;justify-content:space-between;padding:12px 0;cursor:pointer;user-select:none;font-size:14px;font-weight:600;color:#1a1a1a;border-top:1px solid #e5e5e5;margin-top:20px}
+.wad-expand-body{display:none}
+.wad-expand-body.open{display:block}
+/* Preview modal */
+.wad-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);backdrop-filter:blur(3px);z-index:400;align-items:center;justify-content:center;padding:24px}
+.wad-overlay.open{display:flex}
+.wad-modal{background:#fff;border-radius:12px;width:100%;max-width:520px;max-height:85vh;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,.15);animation:wad-in 200ms ease}
+.wad-modal-hdr{padding:16px 20px;border-bottom:1px solid #e5e5e5;display:flex;align-items:center;justify-content:space-between}
+.wad-modal-title{font-size:14px;font-weight:600;color:#1a1a1a}
+.wad-modal-close{width:28px;height:28px;border:1px solid #e5e5e5;border-radius:6px;background:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;color:#6b7280;transition:all 200ms ease;outline:none}
+.wad-modal-close:hover{border-color:#dc2626;color:#dc2626}
+.wad-modal-body{padding:16px 20px;overflow-y:auto;flex:1;display:flex;flex-direction:column;gap:10px}
+.wad-comp{background:#f8f8f8;border:1px solid #e5e5e5;border-radius:8px;padding:12px 14px}
+.wad-comp-label{font-size:10px;font-weight:700;color:#6b7280;text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px}
+.wad-comp-text{font-size:13px;color:#1a1a1a;line-height:1.5;white-space:pre-wrap}
+.wad-comp-btns{display:flex;flex-wrap:wrap;gap:6px;margin-top:4px}
+.wad-comp-chip{background:rgba(64,217,157,.12);color:#40d99d;border-radius:6px;padding:4px 10px;font-size:12px;font-weight:600}
+@media(max-width:900px){.wad-kpi-grid{grid-template-columns:repeat(2,1fr)}.wad-summary{grid-template-columns:repeat(2,1fr)}.wad-chart-row{grid-template-columns:1fr}.wad-form-grid{grid-template-columns:1fr}}
+@media(max-width:560px){.wad-kpi-grid{grid-template-columns:1fr}}
 </style>
 </head>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
@@ -2013,101 +2112,240 @@
   </div>
 </div>
 
-<!-- ═══════════════════ VISTA: WHATSAPP TEMPLATES ═══════════════════ -->
+<!-- ═══════════════════ VISTA: WHATSAPP ═══════════════════ -->
 <div id="view-whatsapp" class="view" style="display:none">
   <div class="view-header">
     <div>
-      <h2 class="view-title">WhatsApp Templates</h2>
-      <p class="view-subtitle">Gestiona y monitorea tus plantillas de la Meta Business API</p>
+      <h2 class="view-title">WhatsApp</h2>
+      <p class="view-subtitle">Templates, analytics y configuración de tu cuenta WhatsApp Business</p>
     </div>
-    <button class="btn-wa-outline" onclick="fetchWATemplates()">↻ Refresh</button>
   </div>
+  <div class="wad-wrap">
+    <!-- Sub-tab nav -->
+    <div class="wad-subtabs">
+      <button class="wad-stab" id="wad-stab-templates" onclick="switchWASubTab('templates')">Templates</button>
+      <button class="wad-stab active" id="wad-stab-analytics" onclick="switchWASubTab('analytics')">Analytics</button>
+      <button class="wad-stab" id="wad-stab-settings" onclick="switchWASubTab('settings')">Settings</button>
+    </div>
 
-  <!-- Settings -->
-  <div class="wa-settings-card">
-    <div class="wa-settings-title">API Credentials</div>
-    <div class="wa-settings-fields">
-      <div class="wa-field-group">
-        <label class="wa-label">Access Token</label>
-        <input type="password" id="waAccessToken" class="wa-input" placeholder="EAAxxxxxxxxxxxxxxx..." />
+    <!-- ── PANEL: TEMPLATES ── -->
+    <div class="wad-panel" id="wad-panel-templates">
+      <div class="wad-filters">
+        <div style="position:relative;flex:1;min-width:180px">
+          <svg style="position:absolute;left:10px;top:50%;transform:translateY(-50%);pointer-events:none" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+          <input type="text" id="wad-tpl-search" class="wad-search" style="flex:1;width:100%" placeholder="Search templates…" oninput="filterWATpl()">
+        </div>
+        <select id="wad-tpl-status" class="wad-select" onchange="filterWATpl()">
+          <option value="all">All Status</option>
+          <option value="APPROVED">Approved</option>
+          <option value="REJECTED">Rejected</option>
+          <option value="PENDING">Pending</option>
+        </select>
+        <select id="wad-tpl-category" class="wad-select" onchange="filterWATpl()">
+          <option value="all">All Categories</option>
+          <option value="MARKETING">Marketing</option>
+          <option value="UTILITY">Utility</option>
+          <option value="AUTHENTICATION">Authentication</option>
+        </select>
+        <button class="wad-btn wad-btn-secondary" id="wad-refresh-btn" onclick="wadRefresh()">
+          <svg id="wad-refresh-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M3 21v-5h5"/></svg>
+          Refresh
+        </button>
       </div>
-      <div class="wa-field-group">
-        <label class="wa-label">WABA ID</label>
-        <input type="text" id="waWabaId" class="wa-input" placeholder="123456789012345" />
+      <div class="wad-summary" id="wad-tpl-summary"></div>
+      <div id="wad-tpl-error" class="wad-error"></div>
+      <div class="wad-table-wrap">
+        <table class="wad-table">
+          <thead><tr>
+            <th onclick="sortWATpl('name')">Name <span id="wad-ts-name"></span></th>
+            <th onclick="sortWATpl('category')">Category <span id="wad-ts-category"></span></th>
+            <th>Language</th>
+            <th onclick="sortWATpl('status')">Status <span id="wad-ts-status"></span></th>
+            <th onclick="sortWATpl('quality')">Quality <span id="wad-ts-quality"></span></th>
+            <th>Actions</th>
+          </tr></thead>
+          <tbody id="wad-tpl-tbody"></tbody>
+        </table>
       </div>
-      <div class="wa-settings-actions">
-        <button class="btn-wa-save" onclick="saveWACredentials()">Save Credentials</button>
+      <div style="margin-top:20px;max-width:380px">
+        <div class="wad-chart-card">
+          <div class="wad-chart-title">Templates by Status</div>
+          <div class="wad-chart-sub">Approval distribution</div>
+          <div class="wad-chart-canvas" style="height:200px"><canvas id="wad-donut"></canvas></div>
+          <div class="wad-chart-legend" id="wad-donut-legend"></div>
+        </div>
       </div>
     </div>
-    <div class="wa-credentials-note">Credentials saved locally in your browser</div>
-  </div>
 
-  <!-- Summary Cards -->
-  <div class="wa-summary-cards" id="waSummaryCards" style="display:none">
-    <div class="wa-stat-card">
-      <div class="wa-stat-value" id="waTotalTemplates">—</div>
-      <div class="wa-stat-label">Total Templates</div>
+    <!-- ── PANEL: ANALYTICS ── -->
+    <div class="wad-panel active" id="wad-panel-analytics">
+      <div class="wad-filters">
+        <div class="wad-date-pills" id="wad-dpills">
+          <button class="wad-dpill" onclick="setWADate('7d',this)">Last 7 days</button>
+          <button class="wad-dpill active" onclick="setWADate('30d',this)">Last 30 days</button>
+          <button class="wad-dpill" onclick="setWADate('14d',this)">Last 14 days</button>
+        </div>
+        <div class="wad-ms" id="wad-ms-wrap">
+          <button class="wad-ms-btn" id="wad-ms-btn" onclick="toggleWAMs()">
+            <span id="wad-ms-label">All Templates</span>
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m6 9 6 6 6-6"/></svg>
+          </button>
+          <div class="wad-ms-dd" id="wad-ms-dd"></div>
+        </div>
+        <button class="wad-btn wad-btn-primary" onclick="applyWAFilters()">Apply Filters</button>
+        <button class="wad-btn wad-btn-ghost" onclick="resetWAFilters()">Reset</button>
+      </div>
+      <div class="wad-kpi-grid" id="wad-kpis"></div>
+      <div class="wad-chart-row">
+        <div class="wad-chart-card">
+          <div class="wad-chart-title">Daily Volume</div>
+          <div class="wad-chart-sub">Messages sent per day</div>
+          <div class="wad-chart-controls">
+            <button class="wad-ctoggle active" onclick="setVolToggle('all',this)">All</button>
+            <button class="wad-ctoggle" onclick="setVolToggle('success',this)">Successful</button>
+            <button class="wad-ctoggle" onclick="setVolToggle('failed',this)">Failed</button>
+          </div>
+          <div class="wad-chart-canvas"><canvas id="wad-vol-chart"></canvas></div>
+        </div>
+        <div class="wad-chart-card">
+          <div class="wad-chart-title">Success Rate by Day</div>
+          <div class="wad-chart-sub">% delivered + read vs sent</div>
+          <div class="wad-chart-canvas"><canvas id="wad-rate-chart"></canvas></div>
+        </div>
+      </div>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+        <div>
+          <div style="font-size:14px;font-weight:600;color:#1a1a1a">Performance by Template</div>
+          <div style="font-size:13px;color:#6b7280;margin-top:2px">Aggregated over selected period</div>
+        </div>
+        <button class="wad-btn wad-btn-secondary" onclick="exportWACSV()">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7,10 12,15 17,10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          Export CSV
+        </button>
+      </div>
+      <div class="wad-table-wrap">
+        <table class="wad-table">
+          <thead><tr>
+            <th onclick="sortWAAn('name')">Template <span id="wad-as-name"></span></th>
+            <th onclick="sortWAAn('sent')" class="sorted">Sent <span id="wad-as-sent">↓</span></th>
+            <th onclick="sortWAAn('delivered')">Delivered <span id="wad-as-delivered"></span></th>
+            <th onclick="sortWAAn('read')">Read <span id="wad-as-read"></span></th>
+            <th onclick="sortWAAn('failed')">Failed <span id="wad-as-failed"></span></th>
+            <th onclick="sortWAAn('rate')">Success Rate <span id="wad-as-rate"></span></th>
+            <th>Trend</th>
+          </tr></thead>
+          <tbody id="wad-an-tbody"></tbody>
+        </table>
+      </div>
+      <div class="wad-pagination" id="wad-an-pages"></div>
+      <div class="wad-expand-hdr" onclick="toggleWADetail()">
+        <span>Daily Detail</span>
+        <svg id="wad-exp-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6b7280" stroke-width="2.5" style="transition:transform 200ms ease"><path d="m6 9 6 6 6-6"/></svg>
+      </div>
+      <div class="wad-expand-body" id="wad-detail-body">
+        <div style="display:flex;align-items:center;gap:8px;margin:12px 0">
+          <div style="position:relative">
+            <svg style="position:absolute;left:10px;top:50%;transform:translateY(-50%);pointer-events:none" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+            <input type="text" id="wad-detail-filter" class="wad-search" style="padding-left:30px;width:240px" placeholder="Filter by template…" oninput="renderWADetail()">
+          </div>
+          <button class="wad-btn wad-btn-secondary" style="height:32px;font-size:12px" onclick="exportWADailyCSV()">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7,10 12,15 17,10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            Export
+          </button>
+        </div>
+        <div class="wad-table-wrap">
+          <table class="wad-table">
+            <thead><tr><th>Date</th><th>Template</th><th>Sent</th><th>Successful</th><th>Failed</th><th>Rate %</th></tr></thead>
+            <tbody id="wad-detail-tbody"></tbody>
+          </table>
+        </div>
+      </div>
     </div>
-    <div class="wa-stat-card wa-approved">
-      <div class="wa-stat-value" id="waApprovedTemplates">—</div>
-      <div class="wa-stat-label">Approved</div>
-    </div>
-    <div class="wa-stat-card wa-rejected">
-      <div class="wa-stat-value" id="waRejectedTemplates">—</div>
-      <div class="wa-stat-label">Rejected</div>
-    </div>
-    <div class="wa-stat-card wa-rate">
-      <div class="wa-stat-value" id="waSuccessRate">—</div>
-      <div class="wa-stat-label">Success Rate</div>
-    </div>
-  </div>
 
-  <!-- State messages -->
-  <div id="waStatusMsg" class="wa-status-msg">Enter your credentials above to load templates</div>
-  <div id="waSpinner" class="wa-spinner" style="display:none">
-    <div class="wa-spinner-ring"></div>
-    <span>Fetching templates from Meta API...</span>
-  </div>
-  <div id="waError" class="wa-error" style="display:none"></div>
-
-  <!-- Templates Table -->
-  <div id="waTableWrap" style="display:none">
-    <table class="data-table">
-      <thead>
-        <tr>
-          <th>Template Name</th>
-          <th>Category</th>
-          <th>Language</th>
-          <th>Status</th>
-          <th>Quality Score</th>
-          <th>Preview</th>
-        </tr>
-      </thead>
-      <tbody id="waTableBody"></tbody>
-    </table>
-  </div>
-
-  <!-- Charts -->
-  <div id="waChartsWrap" class="wa-charts-wrap" style="display:none">
-    <div class="wa-chart-card">
-      <div class="wa-chart-title">Templates by Status</div>
-      <div class="wa-chart-container"><canvas id="waStatusChart"></canvas></div>
+    <!-- ── PANEL: SETTINGS ── -->
+    <div class="wad-panel" id="wad-panel-settings">
+      <div style="max-width:660px">
+        <div class="wad-settings-sec">
+          <div class="wad-settings-sec-title">API Credentials</div>
+          <div class="wad-form-grid">
+            <div class="wad-field">
+              <label for="wad-token">Access Token</label>
+              <div class="wad-input-wrap">
+                <input type="password" id="wad-token" class="wad-input" placeholder="EAAxxxxxxxxxxxxxxx…">
+                <button class="wad-eye-btn" onclick="toggleWAEye()" title="Show/hide">
+                  <svg id="wad-eye-svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg>
+                </button>
+              </div>
+            </div>
+            <div class="wad-field">
+              <label for="wad-waba">WABA ID</label>
+              <input type="text" id="wad-waba" class="wad-input" placeholder="123456789012345">
+              <div class="wad-note">Meta Business Suite → Business Settings → WhatsApp Accounts</div>
+            </div>
+          </div>
+          <div style="margin-top:16px">
+            <button class="wad-btn wad-btn-primary" onclick="saveWASettings()" style="min-width:200px">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17,21 17,13 7,13 7,21"/><polyline points="7,3 7,8 15,8"/></svg>
+              Save &amp; Test Connection
+            </button>
+          </div>
+        </div>
+        <div class="wad-settings-sec">
+          <div class="wad-settings-sec-title">Display Preferences</div>
+          <div class="wad-form-grid">
+            <div class="wad-field">
+              <label for="wad-def-range">Default Date Range</label>
+              <select id="wad-def-range" class="wad-input" style="cursor:pointer">
+                <option value="7d">Last 7 days</option>
+                <option value="14d">Last 14 days</option>
+                <option value="30d" selected>Last 30 days</option>
+              </select>
+            </div>
+            <div class="wad-field">
+              <label for="wad-def-filter">Default Template Filter</label>
+              <select id="wad-def-filter" class="wad-input" style="cursor:pointer">
+                <option value="all">All Templates</option>
+                <option value="approved">Approved only</option>
+              </select>
+            </div>
+          </div>
+          <div class="wad-toggle-row">
+            <span class="wad-toggle-label">Auto-refresh every 5 minutes</span>
+            <label class="wad-toggle">
+              <input type="checkbox" id="wad-autorefresh" onchange="toggleWAAutoRefresh(this.checked)">
+              <span class="wad-toggle-track"></span>
+            </label>
+          </div>
+        </div>
+        <div class="wad-settings-sec">
+          <div class="wad-settings-sec-title">Thresholds &amp; Alerts</div>
+          <div class="wad-form-grid">
+            <div class="wad-field">
+              <label for="wad-thresh-s">Success Rate Alert Threshold (%)</label>
+              <input type="number" id="wad-thresh-s" class="wad-input" value="95" min="0" max="100">
+            </div>
+            <div class="wad-field">
+              <label for="wad-thresh-f">Failed Messages Alert Threshold</label>
+              <input type="number" id="wad-thresh-f" class="wad-input" value="100" min="0">
+            </div>
+          </div>
+          <div class="wad-note" style="margin-top:8px">Alerts shown as dashboard notifications when thresholds are crossed.</div>
+        </div>
+      </div>
     </div>
-    <div class="wa-chart-card">
-      <div class="wa-chart-title">Templates by Category</div>
-      <div class="wa-chart-container"><canvas id="waCategoryChart"></canvas></div>
-    </div>
-  </div>
-</div>
+  </div><!-- /wad-wrap -->
+</div><!-- /view-whatsapp -->
 
 <!-- WA Preview Modal -->
-<div id="waPreviewOverlay" class="wa-preview-overlay" onclick="if(event.target===this)closeWAPreview()">
-  <div class="wa-preview-modal">
-    <div class="wa-preview-header">
-      <h3 id="waPreviewTitle">Template Preview</h3>
-      <div class="wa-preview-close" onclick="closeWAPreview()">✕</div>
+<div id="wad-overlay" class="wad-overlay" onclick="if(event.target===this)closeWAPreview()">
+  <div class="wad-modal">
+    <div class="wad-modal-hdr">
+      <span class="wad-modal-title" id="wad-preview-title">Template Preview</span>
+      <button class="wad-modal-close" onclick="closeWAPreview()">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 6 6 18M6 6l12 12"/></svg>
+      </button>
     </div>
-    <div id="waPreviewBody" class="wa-preview-body"></div>
+    <div class="wad-modal-body" id="wad-preview-body"></div>
   </div>
 </div>
 
@@ -4727,192 +4965,556 @@ function exportAnalyticsCSV() {
 }
 
 // ══════════════════════════════════════════════════════
-// WHATSAPP TEMPLATES
+// WHATSAPP ANALYTICS DASHBOARD
 // ══════════════════════════════════════════════════════
-const WA_MOCK_TEMPLATES = [
-  { id:'m1', name:'bienvenida_arrendatario', category:'UTILITY', language:'es', status:'APPROVED', quality_score:{score:'HIGH'}, components:[{type:'HEADER',format:'TEXT',text:'¡Bienvenido a Rentmies! 🏠'},{type:'BODY',text:'Hola {{1}}, gracias por contactarnos. Estamos listos para ayudarte a encontrar tu próximo hogar en {{2}}. ¿En qué ciudad estás buscando?'},{type:'FOOTER',text:'Rentmies — Arrienda fácil'},{type:'BUTTONS',buttons:[{type:'QUICK_REPLY',text:'Bogotá'},{type:'QUICK_REPLY',text:'Medellín'},{type:'QUICK_REPLY',text:'Cali'}]}] },
-  { id:'m2', name:'oferta_apartamento_marketing', category:'MARKETING', language:'es', status:'APPROVED', quality_score:{score:'HIGH'}, components:[{type:'HEADER',format:'IMAGE'},{type:'BODY',text:'✨ Apartamento disponible en {{1}}\n\n📍 {{2}}\n🛏 {{3}} habitaciones | 🚿 {{4}} baños\n💵 ${{5}}/mes\n\n¿Te interesa agendar una visita?'},{type:'BUTTONS',buttons:[{type:'QUICK_REPLY',text:'Ver más detalles'},{type:'QUICK_REPLY',text:'Agendar visita'}]}] },
-  { id:'m3', name:'recordatorio_pago', category:'UTILITY', language:'es', status:'APPROVED', quality_score:{score:'MEDIUM'}, components:[{type:'BODY',text:'Hola {{1}}, te recordamos que tu pago de arriendo por ${{2}} vence el {{3}}. Puedes pagar en línea en rentmies.co/pagar'},{type:'FOOTER',text:'Rentmies — Tu hogar, nuestra prioridad'}] },
-  { id:'m4', name:'confirmacion_visita', category:'UTILITY', language:'es', status:'APPROVED', quality_score:{score:'HIGH'}, components:[{type:'BODY',text:'✅ Visita confirmada\n\nHola {{1}}, tu visita está confirmada para el {{2}} a las {{3}} en {{4}}.\n\nTe esperamos. ¡Nos vemos pronto!'}] },
-  { id:'m5', name:'promo_descuento_octubre', category:'MARKETING', language:'es', status:'REJECTED', quality_score:{score:'LOW'}, components:[{type:'BODY',text:'🔥 OFERTA ESPECIAL 🔥 Arrienda HOY y obtén 15% de descuento en tu primer mes. ¡Aplica ya!'}] },
-  { id:'m6', name:'verificacion_identidad', category:'AUTHENTICATION', language:'es', status:'APPROVED', quality_score:{score:'HIGH'}, components:[{type:'BODY',text:'Tu código de verificación de Rentmies es: {{1}}. Válido por 10 minutos. No lo compartas con nadie.'}] },
-  { id:'m7', name:'seguimiento_lead', category:'MARKETING', language:'es', status:'PENDING', quality_score:{score:'MEDIUM'}, components:[{type:'BODY',text:'Hola {{1}}, hace unos días estuviste buscando apartamentos en {{2}}. ¿Encontraste lo que buscabas? Tenemos nuevas opciones disponibles.'},{type:'BUTTONS',buttons:[{type:'QUICK_REPLY',text:'Ver opciones'},{type:'QUICK_REPLY',text:'No, gracias'}]}] },
-  { id:'m8', name:'contrato_listo', category:'UTILITY', language:'es', status:'APPROVED', quality_score:{score:'HIGH'}, components:[{type:'BODY',text:'📄 Tu contrato de arrendamiento está listo para firmar, {{1}}. Ingresa a rentmies.co/contrato/{{2}} para revisarlo y firmarlo digitalmente.'}] },
+// ── Mock Templates (8 Rentmies-specific templates) ──
+const WAD_TEMPLATES = [
+  { id:'t1', name:'property_visit_confirmation', category:'UTILITY', language:'es', status:'APPROVED', quality_score:{score:'HIGH'}, components:[{type:'BODY',text:'Hola {{1}}, tu visita al inmueble en {{2}} está confirmada para el {{3}} a las {{4}}. Por favor lleva tu documento de identidad.'},{type:'FOOTER',text:'Rentmies — Tu hogar fácil'},{type:'BUTTONS',buttons:[{type:'QUICK_REPLY',text:'Confirmar'},{type:'QUICK_REPLY',text:'Reagendar'}]}] },
+  { id:'t2', name:'rental_contract_reminder', category:'UTILITY', language:'es', status:'APPROVED', quality_score:{score:'HIGH'}, components:[{type:'BODY',text:'Hola {{1}}, tu contrato de arrendamiento de {{2}} vence el {{3}}. Ingresa a rentmies.co/renovar para iniciar el proceso de renovación y asegurar tu hogar.'},{type:'FOOTER',text:'Rentmies'}] },
+  { id:'t3', name:'new_listing_alert', category:'MARKETING', language:'es', status:'APPROVED', quality_score:{score:'HIGH'}, components:[{type:'HEADER',format:'IMAGE'},{type:'BODY',text:'Nuevo inmueble disponible en {{1}}!\n\n{{2}}\nDesde ${{3}}/mes\n{{4}} hab — {{5}} banos\n\nTe interesa?'},{type:'BUTTONS',buttons:[{type:'QUICK_REPLY',text:'Ver detalles'},{type:'QUICK_REPLY',text:'Agendar visita'}]}] },
+  { id:'t4', name:'payment_due_reminder', category:'UTILITY', language:'es', status:'APPROVED', quality_score:{score:'MEDIUM'}, components:[{type:'BODY',text:'Hola {{1}}, te recordamos que tu pago de arriendo de ${{2}} COP vence el {{3}}. Paga en linea en rentmies.co/pagar y evita recargos.'}] },
+  { id:'t5', name:'welcome_new_tenant', category:'UTILITY', language:'es', status:'APPROVED', quality_score:{score:'HIGH'}, components:[{type:'HEADER',format:'TEXT',text:'Bienvenido a tu nuevo hogar, {{1}}!'},{type:'BODY',text:'Estamos emocionados de que hayas elegido Rentmies. Tu contrato comienza el {{2}} en {{3}}.\n\nSi necesitas algo, estamos aqui 24/7. Bienvenido a la familia!'},{type:'FOOTER',text:'Rentmies'},{type:'BUTTONS',buttons:[{type:'QUICK_REPLY',text:'Ver mi contrato'}]}] },
+  { id:'t6', name:'maintenance_request_update', category:'UTILITY', language:'es', status:'PENDING', quality_score:{score:'MEDIUM'}, components:[{type:'BODY',text:'Hola {{1}}, tu solicitud de mantenimiento #{{2}} ha sido actualizada.\n\nEstado: {{3}}\nTecnico asignado: {{4}}\nFecha estimada: {{5}}'}] },
+  { id:'t7', name:'lease_renewal_offer', category:'MARKETING', language:'es', status:'APPROVED', quality_score:{score:'HIGH'}, components:[{type:'BODY',text:'Hola {{1}}, tienes una oferta especial! Renueva tu contrato antes del {{2}} y obtén {{3}} de descuento en el primer mes renovado.'},{type:'BUTTONS',buttons:[{type:'QUICK_REPLY',text:'Renovar ahora'},{type:'QUICK_REPLY',text:'Mas informacion'}]}] },
+  { id:'t8', name:'viewing_scheduled', category:'UTILITY', language:'es', status:'REJECTED', quality_score:{score:'LOW'}, components:[{type:'BODY',text:'Visita agendada: {{1}} en {{2}} el {{3}}. Lleva tu documento de identidad. Cualquier duda comunicate con nosotros.'}] },
 ]
 
-let waCharts = { status: null, category: null }
-let waTemplatesData = []
-
-function saveWACredentials() {
-  const token = document.getElementById('waAccessToken').value.trim()
-  const wabaId = document.getElementById('waWabaId').value.trim()
-  if (!token || !wabaId) { toast('Completa ambos campos', 'error'); return }
-  localStorage.setItem('wa_access_token', token)
-  localStorage.setItem('wa_waba_id', wabaId)
-  toast('✅ Credenciales guardadas', 'success')
-  fetchWATemplates()
+// ── Generate 30 days of realistic daily data per template ──
+function wadGenDailyData() {
+  const today = new Date()
+  const vols = { t1:1200, t2:800, t3:2400, t4:1800, t5:600, t6:300, t7:1500, t8:400 }
+  const rates = { t1:.97, t2:.95, t3:.93, t4:.96, t5:.98, t6:.91, t7:.94, t8:.89 }
+  const rows = []
+  for (let d = 29; d >= 0; d--) {
+    const dt = new Date(today); dt.setDate(dt.getDate() - d)
+    const ds = dt.toISOString().slice(0,10)
+    const wknd = dt.getDay()===0||dt.getDay()===6
+    WAD_TEMPLATES.forEach(t => {
+      const base = vols[t.id]||500
+      const sent = Math.round(base*(0.7+Math.random()*.6)*(wknd?.6:1))
+      const sr = Math.min(.99,Math.max(.7, rates[t.id]+(Math.random()-.5)*.04))
+      const successful = Math.round(sent*sr)
+      const failed = sent - successful
+      const delivered = successful
+      const read = Math.round(successful*(.55+Math.random()*.25))
+      rows.push({ date:ds, templateId:t.id, templateName:t.name, sent, delivered, read, failed, successful })
+    })
+  }
+  return rows
 }
 
-async function fetchWATemplates() {
-  const token = localStorage.getItem('wa_access_token')
-  const wabaId = localStorage.getItem('wa_waba_id')
+const WAD_DAILY = wadGenDailyData()
 
-  document.getElementById('waStatusMsg').style.display = 'none'
-  document.getElementById('waError').style.display = 'none'
+// ── State ──
+const wadS = {
+  activeTab: 'analytics',
+  templates: [...WAD_TEMPLATES],
+  daily: WAD_DAILY,
+  tplSort: { col:'name', dir:'asc' },
+  anSort: { col:'sent', dir:'desc' },
+  anPage: 1,
+  anDateRange: '30d',
+  anSelTpls: [],
+  anVolToggle: 'all',
+  anDetailOpen: false,
+  charts: { donut:null, vol:null, rate:null },
+  arInterval: null,
+}
+const WAD_PG = 10
 
-  if (!token || !wabaId) {
-    document.getElementById('waStatusMsg').style.display = 'block'
-    document.getElementById('waStatusMsg').textContent = 'Enter your credentials above to load templates'
-    return
+// ── Sub-tab switching ──
+function switchWASubTab(tab) {
+  wadS.activeTab = tab
+  document.querySelectorAll('.wad-stab').forEach(b => b.classList.remove('active'))
+  document.querySelectorAll('.wad-panel').forEach(p => p.classList.remove('active'))
+  const tabEl = document.getElementById(`wad-stab-${tab}`)
+  const panelEl = document.getElementById(`wad-panel-${tab}`)
+  if (tabEl) tabEl.classList.add('active')
+  if (panelEl) panelEl.classList.add('active')
+  if (tab==='templates') renderWATpl()
+  if (tab==='analytics') renderWAAn()
+  if (tab==='settings') loadWASettingsForm()
+}
+
+// ─────────────────────────────────────────────
+// TEMPLATES TAB
+// ─────────────────────────────────────────────
+function getWATplFiltered() {
+  const q = (document.getElementById('wad-tpl-search')?.value||'').toLowerCase()
+  const st = document.getElementById('wad-tpl-status')?.value||'all'
+  const cat = document.getElementById('wad-tpl-category')?.value||'all'
+  return wadS.templates.filter(t =>
+    (!q || t.name.toLowerCase().includes(q)) &&
+    (st==='all' || t.status===st) &&
+    (cat==='all' || t.category===cat)
+  )
+}
+
+function filterWATpl() { renderWATpl() }
+
+function renderWATpl() {
+  const tpls = getWATplFiltered()
+  renderWATplSummary(tpls)
+  renderWATplTable(tpls)
+  renderWADonut(tpls)
+}
+
+function renderWATplSummary(tpls) {
+  const approved = tpls.filter(t=>t.status==='APPROVED').length
+  const rejected = tpls.filter(t=>t.status==='REJECTED').length
+  const n = tpls.length
+  const qMap = {HIGH:90,MEDIUM:70,LOW:40}
+  const avgQ = n ? Math.round(tpls.reduce((a,t)=>a+(qMap[t.quality_score?.score]||50),0)/n) : 0
+  document.getElementById('wad-tpl-summary').innerHTML = `
+    <div class="wad-sumcard"><div class="wad-sumcard-val">${n}</div><div class="wad-sumcard-label">Total Templates</div></div>
+    <div class="wad-sumcard approved"><div class="wad-sumcard-val">${approved}</div><div class="wad-sumcard-label">Approved</div><div class="wad-sumcard-sub">${n?Math.round(approved/n*100):0}% of total</div></div>
+    <div class="wad-sumcard rejected"><div class="wad-sumcard-val">${rejected}</div><div class="wad-sumcard-label">Rejected</div><div class="wad-sumcard-sub">${n?Math.round(rejected/n*100):0}% of total</div></div>
+    <div class="wad-sumcard"><div class="wad-sumcard-val">${avgQ}%</div><div class="wad-sumcard-label">Avg Quality Score</div></div>`
+}
+
+function sortWATpl(col) {
+  wadS.tplSort = wadS.tplSort.col===col ? {col, dir:wadS.tplSort.dir==='asc'?'desc':'asc'} : {col, dir:'asc'}
+  renderWATpl()
+  ;['name','category','status','quality'].forEach(c => {
+    const el = document.getElementById(`wad-ts-${c}`)
+    if (el) el.textContent = wadS.tplSort.col===c ? (wadS.tplSort.dir==='asc'?'↑':'↓') : ''
+  })
+}
+
+function renderWATplTable(tpls) {
+  const qOrder = {HIGH:3,MEDIUM:2,LOW:1}
+  const {col,dir} = wadS.tplSort
+  const d = dir==='asc'?1:-1
+  const sorted = [...tpls].sort((a,b) => {
+    if (col==='quality') return d*((qOrder[a.quality_score?.score]||0)-(qOrder[b.quality_score?.score]||0))
+    const av = col==='name'?a.name:col==='category'?a.category:a.status
+    const bv = col==='name'?b.name:col==='category'?b.category:b.status
+    return d*av.localeCompare(bv)
+  })
+  const qMap = {HIGH:90,MEDIUM:70,LOW:40}
+  if (!sorted.length) { document.getElementById('wad-tpl-tbody').innerHTML='<tr><td colspan="6" style="text-align:center;padding:32px;color:#9ca3af">No templates match filters</td></tr>'; return }
+  document.getElementById('wad-tpl-tbody').innerHTML = sorted.map(t => {
+    const gi = wadS.templates.indexOf(t)
+    const sc = t.quality_score?.score||'MEDIUM'; const sv = qMap[sc]||50
+    const bc = {APPROVED:'wad-badge-approved',REJECTED:'wad-badge-rejected',PENDING:'wad-badge-pending'}[t.status]||'wad-badge-pending'
+    return `<tr>
+      <td style="font-weight:500;max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${t.name}">${t.name}</td>
+      <td><span style="font-size:12px;color:#6b7280;font-weight:500">${t.category}</span></td>
+      <td style="color:#6b7280">${t.language}</td>
+      <td><span class="wad-badge ${bc}">${t.status}</span></td>
+      <td><div class="wad-quality"><div class="wad-quality-bar"><div class="wad-quality-fill" style="width:${sv}%"></div></div><span class="wad-quality-num">${sv}</span></div></td>
+      <td><button class="wad-btn wad-btn-secondary" style="height:30px;font-size:12px;padding:0 10px" onclick="openWAPreview(${gi})">Preview</button></td>
+    </tr>`
+  }).join('')
+}
+
+function renderWADonut(tpls) {
+  const approved=tpls.filter(t=>t.status==='APPROVED').length
+  const rejected=tpls.filter(t=>t.status==='REJECTED').length
+  const pending=tpls.filter(t=>t.status==='PENDING').length
+  const total=tpls.length
+  if (wadS.charts.donut) { wadS.charts.donut.destroy(); wadS.charts.donut=null }
+  const ctx = document.getElementById('wad-donut'); if (!ctx) return
+  wadS.charts.donut = new Chart(ctx, {
+    type:'doughnut',
+    data:{ labels:['Approved','Rejected','Pending'], datasets:[{ data:[approved,rejected,pending], backgroundColor:['#40d99d','#dc2626','#f59e0b'], borderWidth:0, hoverOffset:6 }] },
+    options:{ animation:{duration:400}, cutout:'68%', plugins:{ legend:{display:false}, tooltip:{callbacks:{label:c=>` ${c.label}: ${c.raw} (${total?Math.round(c.raw/total*100):0}%)`}} } },
+    plugins:[{ id:'cl', beforeDraw(ch){ const {width:w,height:h,ctx:c}=ch; c.restore(); c.font='600 20px Inter,sans-serif'; c.fillStyle='#1a1a1a'; c.textAlign='center'; c.textBaseline='middle'; c.fillText(total,w/2,h/2); c.save() } }]
+  })
+  document.getElementById('wad-donut-legend').innerHTML = [['Approved',approved,'#40d99d'],['Rejected',rejected,'#dc2626'],['Pending',pending,'#f59e0b']].map(([l,v,c])=>`<div class="wad-legend-item"><div class="wad-legend-dot" style="background:${c}"></div><span>${l}: <strong>${v}</strong> (${total?Math.round(v/total*100):0}%)</span></div>`).join('')
+}
+
+// ─────────────────────────────────────────────
+// ANALYTICS TAB
+// ─────────────────────────────────────────────
+function getWAAnData() {
+  const days = wadS.anDateRange==='7d'?7:wadS.anDateRange==='14d'?14:30
+  const cutoff = new Date(); cutoff.setDate(cutoff.getDate()-days)
+  const cs = cutoff.toISOString().slice(0,10)
+  let data = wadS.daily.filter(d=>d.date>=cs)
+  if (wadS.anSelTpls.length) data=data.filter(d=>wadS.anSelTpls.includes(d.templateId))
+  return data
+}
+
+function getWAAnPrevData() {
+  const days = wadS.anDateRange==='7d'?7:wadS.anDateRange==='14d'?14:30
+  const end=new Date(); end.setDate(end.getDate()-days)
+  const start=new Date(end); start.setDate(start.getDate()-days)
+  let data = wadS.daily.filter(d=>d.date>=start.toISOString().slice(0,10)&&d.date<end.toISOString().slice(0,10))
+  if (wadS.anSelTpls.length) data=data.filter(d=>wadS.anSelTpls.includes(d.templateId))
+  return data
+}
+
+function renderWAAn() {
+  const data=getWAAnData(), prev=getWAAnPrevData()
+  renderWAKPIs(data,prev)
+  renderWAVolChart(data)
+  renderWARateChart(data)
+  renderWABreakdown(data)
+  if (wadS.anDetailOpen) renderWADetail()
+  renderWAMsDropdown()
+}
+
+function renderWAKPIs(data,prev) {
+  const sum = k => data.reduce((a,d)=>a+d[k],0)
+  const psum = k => prev.reduce((a,d)=>a+d[k],0)
+  const sent=sum('sent'), delivered=sum('delivered'), read=sum('read'), failed=sum('failed'), succ=sum('successful')
+  const psent=psum('sent'), psucc=psum('successful')
+  const rate = sent?(succ/sent*100):0
+  const prevRate = psent?(psucc/psent*100):0
+  const chg=(a,b)=>b?((a-b)/b*100):0
+
+  const byDate = {}; data.forEach(d=>{ if(!byDate[d.date])byDate[d.date]={sent:0,successful:0,failed:0,delivered:0,read:0}; Object.keys(byDate[d.date]).forEach(k=>byDate[d.date][k]+=d[k]) })
+
+  const trend=(pct,inv=false)=>{
+    if(Math.abs(pct)<.05) return `<span class="wad-trend nt">No change</span>`
+    const up=pct>0; const good=inv?!up:up
+    return `<span class="wad-trend ${good?'up':'dn'}">${up?'↑':'↓'} ${Math.abs(pct).toFixed(1)}% vs prev</span>`
   }
+  const rateCls = rate>=95?'rate-good':rate>=80?'rate-warn':'rate-bad'
 
-  document.getElementById('waSpinner').style.display = 'flex'
-  document.getElementById('waTableWrap').style.display = 'none'
-  document.getElementById('waChartsWrap').style.display = 'none'
-  document.getElementById('waSummaryCards').style.display = 'none'
+  document.getElementById('wad-kpis').innerHTML = [
+    { label:'Total Messages Sent', val:sent.toLocaleString(), trend:trend(chg(sent,psent)), spark:wadSpk(byDate,'sent','#40d99d') },
+    { label:'Total Delivered', val:delivered.toLocaleString(), trend:trend(chg(delivered,psum('delivered'))), spark:wadSpk(byDate,'delivered','#40d99d') },
+    { label:'Total Read', val:read.toLocaleString(), trend:trend(0), spark:wadSpk(byDate,'read','#6b7280') },
+    { label:'Successful', val:succ.toLocaleString(), sub:`${sent?(succ/sent*100).toFixed(1):0}% of sent`, extra:'success', spark:wadSpk(byDate,'successful','#40d99d') },
+    { label:'Failed', val:failed.toLocaleString(), sub:`${sent?(failed/sent*100).toFixed(1):0}% of sent`, extra:'danger', spark:wadSpk(byDate,'failed','#dc2626') },
+    { label:'Delivery Rate', val:`${rate.toFixed(1)}%`, valCls:rateCls, trend:trend(rate-prevRate) },
+  ].map(k=>`<div class="wad-kpi${k.extra?' '+k.extra:''}">
+    <div class="wad-kpi-label">${k.label}</div>
+    <div class="wad-kpi-value${k.valCls?' '+k.valCls:''}">${k.val}</div>
+    ${k.sub?`<div class="wad-trend nt">${k.sub}</div>`:''}
+    ${k.trend||''}
+    ${k.spark||''}
+  </div>`).join('')
+}
 
+function wadSpk(byDate,key,color) {
+  const vals = Object.keys(byDate).sort().slice(-7).map(d=>byDate[d][key]||0)
+  if (vals.length<2) return ''
+  const max=Math.max(...vals)||1, min=Math.min(...vals)
+  const W=64,H=28
+  const pts=vals.map((v,i)=>`${(i/(vals.length-1)*W).toFixed(1)},${(H-((v-min)/(max-min||1)*H)).toFixed(1)}`).join(' ')
+  return `<div class="wad-sparkline"><svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}"><polyline points="${pts}" fill="none" stroke="${color}" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" opacity=".75"/></svg></div>`
+}
+
+function renderWAVolChart(data) {
+  const bd={}; data.forEach(d=>{ if(!bd[d.date])bd[d.date]={s:0,f:0}; bd[d.date].s+=d.successful; bd[d.date].f+=d.failed })
+  const labels=Object.keys(bd).sort()
+  const sd=labels.map(d=>bd[d].s), fd=labels.map(d=>bd[d].f)
+  const t=wadS.anVolToggle
+  if (wadS.charts.vol) { wadS.charts.vol.destroy(); wadS.charts.vol=null }
+  const ctx=document.getElementById('wad-vol-chart'); if(!ctx)return
+  const ds=[]
+  if(t==='all'||t==='success') ds.push({label:'Successful',data:sd,backgroundColor:'#40d99d',borderRadius:3,stack:'s'})
+  if(t==='all'||t==='failed')  ds.push({label:'Failed',data:fd,backgroundColor:'#dc2626',borderRadius:3,stack:'s'})
+  wadS.charts.vol = new Chart(ctx,{
+    type:'bar', data:{labels:labels.map(d=>d.slice(5)), datasets:ds},
+    options:{animation:{duration:400},responsive:true,maintainAspectRatio:false,
+      scales:{x:{grid:{color:'#e5e5e5'},ticks:{color:'#6b7280',font:{family:'Inter',size:11},maxTicksLimit:10},stacked:true},y:{grid:{color:'#e5e5e5'},ticks:{color:'#6b7280',font:{family:'Inter',size:11}},stacked:true,beginAtZero:true}},
+      plugins:{legend:{labels:{color:'#6b7280',font:{family:'Inter',size:12},boxWidth:12}},
+        tooltip:{callbacks:{afterBody:items=>{const i=items[0].dataIndex;const s=sd[i]||0;const f=fd[i]||0;const tt=s+f;return[`Rate: ${tt?(s/tt*100).toFixed(1):0}%`]}}}}}
+  })
+}
+
+function setVolToggle(val,btn) {
+  wadS.anVolToggle=val
+  document.querySelectorAll('.wad-ctoggle').forEach(b=>b.classList.remove('active'))
+  btn.classList.add('active')
+  renderWAVolChart(getWAAnData())
+}
+
+function renderWARateChart(data) {
+  const bd={}; data.forEach(d=>{ if(!bd[d.date])bd[d.date]={sent:0,succ:0}; bd[d.date].sent+=d.sent; bd[d.date].succ+=d.successful })
+  const labels=Object.keys(bd).sort()
+  const rates=labels.map(d=>bd[d].sent?+(bd[d].succ/bd[d].sent*100).toFixed(2):0)
+  if (wadS.charts.rate) { wadS.charts.rate.destroy(); wadS.charts.rate=null }
+  const ctx=document.getElementById('wad-rate-chart'); if(!ctx)return
+  wadS.charts.rate = new Chart(ctx,{
+    type:'line',
+    data:{labels:labels.map(d=>d.slice(5)), datasets:[
+      {label:'Success Rate %',data:rates,borderColor:'#40d99d',backgroundColor:'rgba(64,217,157,.08)',fill:true,tension:.35,borderWidth:2,pointRadius:2,pointBackgroundColor:'#40d99d'},
+      {label:'Target (95%)',data:labels.map(()=>95),borderColor:'#9ca3af',borderDash:[5,4],borderWidth:1.5,pointRadius:0,fill:false}
+    ]},
+    options:{animation:{duration:400},responsive:true,maintainAspectRatio:false,
+      scales:{x:{grid:{color:'#e5e5e5'},ticks:{color:'#6b7280',font:{family:'Inter',size:11},maxTicksLimit:10}},y:{grid:{color:'#e5e5e5'},ticks:{color:'#6b7280',font:{family:'Inter',size:11},callback:v=>v+'%'},min:70,max:100}},
+      plugins:{legend:{labels:{color:'#6b7280',font:{family:'Inter',size:12},boxWidth:12}},
+        tooltip:{callbacks:{label:c=>c.datasetIndex===0?[` Rate: ${c.raw}%`,...(()=>{const dd=bd[Object.keys(bd).sort()[c.dataIndex]];return dd?[` Sent: ${dd.sent.toLocaleString()}`,` Succ: ${dd.succ.toLocaleString()}`]:[]})()] :` Target: ${c.raw}%`}}}}
+  })
+}
+
+function renderWABreakdown(data) {
+  const byT={}
+  data.forEach(d=>{
+    if(!byT[d.templateId]) byT[d.templateId]={name:d.templateName,sent:0,delivered:0,read:0,failed:0,successful:0,daily:[]}
+    byT[d.templateId].sent+=d.sent; byT[d.templateId].delivered+=d.delivered; byT[d.templateId].read+=d.read
+    byT[d.templateId].failed+=d.failed; byT[d.templateId].successful+=d.successful
+    byT[d.templateId].daily.push(d.successful/(d.sent||1)*100)
+  })
+  let rows=Object.values(byT).map(t=>({...t,rate:t.sent?t.successful/t.sent*100:0}))
+  const {col,dir}=wadS.anSort; const dd=dir==='asc'?1:-1
+  rows.sort((a,b)=>col==='name'?dd*a.name.localeCompare(b.name):dd*(a[col]-b[col]))
+  const total=rows.length, pg=wadS.anPage, st=(pg-1)*WAD_PG
+  const paged=rows.slice(st,st+WAD_PG)
+  const tbody=document.getElementById('wad-an-tbody')
+  if(!paged.length){tbody.innerHTML='<tr><td colspan="7" style="text-align:center;padding:32px;color:#9ca3af">No data for selected filters</td></tr>';return}
+  tbody.innerHTML=paged.map(t=>{
+    const bc=t.rate>=95?'wad-badge-rg':t.rate>=80?'wad-badge-rw':'wad-badge-rb'
+    const spk=wadMiniSpk(t.daily.slice(-7))
+    return `<tr>
+      <td style="font-weight:500;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${t.name}">${t.name}</td>
+      <td>${t.sent.toLocaleString()}</td><td>${t.delivered.toLocaleString()}</td><td>${t.read.toLocaleString()}</td>
+      <td style="color:#dc2626;font-weight:500">${t.failed.toLocaleString()}</td>
+      <td><span class="wad-badge ${bc}">${t.rate.toFixed(1)}%</span></td>
+      <td>${spk}</td>
+    </tr>`
+  }).join('')
+  const pages=Math.ceil(total/WAD_PG)
+  document.getElementById('wad-an-pages').innerHTML=`
+    <span>${st+1}–${Math.min(st+WAD_PG,total)} of ${total} templates</span>
+    <div class="wad-pagination-btns">
+      <button class="wad-page-btn" onclick="setWAPage(${pg-1})" ${pg<=1?'disabled':''}>
+        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m15 18-6-6 6-6"/></svg>
+      </button>
+      <button class="wad-page-btn" onclick="setWAPage(${pg+1})" ${pg>=pages?'disabled':''}>
+        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m9 18 6-6-6-6"/></svg>
+      </button>
+    </div>`
+}
+
+function wadMiniSpk(vals) {
+  if(!vals||vals.length<2) return '—'
+  const max=Math.max(...vals)||1, min=Math.min(...vals)
+  const W=56,H=20
+  const pts=vals.map((v,i)=>`${(i/(vals.length-1)*W).toFixed(1)},${(H-((v-min)/(max-min||1)*H)).toFixed(1)}`).join(' ')
+  const color=vals[vals.length-1]>=vals[0]?'#40d99d':'#dc2626'
+  return `<svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}"><polyline points="${pts}" fill="none" stroke="${color}" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>`
+}
+
+function sortWAAn(col) {
+  wadS.anSort = wadS.anSort.col===col?{col,dir:wadS.anSort.dir==='asc'?'desc':'asc'}:{col,dir:'desc'}
+  wadS.anPage=1
+  ;['name','sent','delivered','read','failed','rate'].forEach(c=>{
+    const el=document.getElementById(`wad-as-${c}`); if(!el)return
+    el.textContent=wadS.anSort.col===c?(wadS.anSort.dir==='asc'?'↑':'↓'):''
+    el.closest('th')?.classList.toggle('sorted',wadS.anSort.col===c)
+  })
+  renderWABreakdown(getWAAnData())
+}
+
+function setWAPage(p){wadS.anPage=p;renderWABreakdown(getWAAnData())}
+
+function renderWADetail() {
+  const q=(document.getElementById('wad-detail-filter')?.value||'').toLowerCase()
+  const data=getWAAnData()
+  const rows=[...data].sort((a,b)=>b.date.localeCompare(a.date)||a.templateName.localeCompare(b.templateName))
+  const filt=q?rows.filter(d=>d.templateName.includes(q)):rows
+  const tbody=document.getElementById('wad-detail-tbody')
+  if(!filt.length){tbody.innerHTML='<tr><td colspan="6" style="text-align:center;padding:24px;color:#9ca3af">No data</td></tr>';return}
+  tbody.innerHTML=filt.slice(0,120).map(d=>{
+    const r=d.sent?(d.successful/d.sent*100).toFixed(1):0
+    const rc=r>=95?'#40d99d':r>=80?'#f59e0b':'#dc2626'
+    return `<tr>
+      <td style="color:#6b7280;font-size:12px">${d.date}</td>
+      <td style="font-size:12px">${d.templateName}</td>
+      <td>${d.sent.toLocaleString()}</td><td>${d.successful.toLocaleString()}</td>
+      <td style="color:#dc2626">${d.failed.toLocaleString()}</td>
+      <td><span style="font-weight:600;color:${rc}">${r}%</span></td>
+    </tr>`
+  }).join('')
+}
+
+function toggleWADetail() {
+  wadS.anDetailOpen=!wadS.anDetailOpen
+  document.getElementById('wad-detail-body')?.classList.toggle('open',wadS.anDetailOpen)
+  const ch=document.getElementById('wad-exp-chevron')
+  if(ch) ch.style.transform=wadS.anDetailOpen?'rotate(180deg)':'rotate(0)'
+  if(wadS.anDetailOpen) renderWADetail()
+}
+
+// ── Filters ──
+function setWADate(r,btn) {
+  wadS.anDateRange=r
+  document.querySelectorAll('.wad-dpill').forEach(b=>b.classList.remove('active'))
+  btn.classList.add('active')
+}
+
+function applyWAFilters(){wadS.anPage=1;renderWAAn()}
+
+function resetWAFilters() {
+  wadS.anDateRange='30d'; wadS.anSelTpls=[]; wadS.anPage=1
+  document.querySelectorAll('.wad-dpill').forEach((b,i)=>b.classList.toggle('active',i===1))
+  updateWAMsLabel()
+  document.querySelectorAll('#wad-ms-dd input[type=checkbox]').forEach(c=>c.checked=false)
+  renderWAAn()
+}
+
+// ── Multi-select ──
+function renderWAMsDropdown() {
+  const dd=document.getElementById('wad-ms-dd'); if(!dd)return
+  dd.innerHTML=`<div class="wad-ms-item" onclick="event.stopPropagation()"><input type="checkbox" id="wad-ms-all" ${!wadS.anSelTpls.length?'checked':''} onchange="toggleWAMsAll(this)"><label for="wad-ms-all" style="cursor:pointer">All Templates</label></div>`
+    +WAD_TEMPLATES.map(t=>`<div class="wad-ms-item" onclick="event.stopPropagation()"><input type="checkbox" id="wad-ms-${t.id}" value="${t.id}" ${wadS.anSelTpls.includes(t.id)?'checked':''} onchange="toggleWAMsTpl(this)"><label for="wad-ms-${t.id}" style="cursor:pointer;font-size:12px">${t.name}</label></div>`).join('')
+}
+
+function toggleWAMs() {
+  const btn=document.getElementById('wad-ms-btn'),dd=document.getElementById('wad-ms-dd')
+  const open=dd.classList.toggle('open'); btn.classList.toggle('open',open)
+  if(open){ renderWAMsDropdown(); const cl=(e)=>{ if(!document.getElementById('wad-ms-wrap')?.contains(e.target)){dd.classList.remove('open');btn.classList.remove('open');document.removeEventListener('click',cl)} }; setTimeout(()=>document.addEventListener('click',cl),50) }
+}
+
+function toggleWAMsAll(cb) {
+  if(cb.checked){wadS.anSelTpls=[];document.querySelectorAll('#wad-ms-dd input[type=checkbox]:not(#wad-ms-all)').forEach(c=>c.checked=false)}
+  updateWAMsLabel()
+}
+
+function toggleWAMsTpl(cb) {
+  if(cb.checked){if(!wadS.anSelTpls.includes(cb.value))wadS.anSelTpls.push(cb.value);const a=document.getElementById('wad-ms-all');if(a)a.checked=false}
+  else{wadS.anSelTpls=wadS.anSelTpls.filter(id=>id!==cb.value);if(!wadS.anSelTpls.length){const a=document.getElementById('wad-ms-all');if(a)a.checked=true}}
+  updateWAMsLabel()
+}
+
+function updateWAMsLabel() {
+  const el=document.getElementById('wad-ms-label'); if(!el)return
+  if(!wadS.anSelTpls.length) el.textContent='All Templates'
+  else if(wadS.anSelTpls.length===1){const t=WAD_TEMPLATES.find(t=>t.id===wadS.anSelTpls[0]);el.textContent=t?t.name.slice(0,22)+(t.name.length>22?'…':''):'1 selected'}
+  else el.textContent=`${wadS.anSelTpls.length} selected`
+}
+
+// ── CSV Export ──
+function exportWACSV() {
+  const data=getWAAnData(); const byT={}
+  data.forEach(d=>{if(!byT[d.templateId])byT[d.templateId]={name:d.templateName,sent:0,delivered:0,read:0,failed:0,successful:0};['sent','delivered','read','failed','successful'].forEach(k=>byT[d.templateId][k]+=d[k])})
+  const rows=Object.values(byT).map(t=>({...t,rate:t.sent?(t.successful/t.sent*100).toFixed(2):0}))
+  const hdr=['Template','Sent','Delivered','Read','Failed','Successful','Success Rate %']
+  const csv=[hdr,...rows.map(r=>[r.name,r.sent,r.delivered,r.read,r.failed,r.successful,r.rate])].map(r=>r.join(',')).join('\n')
+  const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}))
+  a.download=`wa-analytics-${new Date().toISOString().slice(0,10)}.csv`; a.click()
+  toast('Analytics exported as CSV', 'success')
+}
+
+function exportWADailyCSV() {
+  const data=getWAAnData(); const q=(document.getElementById('wad-detail-filter')?.value||'').toLowerCase()
+  const rows=[...(q?data.filter(d=>d.templateName.includes(q)):data)].sort((a,b)=>b.date.localeCompare(a.date))
+  const hdr=['Date','Template','Sent','Successful','Failed','Rate %']
+  const csv=[hdr,...rows.map(d=>[d.date,d.templateName,d.sent,d.successful,d.failed,d.sent?(d.successful/d.sent*100).toFixed(2):0])].map(r=>r.join(',')).join('\n')
+  const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}))
+  a.download=`wa-daily-${new Date().toISOString().slice(0,10)}.csv`; a.click()
+  toast('Daily data exported as CSV', 'success')
+}
+
+// ─────────────────────────────────────────────
+// SETTINGS TAB
+// ─────────────────────────────────────────────
+function loadWASettingsForm() {
+  const get=k=>localStorage.getItem(k)||''
+  const setVal=(id,v)=>{const el=document.getElementById(id);if(el)el.value=v}
+  const setCk=(id,v)=>{const el=document.getElementById(id);if(el)el.checked=v==='true'}
+  setVal('wad-token',get('wa_access_token'))
+  setVal('wad-waba',get('wa_waba_id'))
+  setVal('wad-def-range',get('wa_def_range')||'30d')
+  setCk('wad-autorefresh',get('wa_autorefresh'))
+  setVal('wad-thresh-s',get('wa_thresh_s')||'95')
+  setVal('wad-thresh-f',get('wa_thresh_f')||'100')
+}
+
+async function saveWASettings() {
+  const token=document.getElementById('wad-token')?.value.trim()
+  const wabaId=document.getElementById('wad-waba')?.value.trim()
+  if(!token||!wabaId){toast('Fill in Access Token and WABA ID','error');return}
+  localStorage.setItem('wa_access_token',token); localStorage.setItem('wa_waba_id',wabaId)
+  localStorage.setItem('wa_def_range',document.getElementById('wad-def-range')?.value||'30d')
+  localStorage.setItem('wa_thresh_s',document.getElementById('wad-thresh-s')?.value||'95')
+  localStorage.setItem('wa_thresh_f',document.getElementById('wad-thresh-f')?.value||'100')
+  toast('Credentials saved. Testing connection…','success')
   try {
-    const url = `https://graph.facebook.com/v21.0/${wabaId}/message_templates?fields=name,status,category,language,quality_score,components&limit=100`
-    const res = await fetch(url, {
-      headers: { 'Authorization': `Bearer ${token}` }
-    })
-    const json = await res.json()
-    if (json.error) {
-      let msg = `[${json.error.code}] ${json.error.message}`
-      if (json.error.code === 100) {
-        msg += '\n\n→ Causa probable: el WABA ID ingresado no es un WhatsApp Business Account ID válido.\n  Encuéntralo en Meta Business Suite → Business Settings → WhatsApp Accounts.'
-      } else if (json.error.code === 190) {
-        msg += '\n\n→ El Access Token expiró o es inválido. Genera uno nuevo en Meta for Developers.'
-      } else if (json.error.code === 200 || json.error.code === 10) {
-        msg += '\n\n→ El token no tiene permiso whatsapp_business_management. Verifica los scopes del token.'
-      }
+    const res=await fetch(`https://graph.facebook.com/v21.0/${wabaId}?fields=id,name`,{headers:{'Authorization':`Bearer ${token}`}})
+    const json=await res.json()
+    if(json.error) throw new Error(`[${json.error.code}] ${json.error.message}`)
+    toast(`Connected to WABA: ${json.name||json.id}`,'success')
+  } catch(err) {
+    if(err.message.includes('fetch')||err.message.includes('CORS')) toast('Saved. API test blocked by CORS (expected in browser)','success')
+    else toast('Connection error: '+err.message,'error')
+  }
+}
+
+function toggleWAEye() {
+  const inp=document.getElementById('wad-token'); if(!inp)return
+  const show=inp.type==='password'; inp.type=show?'text':'password'
+  const svg=document.getElementById('wad-eye-svg'); if(!svg)return
+  svg.innerHTML=show?'<path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/>':'<path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/>'
+}
+
+function toggleWAAutoRefresh(enabled) {
+  localStorage.setItem('wa_autorefresh',enabled)
+  clearInterval(wadS.arInterval)
+  if(enabled){
+    wadS.arInterval=setInterval(()=>{ if(wadS.activeTab==='analytics')renderWAAn(); if(wadS.activeTab==='templates')renderWATpl() },5*60*1000)
+    toast('Auto-refresh enabled (every 5 min)','success')
+  } else toast('Auto-refresh disabled','success')
+}
+
+// ─────────────────────────────────────────────
+// REFRESH (API) & PREVIEW MODAL
+// ─────────────────────────────────────────────
+async function wadRefresh() {
+  const token=localStorage.getItem('wa_access_token'), wabaId=localStorage.getItem('wa_waba_id')
+  const icon=document.getElementById('wad-refresh-icon'), btn=document.getElementById('wad-refresh-btn')
+  if(icon)icon.classList.add('wad-spin'); if(btn)btn.disabled=true
+  const errEl=document.getElementById('wad-tpl-error'); if(errEl)errEl.style.display='none'
+  if(!token||!wabaId){toast('Enter credentials in Settings tab first','error');if(icon)icon.classList.remove('wad-spin');if(btn)btn.disabled=false;return}
+  try {
+    const res=await fetch(`https://graph.facebook.com/v21.0/${wabaId}/message_templates?fields=name,status,category,language,quality_score,components&limit=100`,{headers:{'Authorization':`Bearer ${token}`}})
+    const json=await res.json()
+    if(json.error){
+      let msg=`[${json.error.code}] ${json.error.message}`
+      if(json.error.code===100) msg+='\n\n→ WABA ID is wrong. Find it in Meta Business Suite → Business Settings → WhatsApp Accounts.'
+      else if(json.error.code===190) msg+='\n\n→ Token expired. Generate a new one in Meta for Developers.'
+      else if(json.error.code===200||json.error.code===10) msg+='\n\n→ Token missing whatsapp_business_management scope.'
       throw new Error(msg)
     }
-    waTemplatesData = json.data || []
-    renderWATemplates(waTemplatesData)
+    wadS.templates=json.data||[]; toast(`Loaded ${wadS.templates.length} templates from API`,'success'); renderWATpl()
   } catch(err) {
-    if (err.message.includes('Failed to fetch') || err.message.includes('NetworkError') || err.message.includes('CORS')) {
-      waTemplatesData = WA_MOCK_TEMPLATES
-      renderWATemplates(waTemplatesData, true)
+    if(err.message.includes('fetch')||err.message.includes('NetworkError')||err.message.includes('CORS')){
+      wadS.templates=[...WAD_TEMPLATES]; toast('Using mock data (CORS blocks browser API calls)','success'); renderWATpl()
     } else {
-      document.getElementById('waError').style.display = 'block'
-      document.getElementById('waError').textContent = 'API Error: ' + err.message
+      if(errEl){errEl.style.display='block';errEl.textContent='API Error: '+err.message}
+      toast('API Error — see details above','error')
     }
-  } finally {
-    document.getElementById('waSpinner').style.display = 'none'
-  }
-}
-
-function renderWATemplates(templates, isMock = false) {
-  if (isMock) toast('Usando datos de muestra (API no conectada o CORS)', 'success')
-
-  const approved = templates.filter(t => t.status === 'APPROVED').length
-  const rejected = templates.filter(t => t.status === 'REJECTED').length
-  const rate = templates.length ? Math.round((approved / templates.length) * 100) : 0
-
-  document.getElementById('waTotalTemplates').textContent = templates.length
-  document.getElementById('waApprovedTemplates').textContent = approved
-  document.getElementById('waRejectedTemplates').textContent = rejected
-  document.getElementById('waSuccessRate').textContent = rate + '%'
-  document.getElementById('waSummaryCards').style.display = 'grid'
-
-  const tbody = document.getElementById('waTableBody')
-  tbody.innerHTML = templates.length === 0
-    ? '<tr><td colspan="6" style="text-align:center;padding:20px;color:var(--text-muted)">No templates found</td></tr>'
-    : templates.map((t, i) => `<tr>
-        <td style="font-weight:600">${t.name}</td>
-        <td><span style="font-size:11px;font-weight:600;color:var(--text-muted)">${t.category || '—'}</span></td>
-        <td>${t.language || '—'}</td>
-        <td>${waStatusBadge(t.status)}</td>
-        <td>${waQualityBadge(t.quality_score?.score || '—')}</td>
-        <td><button class="btn-wa-outline" style="height:28px;font-size:11px;padding:0 10px" onclick="openWAPreview(${i})">Preview</button></td>
-      </tr>`).join('')
-  document.getElementById('waTableWrap').style.display = 'block'
-
-  renderWACharts(templates)
-  document.getElementById('waChartsWrap').style.display = 'grid'
-}
-
-function waStatusBadge(status) {
-  const map = { APPROVED:['wa-badge-approved','🟢'], REJECTED:['wa-badge-rejected','🔴'], PENDING:['wa-badge-pending','🟡'] }
-  const [cls, dot] = map[status] || ['wa-badge-pending','🟡']
-  return `<span class="wa-badge ${cls}">${dot} ${status}</span>`
-}
-
-function waQualityBadge(score) {
-  const colors = { HIGH:'var(--green)', MEDIUM:'#f59e0b', LOW:'var(--red)' }
-  return `<span style="font-size:12px;font-weight:600;color:${colors[score]||'var(--text-muted)'}">${score}</span>`
-}
-
-function renderWACharts(templates) {
-  const sc = { APPROVED:0, REJECTED:0, PENDING:0 }
-  const cc = { MARKETING:0, UTILITY:0, AUTHENTICATION:0 }
-  templates.forEach(t => {
-    if (sc[t.status] !== undefined) sc[t.status]++
-    if (cc[t.category] !== undefined) cc[t.category]++
-  })
-
-  if (waCharts.status) { waCharts.status.destroy(); waCharts.status = null }
-  if (waCharts.category) { waCharts.category.destroy(); waCharts.category = null }
-
-  const tickStyle = { color:'#a0a0c0', font:{ family:'inherit', size:11 } }
-
-  waCharts.status = new Chart(document.getElementById('waStatusChart'), {
-    type: 'doughnut',
-    data: {
-      labels: ['Approved','Rejected','Pending'],
-      datasets: [{ data:[sc.APPROVED, sc.REJECTED, sc.PENDING], backgroundColor:['#1D9E75','#e74c3c','#f39c12'], borderWidth:0, hoverOffset:8 }]
-    },
-    options: { cutout:'65%', plugins:{ legend:{ labels:{ color:'#a0a0c0', font:{ family:'inherit', size:12 }, boxWidth:14 } }, tooltip:{ callbacks:{ label: ctx => ` ${ctx.label}: ${ctx.raw}` } } } }
-  })
-
-  waCharts.category = new Chart(document.getElementById('waCategoryChart'), {
-    type: 'bar',
-    data: {
-      labels: ['MARKETING','UTILITY','AUTHENTICATION'],
-      datasets: [{ label:'Templates', data:[cc.MARKETING, cc.UTILITY, cc.AUTHENTICATION], backgroundColor:'#1D9E75', borderRadius:6, borderSkipped:false }]
-    },
-    options: {
-      scales: {
-        x: { ticks: tickStyle, grid:{ color:'rgba(50,50,77,.5)' } },
-        y: { ticks: { ...tickStyle, stepSize:1 }, grid:{ color:'rgba(50,50,77,.5)' } }
-      },
-      plugins: { legend:{ display:false } }
-    }
-  })
+  } finally { if(icon)icon.classList.remove('wad-spin'); if(btn)btn.disabled=false }
 }
 
 function openWAPreview(idx) {
-  const t = waTemplatesData[idx]
-  if (!t) return
-  document.getElementById('waPreviewTitle').textContent = t.name
-  let html = `<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:4px">${waStatusBadge(t.status)}<span class="wa-badge" style="background:var(--bg);color:var(--text-muted)">${t.category}</span><span class="wa-badge" style="background:var(--bg);color:var(--text-muted)">${t.language}</span></div>`
-  ;(t.components || []).forEach(c => {
-    if (c.type === 'BUTTONS') {
-      html += `<div class="wa-preview-section"><div class="wa-preview-section-label">Buttons</div><div class="wa-preview-buttons">${(c.buttons||[]).map(b=>`<span class="wa-preview-btn-chip">${b.text}</span>`).join('')}</div></div>`
-    } else {
-      const text = c.text || (c.format ? `[${c.type} — ${c.format}]` : '')
-      if (text) html += `<div class="wa-preview-section"><div class="wa-preview-section-label">${c.type}</div><div class="wa-preview-section-text">${text}</div></div>`
-    }
+  const t=wadS.templates[idx]; if(!t)return
+  document.getElementById('wad-preview-title').textContent=t.name
+  const bc={APPROVED:'wad-badge-approved',REJECTED:'wad-badge-rejected',PENDING:'wad-badge-pending'}[t.status]||'wad-badge-pending'
+  let html=`<div style="display:flex;gap:6px;flex-wrap:wrap"><span class="wad-badge ${bc}">${t.status}</span><span class="wad-badge" style="background:#f8f8f8;color:#6b7280;border:1px solid #e5e5e5">${t.category}</span><span class="wad-badge" style="background:#f8f8f8;color:#6b7280;border:1px solid #e5e5e5">${t.language}</span></div>`
+  ;(t.components||[]).forEach(c=>{
+    if(c.type==='BUTTONS') html+=`<div class="wad-comp"><div class="wad-comp-label">Buttons</div><div class="wad-comp-btns">${(c.buttons||[]).map(b=>`<span class="wad-comp-chip">${b.text}</span>`).join('')}</div></div>`
+    else{const tx=c.text||(c.format?`[${c.type} — ${c.format}]`:'');if(tx)html+=`<div class="wad-comp"><div class="wad-comp-label">${c.type}</div><div class="wad-comp-text">${tx}</div></div>`}
   })
-  document.getElementById('waPreviewBody').innerHTML = html
-  document.getElementById('waPreviewOverlay').classList.add('open')
+  document.getElementById('wad-preview-body').innerHTML=html
+  document.getElementById('wad-overlay').classList.add('open')
 }
 
 function closeWAPreview() {
-  document.getElementById('waPreviewOverlay').classList.remove('open')
+  document.getElementById('wad-overlay')?.classList.remove('open')
 }
 
+// ─────────────────────────────────────────────
+// INIT
+// ─────────────────────────────────────────────
 function initWATab() {
-  const token = localStorage.getItem('wa_access_token')
-  const wabaId = localStorage.getItem('wa_waba_id')
-  if (token) document.getElementById('waAccessToken').value = token
-  if (wabaId) document.getElementById('waWabaId').value = wabaId
-  if (token && wabaId) fetchWATemplates()
-  else {
-    document.getElementById('waStatusMsg').style.display = 'block'
-    document.getElementById('waStatusMsg').textContent = 'Enter your credentials above to load templates'
-  }
+  loadWASettingsForm()
+  wadS.templates=[...WAD_TEMPLATES]; wadS.daily=WAD_DAILY
+  switchWASubTab('analytics')
+  const token=localStorage.getItem('wa_access_token'), wabaId=localStorage.getItem('wa_waba_id')
+  if(token&&wabaId)(async()=>{
+    try{
+      const res=await fetch(`https://graph.facebook.com/v21.0/${wabaId}/message_templates?fields=name,status,category,language,quality_score,components&limit=100`,{headers:{'Authorization':`Bearer ${token}`}})
+      const json=await res.json()
+      if(!json.error&&json.data){wadS.templates=json.data;if(wadS.activeTab==='templates')renderWATpl()}
+    }catch(e){/* silent, keep mock */}
+  })()
 }
 
 </script>
