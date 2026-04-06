@@ -1075,6 +1075,59 @@
 .chart-wrap{position:relative;height:240px}
 .chart-wrap-lg{position:relative;height:280px}
 @media(max-width:1100px){.an-kpi-grid{grid-template-columns:repeat(3,1fr)}.an-row2,.an-row3{grid-template-columns:1fr}}
+
+/* ── WHATSAPP TEMPLATES VIEW ── */
+.wa-settings-card{background:var(--surface);border:1px solid var(--gray-border);border-radius:var(--radius);padding:18px 20px 16px;margin-bottom:16px}
+.wa-settings-title{font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:1.1px;margin-bottom:14px}
+.wa-settings-fields{display:flex;flex-wrap:wrap;gap:12px;align-items:flex-end}
+.wa-field-group{display:flex;flex-direction:column;gap:5px;flex:1;min-width:200px}
+.wa-label{font-size:11px;font-weight:600;color:var(--text-muted);letter-spacing:.3px}
+.wa-input{background:var(--bg);border:1px solid var(--gray-border);border-radius:var(--radius);color:var(--text);font-family:inherit;font-size:13px;height:36px;outline:none;padding:0 12px;transition:border-color .2s;width:100%}
+.wa-input:focus{border-color:var(--green)}
+.wa-settings-actions{display:flex;gap:8px;align-items:center;flex-shrink:0}
+.wa-credentials-note{font-size:11px;color:var(--text-muted);margin-top:10px}
+.wa-summary-cards{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px}
+.wa-stat-card{background:var(--surface);border:1px solid var(--gray-border);border-radius:var(--radius);padding:16px;text-align:center}
+.wa-stat-card.wa-approved{border-color:rgba(29,158,117,.4)}
+.wa-stat-card.wa-rejected{border-color:rgba(239,68,68,.4)}
+.wa-stat-card.wa-rate{border-color:rgba(59,130,246,.4)}
+.wa-stat-value{font-size:26px;font-weight:700;color:var(--text);line-height:1;margin-bottom:4px}
+.wa-stat-card.wa-approved .wa-stat-value{color:var(--green)}
+.wa-stat-card.wa-rejected .wa-stat-value{color:var(--red)}
+.wa-stat-card.wa-rate .wa-stat-value{color:#3b82f6}
+.wa-stat-label{font-size:11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.8px;font-weight:600}
+.wa-status-msg{text-align:center;color:var(--text-muted);font-size:13px;padding:32px 0}
+.wa-spinner{display:flex;align-items:center;justify-content:center;gap:12px;padding:32px 0;color:var(--text-muted);font-size:13px}
+.wa-spinner-ring{width:22px;height:22px;border:3px solid var(--gray-border);border-top-color:var(--green);border-radius:50%;animation:wa-spin .8s linear infinite;flex-shrink:0}
+@keyframes wa-spin{to{transform:rotate(360deg)}}
+.wa-error{background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.3);border-radius:var(--radius);color:#f87171;font-size:12px;font-family:monospace;padding:12px 16px;margin-bottom:14px;white-space:pre-wrap;word-break:break-all}
+.wa-badge{display:inline-flex;align-items:center;gap:5px;border-radius:20px;font-size:11px;font-weight:600;padding:3px 10px;text-transform:uppercase;letter-spacing:.5px}
+.wa-badge-approved{background:rgba(29,158,117,.15);color:var(--green)}
+.wa-badge-rejected{background:rgba(239,68,68,.15);color:var(--red)}
+.wa-badge-pending{background:rgba(245,158,11,.15);color:#f59e0b}
+.wa-charts-wrap{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:16px}
+.wa-chart-card{background:var(--surface);border:1px solid var(--gray-border);border-radius:var(--radius);padding:18px}
+.wa-chart-title{font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:1.1px;margin-bottom:14px}
+.wa-chart-container{position:relative;height:220px}
+.wa-preview-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);backdrop-filter:blur(4px);z-index:200;align-items:center;justify-content:center;padding:24px}
+.wa-preview-overlay.open{display:flex}
+.wa-preview-modal{background:var(--surface);border:1px solid var(--gray-border);border-radius:12px;width:100%;max-width:520px;max-height:85vh;display:flex;flex-direction:column;overflow:hidden;animation:modalIn .18s ease;box-shadow:0 24px 80px rgba(0,0,0,.5)}
+@keyframes modalIn{from{opacity:0;transform:scale(.96) translateY(4px)}to{opacity:1;transform:scale(1) translateY(0)}}
+.wa-preview-header{padding:16px 20px;border-bottom:1px solid var(--gray-border);display:flex;align-items:center;justify-content:space-between}
+.wa-preview-header h3{font-size:14px;font-weight:700}
+.wa-preview-close{width:28px;height:28px;background:var(--bg);border:1px solid var(--gray-border);border-radius:6px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:15px;color:var(--text-muted);transition:border-color .15s,color .15s}
+.wa-preview-close:hover{border-color:rgba(239,68,68,.4);color:var(--red)}
+.wa-preview-body{padding:16px 20px;overflow-y:auto;flex:1;display:flex;flex-direction:column;gap:10px}
+.wa-preview-section{background:var(--bg);border:1px solid var(--gray-border);border-radius:8px;padding:12px 14px}
+.wa-preview-section-label{font-size:10px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px}
+.wa-preview-section-text{font-size:13px;color:var(--text);line-height:1.5;white-space:pre-wrap}
+.wa-preview-buttons{display:flex;flex-wrap:wrap;gap:6px;margin-top:4px}
+.wa-preview-btn-chip{background:rgba(29,158,117,.12);color:var(--green);border-radius:6px;padding:4px 10px;font-size:12px;font-weight:600}
+.btn-wa-save{background:var(--green);border:none;border-radius:var(--radius);color:#fff;cursor:pointer;font-family:inherit;font-size:13px;font-weight:600;height:36px;padding:0 16px;transition:background .2s,transform .15s;white-space:nowrap}
+.btn-wa-save:hover{background:var(--green-dark);transform:translateY(-1px)}
+.btn-wa-outline{background:transparent;border:1px solid var(--gray-border);border-radius:var(--radius);color:var(--text-muted);cursor:pointer;font-family:inherit;font-size:13px;font-weight:500;height:36px;padding:0 14px;transition:border-color .2s,color .2s;white-space:nowrap}
+.btn-wa-outline:hover{border-color:var(--green);color:var(--green)}
+@media(max-width:900px){.wa-summary-cards{grid-template-columns:repeat(2,1fr)}.wa-charts-wrap{grid-template-columns:1fr}}
 </style>
 </head>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
@@ -1101,6 +1154,7 @@
     <button class="nav-btn" id="nav-analytics" onclick="switchView('analytics')">Analytics</button>
     <button class="nav-btn" id="nav-logs" onclick="switchView('logs')">Logs <span id="logsBadge" style="display:none;background:var(--red);color:#fff;border-radius:10px;font-size:10px;font-weight:700;padding:1px 5px;margin-left:4px">0</span></button>
     <button class="nav-btn" id="nav-settings" onclick="switchView('settings')">Settings</button>
+    <button class="nav-btn" id="nav-whatsapp" onclick="switchView('whatsapp')">💬 WhatsApp</button>
   </nav>
   <div class="header-right">
     <button class="btn btn-secondary btn-sm" onclick="openPromptsModal()" style="width:auto">
@@ -1959,6 +2013,104 @@
   </div>
 </div>
 
+<!-- ═══════════════════ VISTA: WHATSAPP TEMPLATES ═══════════════════ -->
+<div id="view-whatsapp" class="view" style="display:none">
+  <div class="view-header">
+    <div>
+      <h2 class="view-title">WhatsApp Templates</h2>
+      <p class="view-subtitle">Gestiona y monitorea tus plantillas de la Meta Business API</p>
+    </div>
+    <button class="btn-wa-outline" onclick="fetchWATemplates()">↻ Refresh</button>
+  </div>
+
+  <!-- Settings -->
+  <div class="wa-settings-card">
+    <div class="wa-settings-title">API Credentials</div>
+    <div class="wa-settings-fields">
+      <div class="wa-field-group">
+        <label class="wa-label">Access Token</label>
+        <input type="password" id="waAccessToken" class="wa-input" placeholder="EAAxxxxxxxxxxxxxxx..." />
+      </div>
+      <div class="wa-field-group">
+        <label class="wa-label">WABA ID</label>
+        <input type="text" id="waWabaId" class="wa-input" placeholder="123456789012345" />
+      </div>
+      <div class="wa-settings-actions">
+        <button class="btn-wa-save" onclick="saveWACredentials()">Save Credentials</button>
+      </div>
+    </div>
+    <div class="wa-credentials-note">Credentials saved locally in your browser</div>
+  </div>
+
+  <!-- Summary Cards -->
+  <div class="wa-summary-cards" id="waSummaryCards" style="display:none">
+    <div class="wa-stat-card">
+      <div class="wa-stat-value" id="waTotalTemplates">—</div>
+      <div class="wa-stat-label">Total Templates</div>
+    </div>
+    <div class="wa-stat-card wa-approved">
+      <div class="wa-stat-value" id="waApprovedTemplates">—</div>
+      <div class="wa-stat-label">Approved</div>
+    </div>
+    <div class="wa-stat-card wa-rejected">
+      <div class="wa-stat-value" id="waRejectedTemplates">—</div>
+      <div class="wa-stat-label">Rejected</div>
+    </div>
+    <div class="wa-stat-card wa-rate">
+      <div class="wa-stat-value" id="waSuccessRate">—</div>
+      <div class="wa-stat-label">Success Rate</div>
+    </div>
+  </div>
+
+  <!-- State messages -->
+  <div id="waStatusMsg" class="wa-status-msg">Enter your credentials above to load templates</div>
+  <div id="waSpinner" class="wa-spinner" style="display:none">
+    <div class="wa-spinner-ring"></div>
+    <span>Fetching templates from Meta API...</span>
+  </div>
+  <div id="waError" class="wa-error" style="display:none"></div>
+
+  <!-- Templates Table -->
+  <div id="waTableWrap" style="display:none">
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Template Name</th>
+          <th>Category</th>
+          <th>Language</th>
+          <th>Status</th>
+          <th>Quality Score</th>
+          <th>Preview</th>
+        </tr>
+      </thead>
+      <tbody id="waTableBody"></tbody>
+    </table>
+  </div>
+
+  <!-- Charts -->
+  <div id="waChartsWrap" class="wa-charts-wrap" style="display:none">
+    <div class="wa-chart-card">
+      <div class="wa-chart-title">Templates by Status</div>
+      <div class="wa-chart-container"><canvas id="waStatusChart"></canvas></div>
+    </div>
+    <div class="wa-chart-card">
+      <div class="wa-chart-title">Templates by Category</div>
+      <div class="wa-chart-container"><canvas id="waCategoryChart"></canvas></div>
+    </div>
+  </div>
+</div>
+
+<!-- WA Preview Modal -->
+<div id="waPreviewOverlay" class="wa-preview-overlay" onclick="if(event.target===this)closeWAPreview()">
+  <div class="wa-preview-modal">
+    <div class="wa-preview-header">
+      <h3 id="waPreviewTitle">Template Preview</h3>
+      <div class="wa-preview-close" onclick="closeWAPreview()">✕</div>
+    </div>
+    <div id="waPreviewBody" class="wa-preview-body"></div>
+  </div>
+</div>
+
 <!-- ═══════════════════ TOAST CONTAINER ═══════════════════ -->
 <div class="toast-container" id="toastContainer"></div>
 
@@ -2616,7 +2768,7 @@ function startMockSimulation() {
 // ══════════════════════════════════════════════════════
 // NAVEGACIÓN PRINCIPAL
 // ══════════════════════════════════════════════════════
-const VIEWS = ['dashboard', 'inmuebles', 'leads', 'calendario', 'analytics', 'logs', 'settings']
+const VIEWS = ['dashboard', 'inmuebles', 'leads', 'calendario', 'analytics', 'logs', 'settings', 'whatsapp']
 
 function switchView(view) {
   // Ocultar/mostrar layout principal vs vistas
@@ -2644,6 +2796,7 @@ function switchView(view) {
   if (view === 'leads') loadLeadsView()
   if (view === 'logs') { renderLogs(); resetLogsBadge() }
   if (view === 'analytics') loadAnalyticsView()
+  if (view === 'whatsapp') initWATab()
   state.activeView = view
 }
 
@@ -3975,7 +4128,7 @@ async function init() {
 
 // Cerrar modal con Escape
 document.addEventListener('keydown', (e) => {
-  if (e.key === 'Escape') closePromptsModal()
+  if (e.key === 'Escape') { closePromptsModal(); closeWAPreview() }
 })
 
 // Click fuera del modal lo cierra
@@ -4571,6 +4724,183 @@ function exportAnalyticsCSV() {
   a.download    = `analytics-rentmies-${new Date().toISOString().slice(0,10)}.csv`
   a.click()
   toast('Analytics exportado como CSV', 'success')
+}
+
+// ══════════════════════════════════════════════════════
+// WHATSAPP TEMPLATES
+// ══════════════════════════════════════════════════════
+const WA_MOCK_TEMPLATES = [
+  { id:'m1', name:'bienvenida_arrendatario', category:'UTILITY', language:'es', status:'APPROVED', quality_score:{score:'HIGH'}, components:[{type:'HEADER',format:'TEXT',text:'¡Bienvenido a Rentmies! 🏠'},{type:'BODY',text:'Hola {{1}}, gracias por contactarnos. Estamos listos para ayudarte a encontrar tu próximo hogar en {{2}}. ¿En qué ciudad estás buscando?'},{type:'FOOTER',text:'Rentmies — Arrienda fácil'},{type:'BUTTONS',buttons:[{type:'QUICK_REPLY',text:'Bogotá'},{type:'QUICK_REPLY',text:'Medellín'},{type:'QUICK_REPLY',text:'Cali'}]}] },
+  { id:'m2', name:'oferta_apartamento_marketing', category:'MARKETING', language:'es', status:'APPROVED', quality_score:{score:'HIGH'}, components:[{type:'HEADER',format:'IMAGE'},{type:'BODY',text:'✨ Apartamento disponible en {{1}}\n\n📍 {{2}}\n🛏 {{3}} habitaciones | 🚿 {{4}} baños\n💵 ${{5}}/mes\n\n¿Te interesa agendar una visita?'},{type:'BUTTONS',buttons:[{type:'QUICK_REPLY',text:'Ver más detalles'},{type:'QUICK_REPLY',text:'Agendar visita'}]}] },
+  { id:'m3', name:'recordatorio_pago', category:'UTILITY', language:'es', status:'APPROVED', quality_score:{score:'MEDIUM'}, components:[{type:'BODY',text:'Hola {{1}}, te recordamos que tu pago de arriendo por ${{2}} vence el {{3}}. Puedes pagar en línea en rentmies.co/pagar'},{type:'FOOTER',text:'Rentmies — Tu hogar, nuestra prioridad'}] },
+  { id:'m4', name:'confirmacion_visita', category:'UTILITY', language:'es', status:'APPROVED', quality_score:{score:'HIGH'}, components:[{type:'BODY',text:'✅ Visita confirmada\n\nHola {{1}}, tu visita está confirmada para el {{2}} a las {{3}} en {{4}}.\n\nTe esperamos. ¡Nos vemos pronto!'}] },
+  { id:'m5', name:'promo_descuento_octubre', category:'MARKETING', language:'es', status:'REJECTED', quality_score:{score:'LOW'}, components:[{type:'BODY',text:'🔥 OFERTA ESPECIAL 🔥 Arrienda HOY y obtén 15% de descuento en tu primer mes. ¡Aplica ya!'}] },
+  { id:'m6', name:'verificacion_identidad', category:'AUTHENTICATION', language:'es', status:'APPROVED', quality_score:{score:'HIGH'}, components:[{type:'BODY',text:'Tu código de verificación de Rentmies es: {{1}}. Válido por 10 minutos. No lo compartas con nadie.'}] },
+  { id:'m7', name:'seguimiento_lead', category:'MARKETING', language:'es', status:'PENDING', quality_score:{score:'MEDIUM'}, components:[{type:'BODY',text:'Hola {{1}}, hace unos días estuviste buscando apartamentos en {{2}}. ¿Encontraste lo que buscabas? Tenemos nuevas opciones disponibles.'},{type:'BUTTONS',buttons:[{type:'QUICK_REPLY',text:'Ver opciones'},{type:'QUICK_REPLY',text:'No, gracias'}]}] },
+  { id:'m8', name:'contrato_listo', category:'UTILITY', language:'es', status:'APPROVED', quality_score:{score:'HIGH'}, components:[{type:'BODY',text:'📄 Tu contrato de arrendamiento está listo para firmar, {{1}}. Ingresa a rentmies.co/contrato/{{2}} para revisarlo y firmarlo digitalmente.'}] },
+]
+
+let waCharts = { status: null, category: null }
+let waTemplatesData = []
+
+function saveWACredentials() {
+  const token = document.getElementById('waAccessToken').value.trim()
+  const wabaId = document.getElementById('waWabaId').value.trim()
+  if (!token || !wabaId) { toast('Completa ambos campos', 'error'); return }
+  localStorage.setItem('wa_access_token', token)
+  localStorage.setItem('wa_waba_id', wabaId)
+  toast('✅ Credenciales guardadas', 'success')
+  fetchWATemplates()
+}
+
+async function fetchWATemplates() {
+  const token = localStorage.getItem('wa_access_token')
+  const wabaId = localStorage.getItem('wa_waba_id')
+
+  document.getElementById('waStatusMsg').style.display = 'none'
+  document.getElementById('waError').style.display = 'none'
+
+  if (!token || !wabaId) {
+    document.getElementById('waStatusMsg').style.display = 'block'
+    document.getElementById('waStatusMsg').textContent = 'Enter your credentials above to load templates'
+    return
+  }
+
+  document.getElementById('waSpinner').style.display = 'flex'
+  document.getElementById('waTableWrap').style.display = 'none'
+  document.getElementById('waChartsWrap').style.display = 'none'
+  document.getElementById('waSummaryCards').style.display = 'none'
+
+  try {
+    const url = `https://graph.facebook.com/v19.0/${wabaId}/message_templates?access_token=${token}&fields=name,status,category,language,quality_score,components&limit=100`
+    const res = await fetch(url)
+    const json = await res.json()
+    if (json.error) throw new Error(`[${json.error.code}] ${json.error.message}`)
+    waTemplatesData = json.data || []
+    renderWATemplates(waTemplatesData)
+  } catch(err) {
+    if (err.message.includes('Failed to fetch') || err.message.includes('NetworkError') || err.message.includes('CORS')) {
+      waTemplatesData = WA_MOCK_TEMPLATES
+      renderWATemplates(waTemplatesData, true)
+    } else {
+      document.getElementById('waError').style.display = 'block'
+      document.getElementById('waError').textContent = 'API Error: ' + err.message
+    }
+  } finally {
+    document.getElementById('waSpinner').style.display = 'none'
+  }
+}
+
+function renderWATemplates(templates, isMock = false) {
+  if (isMock) toast('Usando datos de muestra (API no conectada o CORS)', 'success')
+
+  const approved = templates.filter(t => t.status === 'APPROVED').length
+  const rejected = templates.filter(t => t.status === 'REJECTED').length
+  const rate = templates.length ? Math.round((approved / templates.length) * 100) : 0
+
+  document.getElementById('waTotalTemplates').textContent = templates.length
+  document.getElementById('waApprovedTemplates').textContent = approved
+  document.getElementById('waRejectedTemplates').textContent = rejected
+  document.getElementById('waSuccessRate').textContent = rate + '%'
+  document.getElementById('waSummaryCards').style.display = 'grid'
+
+  const tbody = document.getElementById('waTableBody')
+  tbody.innerHTML = templates.length === 0
+    ? '<tr><td colspan="6" style="text-align:center;padding:20px;color:var(--text-muted)">No templates found</td></tr>'
+    : templates.map((t, i) => `<tr>
+        <td style="font-weight:600">${t.name}</td>
+        <td><span style="font-size:11px;font-weight:600;color:var(--text-muted)">${t.category || '—'}</span></td>
+        <td>${t.language || '—'}</td>
+        <td>${waStatusBadge(t.status)}</td>
+        <td>${waQualityBadge(t.quality_score?.score || '—')}</td>
+        <td><button class="btn-wa-outline" style="height:28px;font-size:11px;padding:0 10px" onclick="openWAPreview(${i})">Preview</button></td>
+      </tr>`).join('')
+  document.getElementById('waTableWrap').style.display = 'block'
+
+  renderWACharts(templates)
+  document.getElementById('waChartsWrap').style.display = 'grid'
+}
+
+function waStatusBadge(status) {
+  const map = { APPROVED:['wa-badge-approved','🟢'], REJECTED:['wa-badge-rejected','🔴'], PENDING:['wa-badge-pending','🟡'] }
+  const [cls, dot] = map[status] || ['wa-badge-pending','🟡']
+  return `<span class="wa-badge ${cls}">${dot} ${status}</span>`
+}
+
+function waQualityBadge(score) {
+  const colors = { HIGH:'var(--green)', MEDIUM:'#f59e0b', LOW:'var(--red)' }
+  return `<span style="font-size:12px;font-weight:600;color:${colors[score]||'var(--text-muted)'}">${score}</span>`
+}
+
+function renderWACharts(templates) {
+  const sc = { APPROVED:0, REJECTED:0, PENDING:0 }
+  const cc = { MARKETING:0, UTILITY:0, AUTHENTICATION:0 }
+  templates.forEach(t => {
+    if (sc[t.status] !== undefined) sc[t.status]++
+    if (cc[t.category] !== undefined) cc[t.category]++
+  })
+
+  if (waCharts.status) { waCharts.status.destroy(); waCharts.status = null }
+  if (waCharts.category) { waCharts.category.destroy(); waCharts.category = null }
+
+  const tickStyle = { color:'#a0a0c0', font:{ family:'inherit', size:11 } }
+
+  waCharts.status = new Chart(document.getElementById('waStatusChart'), {
+    type: 'doughnut',
+    data: {
+      labels: ['Approved','Rejected','Pending'],
+      datasets: [{ data:[sc.APPROVED, sc.REJECTED, sc.PENDING], backgroundColor:['#1D9E75','#e74c3c','#f39c12'], borderWidth:0, hoverOffset:8 }]
+    },
+    options: { cutout:'65%', plugins:{ legend:{ labels:{ color:'#a0a0c0', font:{ family:'inherit', size:12 }, boxWidth:14 } }, tooltip:{ callbacks:{ label: ctx => ` ${ctx.label}: ${ctx.raw}` } } } }
+  })
+
+  waCharts.category = new Chart(document.getElementById('waCategoryChart'), {
+    type: 'bar',
+    data: {
+      labels: ['MARKETING','UTILITY','AUTHENTICATION'],
+      datasets: [{ label:'Templates', data:[cc.MARKETING, cc.UTILITY, cc.AUTHENTICATION], backgroundColor:'#1D9E75', borderRadius:6, borderSkipped:false }]
+    },
+    options: {
+      scales: {
+        x: { ticks: tickStyle, grid:{ color:'rgba(50,50,77,.5)' } },
+        y: { ticks: { ...tickStyle, stepSize:1 }, grid:{ color:'rgba(50,50,77,.5)' } }
+      },
+      plugins: { legend:{ display:false } }
+    }
+  })
+}
+
+function openWAPreview(idx) {
+  const t = waTemplatesData[idx]
+  if (!t) return
+  document.getElementById('waPreviewTitle').textContent = t.name
+  let html = `<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:4px">${waStatusBadge(t.status)}<span class="wa-badge" style="background:var(--bg);color:var(--text-muted)">${t.category}</span><span class="wa-badge" style="background:var(--bg);color:var(--text-muted)">${t.language}</span></div>`
+  ;(t.components || []).forEach(c => {
+    if (c.type === 'BUTTONS') {
+      html += `<div class="wa-preview-section"><div class="wa-preview-section-label">Buttons</div><div class="wa-preview-buttons">${(c.buttons||[]).map(b=>`<span class="wa-preview-btn-chip">${b.text}</span>`).join('')}</div></div>`
+    } else {
+      const text = c.text || (c.format ? `[${c.type} — ${c.format}]` : '')
+      if (text) html += `<div class="wa-preview-section"><div class="wa-preview-section-label">${c.type}</div><div class="wa-preview-section-text">${text}</div></div>`
+    }
+  })
+  document.getElementById('waPreviewBody').innerHTML = html
+  document.getElementById('waPreviewOverlay').classList.add('open')
+}
+
+function closeWAPreview() {
+  document.getElementById('waPreviewOverlay').classList.remove('open')
+}
+
+function initWATab() {
+  const token = localStorage.getItem('wa_access_token')
+  const wabaId = localStorage.getItem('wa_waba_id')
+  if (token) document.getElementById('waAccessToken').value = token
+  if (wabaId) document.getElementById('waWabaId').value = wabaId
+  if (token && wabaId) fetchWATemplates()
+  else {
+    document.getElementById('waStatusMsg').style.display = 'block'
+    document.getElementById('waStatusMsg').textContent = 'Enter your credentials above to load templates'
+  }
 }
 
 </script>
