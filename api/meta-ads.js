@@ -90,10 +90,13 @@ async function createAdSet({ adAccountId, accessToken, campaignId, name, dailyBu
       geo_locations: {
         cities: [{ key: geo.key, country: geo.country, radius: 20, distance_unit: 'kilometer' }],
       },
-      age_min: 24,
-      age_max: 55,
+      age_min:             24,
+      age_max:             55,
+      publisher_platforms: ['facebook'],   // Facebook feed primero
+      facebook_positions:  ['feed'],
+      targeting_automation: { advantage_audience: 0 },  // manual targeting, no Advantage+
     },
-    end_time: Math.floor(endTime.getTime() / 1000),  // Unix timestamp (integer)
+    end_time: Math.floor(endTime.getTime() / 1000),
     status:   'PAUSED',
   })
 }

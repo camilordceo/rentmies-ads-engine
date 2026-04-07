@@ -112,17 +112,23 @@ async function checkContainerStatus({ creationId, accessToken }) {
  * Flujo completo: imagen → container → publicar → permalink.
  * Con retry si el container no está listo.
  */
-async function publishToInstagram({ igAccountId, accessToken, imageUrl, caption, retries = 3 }) {
+async function publishToInstagram({ igAccountId, accessToken, imageUrl, caption, retries = 6 }) {
+  // Validar que la URL sea pública (no data: URI ni localhost)
+  if (!imageUrl || imageUrl.startsWith('data:') || imageUrl.includes('localhost')) {
+    throw new Error('La imagen debe ser una URL pública accesible (no base64 ni localhost)')
+  }
+
   // 1. Crear container
   const creationId = await createImageContainer({ igAccountId, accessToken, imageUrl, caption })
 
-  // 2. Esperar que el container esté listo (polling con hasta 3 intentos)
+  // 2. Esperar que el container esté listo — Meta necesita unos segundos para procesar
+  await new Promise(r => setTimeout(r, 3000)) // espera inicial antes del primer check
   for (let i = 0; i < retries; i++) {
     const status = await checkContainerStatus({ creationId, accessToken })
     if (status.status_code === 'FINISHED') break
     if (status.status_code === 'ERROR') throw new Error(`Container error: ${status.status}`)
     if (i === retries - 1) throw new Error('Container no listo después de múltiples intentos')
-    await new Promise(r => setTimeout(r, 2000)) // esperar 2s entre intentos
+    await new Promise(r => setTimeout(r, 3000)) // 3s entre cada reintento
   }
 
   // 3. Publicar
