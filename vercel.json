@@ -9,6 +9,14 @@
     "api/generate-video.js":        { "maxDuration": 120 },
     "api/tiktok.js":                { "maxDuration": 60 },
     "api/auth/tiktok.js":           { "maxDuration": 10 },
-    "api/auth/tiktok-callback.js":  { "maxDuration": 15 }
-  }
+    "api/auth/tiktok-callback.js":  { "maxDuration": 15 },
+    "api/schedule-plan.js":         { "maxDuration": 30 },
+    "api/cron-publish.js":          { "maxDuration": 60 }
+  },
+  "crons": [
+    {
+      "path": "/api/cron-publish",
+      "schedule": "55 13 * * *"
+    }
+  ]
 }
