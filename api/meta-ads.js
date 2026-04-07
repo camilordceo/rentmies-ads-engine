@@ -65,9 +65,10 @@ function acctId(adAccountId) {
 async function createMetaCampaign({ adAccountId, accessToken, name }) {
   return graphPost(`/${acctId(adAccountId)}/campaigns`, accessToken, {
     name,
-    objective:              'OUTCOME_TRAFFIC',
-    status:                 'PAUSED',
-    special_ad_categories:  [],   // empty array = no special category restrictions
+    objective:                       'OUTCOME_TRAFFIC',
+    status:                          'PAUSED',
+    special_ad_categories:           [],
+    is_adset_budget_sharing_enabled: false,  // budget set per ad set, not campaign-level CBO
   })
 }
 
