@@ -3,8 +3,12 @@
     { "source": "/((?!api/).*)", "destination": "/public/index.html" }
   ],
   "functions": {
-    "api/meta-ads.js": { "maxDuration": 30 },
-    "api/instagram.js": { "maxDuration": 30 },
-    "api/generate.js": { "maxDuration": 30 }
+    "api/meta-ads.js":              { "maxDuration": 30 },
+    "api/instagram.js":             { "maxDuration": 60 },
+    "api/generate.js":              { "maxDuration": 30 },
+    "api/generate-video.js":        { "maxDuration": 120 },
+    "api/tiktok.js":                { "maxDuration": 60 },
+    "api/auth/tiktok.js":           { "maxDuration": 10 },
+    "api/auth/tiktok-callback.js":  { "maxDuration": 15 }
   }
 }

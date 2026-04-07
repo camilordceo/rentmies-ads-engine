@@ -170,6 +170,38 @@ select:focus, input:focus { border-color: var(--green); box-shadow: 0 0 0 3px rg
 .toast { position: fixed; bottom: 24px; right: 24px; background: #fff3cd; border: 1px solid #ffc107; color: #856404; padding: 12px 18px; border-radius: 10px; font-size: 13px; font-weight: 600; box-shadow: var(--shadow); z-index: 999; opacity: 0; transition: opacity 0.3s; max-width: 320px; }
 .toast.show { opacity: 1; }
 
+/* PUBLISH PANEL */
+.publish-panel { max-width: 960px; margin: 28px auto 0; background: var(--white); border-radius: var(--radius); box-shadow: var(--shadow); padding: 24px; }
+.publish-panel-title { font-size: 16px; font-weight: 800; margin-bottom: 20px; display: flex; align-items: center; gap: 8px; }
+.format-selector { display: flex; gap: 10px; margin-bottom: 20px; }
+.format-btn { flex: 1; padding: 14px; border: 2px solid var(--gray-200); border-radius: 12px; background: var(--gray-100); cursor: pointer; text-align: center; font-size: 13px; font-weight: 600; color: var(--gray-600); transition: all 0.15s; }
+.format-btn:hover { border-color: var(--green); color: var(--green); }
+.format-btn.selected { border-color: var(--green); background: var(--green-light); color: var(--green-dark); }
+.format-btn .fmt-icon { font-size: 24px; display: block; margin-bottom: 4px; }
+.platform-selector { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
+.platform-btn { display: flex; align-items: center; gap: 8px; padding: 10px 16px; border: 2px solid var(--gray-200); border-radius: 10px; background: var(--gray-100); cursor: pointer; font-size: 13px; font-weight: 600; color: var(--gray-600); transition: all 0.15s; user-select: none; }
+.platform-btn:hover { border-color: var(--green); }
+.platform-btn.selected { border-color: var(--green); background: var(--green-light); color: var(--green-dark); }
+.platform-btn.disabled { opacity: 0.4; cursor: not-allowed; }
+.video-gen-box { background: var(--gray-100); border-radius: 10px; padding: 16px; margin-bottom: 16px; display: none; }
+.video-gen-box.visible { display: block; }
+.btn-gen-video { width: 100%; padding: 12px; background: #6C3CE1; color: white; border: none; border-radius: 10px; font-size: 14px; font-weight: 700; cursor: pointer; transition: all 0.2s; }
+.btn-gen-video:hover { background: #5a2ec5; }
+.btn-gen-video:disabled { opacity: 0.5; cursor: not-allowed; }
+.video-preview { width: 100%; border-radius: 8px; margin-top: 12px; display: none; max-height: 200px; object-fit: cover; }
+.video-preview.visible { display: block; }
+.caption-area { width: 100%; padding: 12px 14px; border: 1.5px solid var(--gray-200); border-radius: 10px; font-size: 14px; font-family: inherit; resize: vertical; min-height: 80px; background: var(--gray-100); color: var(--gray-900); transition: border-color 0.15s; outline: none; margin-bottom: 16px; }
+.caption-area:focus { border-color: var(--green); background: white; }
+.btn-publish { width: 100%; padding: 15px; background: var(--green); color: white; border: none; border-radius: 50px; font-size: 16px; font-weight: 700; cursor: pointer; transition: all 0.2s; box-shadow: 0 4px 16px rgba(29,158,117,0.3); }
+.btn-publish:hover { background: var(--green-dark); }
+.btn-publish:disabled { opacity: 0.5; cursor: not-allowed; }
+.publish-results { margin-top: 14px; display: none; }
+.publish-results.visible { display: block; }
+.publish-result-item { display: flex; align-items: center; gap: 10px; padding: 10px 14px; border-radius: 8px; margin-bottom: 8px; font-size: 13px; font-weight: 600; }
+.publish-result-item.success { background: var(--green-light); color: var(--green-dark); }
+.publish-result-item.error { background: #fff0f0; color: #c0392b; }
+.publish-result-item.processing { background: #fff8e1; color: #856404; }
+
 @media (max-width: 480px) {
   .ads-grid { grid-template-columns: 1fr; }
   .checkbox-grid { grid-template-columns: 1fr 1fr; }
@@ -317,6 +349,55 @@ select:focus, input:focus { border-color: var(--green); box-shadow: 0 0 0 3px rg
     </div>
   </div>
   <div class="ads-grid" id="ads-grid"></div>
+
+  <!-- PUBLISH PANEL -->
+  <div class="publish-panel" id="publish-panel">
+    <div class="publish-panel-title">📱 Publicar en redes sociales</div>
+
+    <!-- Formato -->
+    <div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--gray-400);margin-bottom:10px;">Formato</div>
+    <div class="format-selector">
+      <div class="format-btn selected" onclick="selectFormat('image', this)">
+        <span class="fmt-icon">📷</span>Imagen
+      </div>
+      <div class="format-btn" onclick="selectFormat('video', this)">
+        <span class="fmt-icon">🎬</span>Video (Reel/TikTok)
+      </div>
+    </div>
+
+    <!-- Video generation box (solo visible si formato = video) -->
+    <div class="video-gen-box" id="video-gen-box">
+      <div style="font-size:13px;color:var(--gray-600);margin-bottom:10px;">Genera un video de 15s con Gemini Veo a partir de la descripción del inmueble.</div>
+      <button class="btn-gen-video" id="btn-gen-video" onclick="generateVideo()">🤖 Generar video con IA</button>
+      <video class="video-preview" id="video-preview" controls></video>
+      <div id="video-url-display" style="font-size:11px;color:var(--gray-400);margin-top:6px;word-break:break-all;"></div>
+    </div>
+
+    <!-- Plataformas -->
+    <div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--gray-400);margin-bottom:10px;">Destinos</div>
+    <div class="platform-selector">
+      <div class="platform-btn selected" id="plat-facebook" onclick="togglePlatform('facebook', this)">
+        <span>🔵</span> Facebook
+      </div>
+      <div class="platform-btn selected" id="plat-instagram" onclick="togglePlatform('instagram', this)">
+        <span>📸</span> Instagram
+      </div>
+      <div class="platform-btn" id="plat-tiktok" onclick="togglePlatform('tiktok', this)">
+        <span>🎵</span> TikTok
+      </div>
+    </div>
+    <div id="tiktok-warning" style="display:none;font-size:12px;color:#856404;background:#fff8e1;padding:8px 12px;border-radius:8px;margin-bottom:12px;">
+      ⚠️ TikTok solo soporta video. Cambia el formato a Video para activarlo.
+    </div>
+
+    <!-- Caption -->
+    <div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--gray-400);margin-bottom:8px;">Caption / Descripción</div>
+    <textarea class="caption-area" id="publish-caption" placeholder="🏠 Hermoso apartamento en Bogotá&#10;2 hab | 2 baños | 75m²&#10;&#10;#inmuebles #bogota #arriendos #fyp"></textarea>
+
+    <button class="btn-publish" id="btn-publish" onclick="publishToSocial()">✦ Publicar ahora</button>
+
+    <div class="publish-results" id="publish-results"></div>
+  </div>
 </div>
 
 <div class="toast" id="toast"></div>
@@ -597,6 +678,13 @@ function renderResults(tipo, ciudad, precio, features, imageResults) {
   const grid = document.getElementById('ads-grid');
   grid.innerHTML = '';
 
+  // Auto-fill caption con datos del inmueble
+  const captionEl = document.getElementById('publish-caption')
+  if (captionEl) {
+    const fs = features.slice(0, 3).map(f => ({ piscina:'🏊 piscina', gym:'💪 gym', parqueadero:'🚗 parqueadero', vigilancia:'🔐 vigilancia', terraza:'🌿 terraza', pets:'🐾 pet-friendly' }[f] || f))
+    captionEl.value = `🏠 ${capitalize(tipo)} disponible en ${ciudad}\n${fs.join(' · ')}${fs.length?' · ':''}\n💰 ${formatPrice(precio)}\n\n#inmuebles #${ciudad.toLowerCase().replace('á','a').replace('é','e')} #arriendos #${tipo} #fyp`
+  }
+
   platforms.forEach((tpl, i) => {
     const headline = tpl.headline(tipo, ciudad);
     const desc = tpl.desc(tipo, ciudad, precio, features);
@@ -658,6 +746,165 @@ function renderResults(tipo, ciudad, precio, features, imageResults) {
     card.appendChild(body);
     grid.appendChild(card);
   });
+}
+
+// ── PUBLISH PANEL STATE ──
+let publishFormat    = 'image'
+let publishPlatforms = new Set(['facebook', 'instagram'])
+let generatedVideoUrl = null
+
+function selectFormat(fmt, el) {
+  publishFormat = fmt
+  document.querySelectorAll('.format-btn').forEach(b => b.classList.remove('selected'))
+  el.classList.add('selected')
+
+  const videoBox  = document.getElementById('video-gen-box')
+  const tiktokBtn = document.getElementById('plat-tiktok')
+  const tiktokWarn = document.getElementById('tiktok-warning')
+
+  if (fmt === 'video') {
+    videoBox.classList.add('visible')
+    tiktokBtn.classList.remove('disabled')
+    tiktokWarn.style.display = 'none'
+  } else {
+    videoBox.classList.remove('visible')
+    // TikTok solo soporta video → desactivar si estaba seleccionado
+    if (publishPlatforms.has('tiktok')) {
+      publishPlatforms.delete('tiktok')
+      tiktokBtn.classList.remove('selected')
+    }
+    tiktokWarn.style.display = 'none'
+  }
+}
+
+function togglePlatform(platform, el) {
+  if (platform === 'tiktok' && publishFormat === 'image') {
+    document.getElementById('tiktok-warning').style.display = 'block'
+    return
+  }
+  if (el.classList.contains('disabled')) return
+  if (publishPlatforms.has(platform)) {
+    publishPlatforms.delete(platform)
+    el.classList.remove('selected')
+  } else {
+    publishPlatforms.add(platform)
+    el.classList.add('selected')
+  }
+}
+
+async function generateVideo() {
+  const btn = document.getElementById('btn-gen-video')
+  const preview = document.getElementById('video-preview')
+  const urlDisplay = document.getElementById('video-url-display')
+  const apiKey = (localStorage.getItem('rentmies_gemini_key') || '').trim()
+
+  btn.disabled = true
+  btn.textContent = '⏳ Generando video (15-60s)...'
+
+  try {
+    const tipo    = document.getElementById('tipo').value
+    const ciudad  = document.getElementById('ciudad').value
+    const features = [...document.querySelectorAll('#features-grid input:checked')].map(cb => cb.value)
+
+    const res = await fetch('/api/generate-video', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        tipo, ciudad,
+        amenidades: features,
+        apiKey,
+        simulate: !apiKey,
+      }),
+    })
+    const data = await res.json()
+
+    if (!data.success) throw new Error(data.error || 'Error al generar video')
+
+    generatedVideoUrl = data.videoUrl
+    preview.src = generatedVideoUrl
+    preview.classList.add('visible')
+    urlDisplay.textContent = generatedVideoUrl
+    btn.textContent = '✓ Video listo'
+    if (data.simulated) showToast('Video simulado. Configura GEMINI_API_KEY para generación real.')
+
+  } catch (err) {
+    showToast('Error al generar video: ' + err.message)
+    btn.textContent = '🤖 Reintentar generar video'
+    btn.disabled = false
+  }
+}
+
+async function publishToSocial() {
+  const caption = document.getElementById('publish-caption').value.trim()
+  if (!caption) { showToast('⚠️ Escribe un caption antes de publicar.'); return; }
+  if (publishPlatforms.size === 0) { showToast('⚠️ Selecciona al menos una plataforma.'); return; }
+  if (publishFormat === 'video' && !generatedVideoUrl) {
+    showToast('⚠️ Primero genera el video con IA.'); return;
+  }
+
+  const btn = document.getElementById('btn-publish')
+  btn.disabled = true
+  btn.textContent = '⏳ Publicando...'
+
+  const resultsEl = document.getElementById('publish-results')
+  resultsEl.innerHTML = ''
+  resultsEl.classList.add('visible')
+
+  const platforms = [...publishPlatforms]
+
+  for (const platform of platforms) {
+    const item = document.createElement('div')
+    item.className = 'publish-result-item processing'
+    item.textContent = `⏳ Publicando en ${platform}...`
+    resultsEl.appendChild(item)
+
+    try {
+      let res, data
+
+      if (platform === 'facebook') {
+        // Facebook usa meta-ads (ya existente)
+        res = await fetch('/api/meta-ads', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ ads: [{ headline: caption.split('\n')[0], description: caption, variationType: 'social', platform: 'facebook', feedImage: '' }], ciudad: document.getElementById('ciudad')?.value || 'Bogotá' }),
+        })
+        data = await res.json()
+      } else if (platform === 'instagram') {
+        res = await fetch('/api/instagram', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            format:   publishFormat,
+            caption,
+            videoUrl: publishFormat === 'video' ? generatedVideoUrl : undefined,
+            imageUrl: publishFormat === 'image' ? (uploadedPhotoDataUrl || undefined) : undefined,
+          }),
+        })
+        data = await res.json()
+      } else if (platform === 'tiktok') {
+        res = await fetch('/api/tiktok', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ videoUrl: generatedVideoUrl, caption }),
+        })
+        data = await res.json()
+      }
+
+      if (data?.success) {
+        item.className = 'publish-result-item success'
+        const link = data.permalink || data.adsManagerUrl || ''
+        item.innerHTML = `✓ ${platform.charAt(0).toUpperCase()+platform.slice(1)} publicado${data.simulated?' (simulado)':''} ${link ? `· <a href="${link}" target="_blank" style="color:var(--green);">Ver</a>` : ''}`
+      } else {
+        throw new Error(data?.error || 'Error desconocido')
+      }
+    } catch (err) {
+      item.className = 'publish-result-item error'
+      item.textContent = `✕ ${platform}: ${err.message}`
+    }
+  }
+
+  btn.disabled = false
+  btn.textContent = '✦ Publicar de nuevo'
 }
 </script>
 </body>

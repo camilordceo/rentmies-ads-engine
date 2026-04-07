@@ -1,23 +1,21 @@
 /**
  * RENTMIES ADS ENGINE — INSTAGRAM PUBLISHER
  *
- * Flujo de publicación en Instagram via Meta Graph API:
+ * Soporta tres formatos:
+ *   - image  → Feed post (imagen)
+ *   - video  → Reel (video 9:16, MP4, max 90s)
+ *   - carousel → Hasta 10 imágenes
  *
- *   1. Crear container de imagen
- *      POST /{ig-user-id}/media
- *      → retorna creation_id
- *
- *   2. Publicar el container
- *      POST /{ig-user-id}/media_publish
- *      → retorna media_id (post publicado)
- *
- *   3. (Opcional) Obtener permalink
- *      GET /{media-id}?fields=permalink
+ * Flujo común:
+ *   1. Crear container (image/video/carousel)
+ *   2. Esperar procesamiento (polling status_code)
+ *   3. Publicar container (media_publish)
+ *   4. Obtener permalink
  *
  * Requisitos:
  *   - META_ACCESS_TOKEN: token con permisos instagram_basic, instagram_content_publish
  *   - META_IG_ACCOUNT_ID: Instagram Business Account ID
- *   - La imagen debe ser una URL pública accesible (no localhost)
+ *   - URLs deben ser públicas (no localhost, no base64)
  */
 
 const https = require('https')
@@ -59,14 +57,29 @@ function graphRequest(method, path, body) {
 }
 
 /**
- * Paso 1 — Crea un container de imagen en Instagram.
- * La imagen debe ser una URL pública (CDN, S3, etc).
+ * Paso 1a — Crea un container de IMAGEN en Instagram.
  */
 async function createImageContainer({ igAccountId, accessToken, imageUrl, caption }) {
   const params = new URLSearchParams({
     image_url:    imageUrl,
     caption:      caption,
     access_token: accessToken
+  })
+  const result = await graphRequest('POST', `/${igAccountId}/media?${params}`, null)
+  return result.id // creation_id
+}
+
+/**
+ * Paso 1b — Crea un container de VIDEO (Reel) en Instagram.
+ * video_url debe ser una URL pública de MP4 (9:16, max 90s, max 1GB).
+ */
+async function createReelContainer({ igAccountId, accessToken, videoUrl, caption, shareToFeed = true }) {
+  const params = new URLSearchParams({
+    media_type:    'REELS',
+    video_url:     videoUrl,
+    caption:       caption,
+    share_to_feed: String(shareToFeed),  // también aparece en el feed
+    access_token:  accessToken
   })
   const result = await graphRequest('POST', `/${igAccountId}/media?${params}`, null)
   return result.id // creation_id
@@ -112,23 +125,32 @@ async function checkContainerStatus({ creationId, accessToken }) {
  * Flujo completo: imagen → container → publicar → permalink.
  * Con retry si el container no está listo.
  */
-async function publishToInstagram({ igAccountId, accessToken, imageUrl, caption, retries = 6 }) {
-  // Validar que la URL sea pública (no data: URI ni localhost)
-  if (!imageUrl || imageUrl.startsWith('data:') || imageUrl.includes('localhost')) {
-    throw new Error('La imagen debe ser una URL pública accesible (no base64 ni localhost)')
+async function publishToInstagram({ igAccountId, accessToken, imageUrl, videoUrl, caption, format = 'image', shareToFeed = true, retries = 6 }) {
+  const mediaUrl = format === 'video' ? videoUrl : imageUrl
+
+  // Validar que la URL sea pública
+  if (!mediaUrl || mediaUrl.startsWith('data:') || mediaUrl.includes('localhost')) {
+    throw new Error(`La ${format === 'video' ? 'URL del video' : 'imagen'} debe ser pública (no base64 ni localhost)`)
   }
 
-  // 1. Crear container
-  const creationId = await createImageContainer({ igAccountId, accessToken, imageUrl, caption })
+  // 1. Crear container según formato
+  let creationId
+  if (format === 'video') {
+    creationId = await createReelContainer({ igAccountId, accessToken, videoUrl: mediaUrl, caption, shareToFeed })
+  } else {
+    creationId = await createImageContainer({ igAccountId, accessToken, imageUrl: mediaUrl, caption })
+  }
 
-  // 2. Esperar que el container esté listo — Meta necesita unos segundos para procesar
-  await new Promise(r => setTimeout(r, 3000)) // espera inicial antes del primer check
+  // 2. Esperar que el container esté listo (videos tardan más)
+  const initialDelay = format === 'video' ? 8000 : 3000
+  await new Promise(r => setTimeout(r, initialDelay))
+
   for (let i = 0; i < retries; i++) {
     const status = await checkContainerStatus({ creationId, accessToken })
     if (status.status_code === 'FINISHED') break
     if (status.status_code === 'ERROR') throw new Error(`Container error: ${status.status}`)
     if (i === retries - 1) throw new Error('Container no listo después de múltiples intentos')
-    await new Promise(r => setTimeout(r, 3000)) // 3s entre cada reintento
+    await new Promise(r => setTimeout(r, format === 'video' ? 5000 : 3000))
   }
 
   // 3. Publicar
@@ -138,12 +160,13 @@ async function publishToInstagram({ igAccountId, accessToken, imageUrl, caption,
   const post = await getPermalink({ mediaId, accessToken })
 
   return {
-    success: true,
+    success:   true,
     mediaId,
     creationId,
     permalink: post.permalink,
     timestamp: post.timestamp,
-    platform:  'instagram'
+    platform:  'instagram',
+    format,
   }
 }
 
@@ -157,41 +180,48 @@ module.exports = async (req, res) => {
 
   const {
     imageUrl,
+    videoUrl,
+    format       = 'image',   // 'image' | 'video'
     caption,
-    // Credenciales desde el body (enviadas desde el cliente con las settings del usuario)
-    // Si no vienen en el body, usa las env vars del servidor
+    shareToFeed  = true,
     igAccountId  = process.env.META_IG_ACCOUNT_ID,
     accessToken  = process.env.META_ACCESS_TOKEN,
-    // Modo simulación: si no hay credenciales reales
-    simulate     = false
+    simulate     = false,
   } = req.body || {}
 
-  if (!imageUrl || !caption) {
-    return res.status(400).json({ success: false, error: 'Se requiere imageUrl y caption' })
+  if (!caption) {
+    return res.status(400).json({ success: false, error: 'Se requiere caption' })
+  }
+  if (format === 'video' && !videoUrl) {
+    return res.status(400).json({ success: false, error: 'Se requiere videoUrl para formato video' })
+  }
+  if (format === 'image' && !imageUrl) {
+    return res.status(400).json({ success: false, error: 'Se requiere imageUrl para formato imagen' })
   }
 
-  // ── Modo simulación (sin credenciales) ──
+  // ── Modo simulación ──
   if (simulate || !igAccountId || !accessToken) {
-    await new Promise(r => setTimeout(r, 1200)) // simular latencia
+    await new Promise(r => setTimeout(r, 1200))
     const fakeId = `ig_${Date.now()}`
     return res.status(200).json({
-      success: true,
-      simulated: true,
-      mediaId:   fakeId,
+      success:    true,
+      simulated:  true,
+      mediaId:    fakeId,
       creationId: `cont_${fakeId}`,
-      permalink: `https://www.instagram.com/p/mock_${fakeId.slice(-8)}/`,
-      timestamp: new Date().toISOString(),
-      platform: 'instagram',
-      message: 'Simulado. Configura META_IG_ACCOUNT_ID y META_ACCESS_TOKEN para publicar real.'
+      permalink:  `https://www.instagram.com/p/mock_${fakeId.slice(-8)}/`,
+      timestamp:  new Date().toISOString(),
+      platform:   'instagram',
+      format,
+      message:    'Simulado. Configura META_IG_ACCOUNT_ID y META_ACCESS_TOKEN para publicar real.',
     })
   }
 
   // ── Publicación real ──
   try {
-    const result = await publishToInstagram({ igAccountId, accessToken, imageUrl, caption })
+    const result = await publishToInstagram({ igAccountId, accessToken, imageUrl, videoUrl, caption, format, shareToFeed })
     res.status(200).json(result)
   } catch (err) {
     console.error('Instagram publish error:', err.message)
-    res.status(500).json({ success: false, error: err.message, platform: 'instagram' })
+    res.status(500).json({ success: false, error: err.message, platform: 'instagram', format })
   }
 }
