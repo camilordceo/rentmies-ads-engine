@@ -3,7 +3,21 @@
     "allow": [
       "Bash(npm install:*)",
       "Bash(taskkill:*)",
-      "Bash(node -e \"require\\(''./engine/analyzer''\\); require\\(''./engine/generator''\\); console.log\\(''OK''\\)\")"
+      "Bash(node -e \"require\\(''./engine/analyzer''\\); require\\(''./engine/generator''\\); console.log\\(''OK''\\)\")",
+      "WebFetch(domain:raw.githubusercontent.com)",
+      "WebFetch(domain:api.github.com)",
+      "Bash(curl:*)",
+      "Bash(gh repo:*)",
+      "Bash(gh search:*)",
+      "Bash(uipro init:*)",
+      "WebFetch(domain:github.com)",
+      "Read(//c/Users/camil/.claude/skills//**)",
+      "Read(//c/Users/camil/.claude/skills/**)",
+      "Bash(cp:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(python3:*)",
+      "Bash(git push:*)"
     ]
   }
 }

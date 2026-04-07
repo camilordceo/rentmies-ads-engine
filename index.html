@@ -1016,7 +1016,7 @@ async function initMarketerTab() {
   // Cargar inmuebles si aún no
   if (INVENTORY.length === 0) {
     try {
-      const res = await fetch('/api/inmuebles')
+      const res = await fetch('/api/data?resource=inmuebles')
       const data = await res.json()
       const items = data.inmuebles || data || []
       items.forEach(p => INVENTORY.push(p))
