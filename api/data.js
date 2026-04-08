@@ -2,17 +2,31 @@
  * RENTMIES — DATA ROUTER
  * GET/POST/PUT /api/data?resource=<name>
  *
- * Consolida 7 endpoints utilitarios en una sola función:
- *   inmuebles  → GET  lista de propiedades
- *   metrics    → GET  métricas de ads (demo)
- *   logs       → GET  log de decisiones del analizador
- *   analyze    → POST analiza métricas y decide acción
- *   settings   → GET  estado de variables de entorno (sin exponer valores)
- *   prompts    → GET|PUT  prompts del sistema
- *   publish    → POST publicación genérica (mock)
+ * Consolida endpoints utilitarios + nuevos recursos de la plataforma:
+ *   inmuebles      → GET  lista de propiedades
+ *   metrics        → GET  métricas de ads (demo)
+ *   logs           → GET  log de decisiones del analizador
+ *   analyze        → POST analiza métricas y decide acción
+ *   settings       → GET  estado de variables de entorno
+ *   prompts        → GET|PUT  prompts del sistema
+ *   publish        → POST publicación genérica (mock)
+ *   leads          → POST captura lead del landing
+ *   checkout       → POST|GET crea sesión de pago
+ *   nocomm         → POST onboarding Sin Comisión
  */
 
 const inmuebles = require('../data/inmuebles.json')
+const supabase  = require('../lib/supabase')
+
+// ── Plans (for checkout) ─────────────────────────────────────────────────────
+const PLANS = {
+  '30dias-basico':   { name:'30 Días Básico',        price_cop:89000,   billing:'monthly' },
+  '30dias-estandar': { name:'30 Días Estándar',       price_cop:199000,  billing:'monthly' },
+  '30dias-pro':      { name:'30 Días Pro Agencia',    price_cop:399000,  billing:'monthly' },
+  'pro-starter':     { name:'Rentmies Pro Starter',   price_cop:599000,  billing:'monthly' },
+  'pro-premium':     { name:'Rentmies Pro Premium',   price_cop:1200000, billing:'monthly' },
+  'nocomm':          { name:'Sin Comisión',           price_cop:149000,  billing:'onetime' },
+}
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -159,5 +173,51 @@ module.exports = (req, res) => {
     return res.status(200).json({ success: true, published })
   }
 
-  res.status(400).json({ error: `Recurso desconocido: '${resource}'. Usa ?resource=inmuebles|metrics|logs|analyze|settings|prompts|publish` })
+  // ── POST /api/data?resource=leads ──────────────────────────────────────────
+  if (resource === 'leads') {
+    if (req.method !== 'POST') return res.status(405).json({ error: 'POST required' })
+    const { name, phone, email='', city='', product='', source='landing', message='' } = req.body || {}
+    if (!name || !phone) return res.status(400).json({ error: 'name y phone son requeridos' })
+    const leadData = { name: name.trim(), phone: phone.trim(), email: email||null, city: city||null, product: product||null, source, message: message||null, status:'new', created_at: new Date().toISOString() }
+    if (supabase) {
+      try { await supabase.from('leads').insert(leadData) }
+      catch(e) { console.error('[leads]', e.message) }
+    }
+    console.log(`🔥 LEAD: ${name} · ${phone} · ${product} · ${city}`)
+    return res.status(200).json({ success: true, message: 'Lead capturado. Te contactaremos en menos de 2 horas.' })
+  }
+
+  // ── GET|POST /api/data?resource=checkout ────────────────────────────────────
+  if (resource === 'checkout') {
+    if (req.method === 'GET') {
+      const { plan_id } = req.query
+      if (plan_id && PLANS[plan_id]) return res.status(200).json({ success: true, plan: { id: plan_id, ...PLANS[plan_id] } })
+      return res.status(200).json({ success: true, plans: PLANS })
+    }
+    if (req.method !== 'POST') return res.status(405).json({ error: 'GET or POST required' })
+    const { plan_id, name='', email='', phone='' } = req.body || {}
+    if (!plan_id || !PLANS[plan_id]) return res.status(400).json({ error: `Plan inválido: ${plan_id}` })
+    const plan = PLANS[plan_id]
+    const waMsg = encodeURIComponent(`Hola Rentmies! Quiero contratar ${plan.name} ($${plan.price_cop.toLocaleString('es-CO')} COP). Nombre: ${name}. WhatsApp: ${phone}`)
+    const checkoutUrl = `https://wa.me/573001234567?text=${waMsg}`
+    return res.status(200).json({ success: true, checkout_url: checkoutUrl, plan: { id: plan_id, ...plan }, fallback: true })
+  }
+
+  // ── POST /api/data?resource=nocomm ──────────────────────────────────────────
+  if (resource === 'nocomm') {
+    if (req.method !== 'POST') return res.status(405).json({ error: 'POST required' })
+    const { seller_name, seller_phone, seller_email='', property_type='apartamento', city='Bogotá', neighborhood='', price=0, area=0, bedrooms=0, bathrooms=0, description='', images=[] } = req.body || {}
+    if (!seller_name || !seller_phone) return res.status(400).json({ error: 'seller_name y seller_phone requeridos' })
+    const start = new Date()
+    const end   = new Date(start.getTime() + 30*24*60*60*1000)
+    const mockId = `nocomm-${Date.now()}`
+    if (supabase) {
+      try {
+        await supabase.from('nocomm_listings').insert({ property_type, city, neighborhood, price:price||null, area:area||null, bedrooms:bedrooms||null, bathrooms:bathrooms||null, description, seller_name, seller_phone, seller_email:seller_email||null, images:images.length?images:null, status:'active', campaign_start:start.toISOString(), campaign_end:end.toISOString() })
+      } catch(e) { console.error('[nocomm]', e.message) }
+    }
+    return res.status(200).json({ success: true, listing_id: mockId, campaign: { start, end, posts: 12 } })
+  }
+
+  res.status(400).json({ error: `Recurso desconocido: '${resource}'. Usa ?resource=inmuebles|metrics|logs|analyze|settings|prompts|publish|leads|checkout|nocomm` })
 }

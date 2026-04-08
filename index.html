@@ -1000,7 +1000,7 @@ async function submitLead() {
   btn.textContent = 'Enviando...';
   btn.disabled = true;
   try {
-    const res = await fetch('/api/leads', {
+    const res = await fetch('/api/data?resource=leads', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ name, phone, email, city, product, source: 'landing' }),
