@@ -1,36 +1,37 @@
 -- ============================================================
--- RENTMIES — SUPABASE SCHEMA v2
--- Nuevas tablas para el landing page y los 3 productos.
--- Ejecuta esto en el SQL Editor de tu proyecto Supabase.
--- Compatible con el schema v1 existente.
+-- RENTMIES ADS ENGINE — SCHEMA V2 (GROWTH SUITE)
+-- Run in Supabase SQL Editor
+-- Extends existing tables, adds new Ads Engine tables
 -- ============================================================
 
--- ── LEADS (del landing page) ──────────────────────────────────────────────────
+-- ── EXISTING TABLES (do not modify) ──
+-- public.empresas (id, nombre, logo_url, plan, activa)
+-- public.profiles (id, email, nombre, rol, empresa_id, avatar_url, activo, credits_remaining, plan)
+-- public.inventario_sql (id, empresa_id, tipo_inmueble_propiedad, tipo_transaccion_negocio, ...)
+-- public.whatsapp_ai (id, empresa_id, numero_whatsapp, activo)
+
+-- ── LEADS (from v2 landing) ──────────────────��───────────────────────────────
 CREATE TABLE IF NOT EXISTS leads (
   id          UUID DEFAULT gen_random_uuid() PRIMARY KEY,
   name        TEXT NOT NULL,
   email       TEXT,
   phone       TEXT NOT NULL,
   city        TEXT,
-  product     TEXT,   -- '30dias-basico', '30dias-estandar', 'pro-starter', etc.
-  source      TEXT DEFAULT 'landing',  -- 'landing', 'ad', 'whatsapp', 'referral'
+  product     TEXT,
+  source      TEXT DEFAULT 'landing',
   message     TEXT,
-  status      TEXT DEFAULT 'new',  -- 'new', 'contacted', 'converted', 'lost'
+  status      TEXT DEFAULT 'new',
   created_at  TIMESTAMPTZ DEFAULT now(),
   updated_at  TIMESTAMPTZ DEFAULT now()
 );
 
-CREATE INDEX IF NOT EXISTS idx_leads_status    ON leads(status);
-CREATE INDEX IF NOT EXISTS idx_leads_created   ON leads(created_at DESC);
-CREATE INDEX IF NOT EXISTS idx_leads_product   ON leads(product);
-
--- ── PLANS ────────────────────────────────────────────────────────────────────
+-- ── PLANS ───────────────────────��────────────────────────────────────────────
 CREATE TABLE IF NOT EXISTS plans (
-  id               TEXT PRIMARY KEY,  -- '30dias-basico', 'pro-premium', 'nocomm'
-  product          TEXT NOT NULL,     -- '30dias', 'pro', 'nocomm'
+  id               TEXT PRIMARY KEY,
+  product          TEXT NOT NULL,
   name             TEXT NOT NULL,
   price_cop        INTEGER NOT NULL,
-  billing          TEXT DEFAULT 'monthly',  -- 'monthly', 'onetime'
+  billing          TEXT DEFAULT 'monthly',
   properties_limit INTEGER,
   posts_per_month  INTEGER,
   features         JSONB,
@@ -38,29 +39,16 @@ CREATE TABLE IF NOT EXISTS plans (
   created_at       TIMESTAMPTZ DEFAULT now()
 );
 
--- Insertar planes
-INSERT INTO plans (id, product, name, price_cop, billing, properties_limit, posts_per_month, features) VALUES
-('30dias-basico',    '30dias', '30 Días Básico',         89000,   'monthly', 1,  12, '{"platforms":["instagram","facebook"],"ai_video":false,"analytics":false}'),
-('30dias-estandar',  '30dias', '30 Días Estándar',      199000,   'monthly', 5,  20, '{"platforms":["instagram","facebook","stories"],"ai_video":true,"analytics":"weekly"}'),
-('30dias-pro',       '30dias', '30 Días Pro Agencia',   399000,   'monthly', 20, 30, '{"platforms":["instagram","facebook","tiktok","stories"],"ai_video":true,"analytics":"realtime"}'),
-('pro-starter',      'pro',    'Rentmies Pro Starter',  599000,   'monthly', 3,  30, '{"platforms":["instagram","facebook"],"ai_video":3,"meta_ads":true,"analytics":"basic","account_manager":false}'),
-('pro-premium',      'pro',    'Rentmies Pro Premium', 1200000,   'monthly', null, 80, '{"platforms":["instagram","facebook","google","tiktok"],"ai_video":true,"meta_ads":true,"google_ads":true,"analytics":"full","account_manager":true,"ad_budget_included":200000}'),
-('nocomm',           'nocomm', 'Sin Comisión',          149000,   'onetime', 1,  12, '{"platforms":["instagram","facebook"],"ai_video":false,"listing_page":true,"portal_listing":true,"guarantee":"30day_refund"}')
-ON CONFLICT (id) DO UPDATE SET
-  price_cop = EXCLUDED.price_cop,
-  features  = EXCLUDED.features,
-  active    = EXCLUDED.active;
-
 -- ── SUBSCRIPTIONS ─────────────────────────────────────────────────────────────
 CREATE TABLE IF NOT EXISTS subscriptions (
   id                UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-  client_id         UUID REFERENCES clients(id) ON DELETE SET NULL,
+  client_id         UUID,
   plan_id           TEXT REFERENCES plans(id),
-  status            TEXT DEFAULT 'pending',  -- pending, active, paused, cancelled, expired
+  status            TEXT DEFAULT 'pending',
   start_date        TIMESTAMPTZ,
   end_date          TIMESTAMPTZ,
-  payment_reference TEXT,        -- Stripe session ID, Wompi reference, etc.
-  amount_paid       INTEGER,     -- en COP
+  payment_reference TEXT,
+  amount_paid       INTEGER,
   next_billing_date TIMESTAMPTZ,
   cancelled_at      TIMESTAMPTZ,
   cancel_reason     TEXT,
@@ -69,182 +57,212 @@ CREATE TABLE IF NOT EXISTS subscriptions (
   updated_at        TIMESTAMPTZ DEFAULT now()
 );
 
-CREATE INDEX IF NOT EXISTS idx_subscriptions_client ON subscriptions(client_id);
-CREATE INDEX IF NOT EXISTS idx_subscriptions_status ON subscriptions(status);
-CREATE INDEX IF NOT EXISTS idx_subscriptions_next   ON subscriptions(next_billing_date);
-
--- ── CONTENT CALENDAR (30-day scheduler) ──────────────────────────────────────
+-- ── CONTENT CALENDAR ────────────────────��──────────────────────���─────────────
 CREATE TABLE IF NOT EXISTS content_calendar (
   id               UUID DEFAULT gen_random_uuid() PRIMARY KEY,
   subscription_id  UUID REFERENCES subscriptions(id) ON DELETE CASCADE,
-  property_id      UUID REFERENCES properties(id) ON DELETE SET NULL,
+  property_id      UUID,
   post_date        DATE NOT NULL,
-  platform         TEXT NOT NULL,       -- 'instagram', 'facebook', 'instagram_story', 'tiktok'
-  content_type     TEXT DEFAULT 'image', -- 'image', 'video', 'carousel', 'story'
+  platform         TEXT NOT NULL,
+  content_type     TEXT DEFAULT 'image',
   caption          TEXT,
-  image_url        TEXT,                 -- generada o subida por el cliente
+  image_url        TEXT,
   headline         TEXT,
-  variation        TEXT,                 -- 'urgency', 'outcome', 'social', 'brand_*'
-  status           TEXT DEFAULT 'scheduled', -- scheduled, generating, published, failed, skipped
-  post_id          TEXT,                 -- ID del post en la plataforma
+  variation        TEXT,
+  status           TEXT DEFAULT 'scheduled',
+  post_id          TEXT,
   error_message    TEXT,
-  metrics          JSONB,                -- {impressions, reach, likes, comments, saves}
+  metrics          JSONB,
   created_at       TIMESTAMPTZ DEFAULT now(),
   published_at     TIMESTAMPTZ
 );
 
-CREATE INDEX IF NOT EXISTS idx_calendar_date   ON content_calendar(post_date);
-CREATE INDEX IF NOT EXISTS idx_calendar_status ON content_calendar(status);
-CREATE INDEX IF NOT EXISTS idx_calendar_sub    ON content_calendar(subscription_id);
+-- ══════════════��═════════════════════════════════════════��═════
+-- NEW ADS ENGINE TABLES
+-- ══════════════════════════════════════════════════════════════
 
--- ── NOCOMM LISTINGS (Sin Comisión) ───────────────────────────────────────────
-CREATE TABLE IF NOT EXISTS nocomm_listings (
-  id              UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-  client_id       UUID REFERENCES clients(id) ON DELETE SET NULL,
-  subscription_id UUID REFERENCES subscriptions(id) ON DELETE SET NULL,
-  property_type   TEXT NOT NULL,   -- 'apartamento', 'casa', 'lote', 'local', 'oficina'
-  city            TEXT NOT NULL,
-  neighborhood    TEXT,
-  price           BIGINT,          -- en COP
-  area            INTEGER,         -- m²
-  bedrooms        INTEGER,
-  bathrooms       INTEGER,
-  description     TEXT,
-  seller_name     TEXT NOT NULL,
-  seller_phone    TEXT NOT NULL,
-  seller_email    TEXT,
-  images          TEXT[],
-  listing_slug    TEXT UNIQUE,     -- para la URL pública: /inmueble/{slug}
-  status          TEXT DEFAULT 'pending',  -- pending, active, sold, expired, cancelled
-  views           INTEGER DEFAULT 0,
-  leads_count     INTEGER DEFAULT 0,
-  campaign_start  TIMESTAMPTZ,
-  campaign_end    TIMESTAMPTZ,
-  created_at      TIMESTAMPTZ DEFAULT now(),
-  updated_at      TIMESTAMPTZ DEFAULT now()
+-- Ad Campaigns
+CREATE TABLE IF NOT EXISTS public.ad_campaigns (
+  id                    UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  empresa_id            UUID NOT NULL,
+  created_by            UUID,
+  name                  TEXT NOT NULL,
+  status                TEXT DEFAULT 'draft',
+  ciudad                TEXT,
+  tipo_inmueble         TEXT,
+  tipo_transaccion      TEXT,
+  presupuesto_diario    NUMERIC(12,2),
+  presupuesto_total     NUMERIC(12,2),
+  moneda                TEXT DEFAULT 'COP',
+  inventario_sql_id     UUID,
+  platforms             JSONB DEFAULT '[]'::jsonb,
+  prompt_config         JSONB DEFAULT '{}'::jsonb,
+  total_ads_generated   INT DEFAULT 0,
+  total_ads_published   INT DEFAULT 0,
+  created_at            TIMESTAMPTZ DEFAULT now(),
+  updated_at            TIMESTAMPTZ DEFAULT now()
 );
 
-CREATE INDEX IF NOT EXISTS idx_nocomm_city    ON nocomm_listings(city);
-CREATE INDEX IF NOT EXISTS idx_nocomm_status  ON nocomm_listings(status);
-CREATE INDEX IF NOT EXISTS idx_nocomm_slug    ON nocomm_listings(listing_slug);
-
--- ── PAYMENTS (registro de todos los pagos) ───────────────────────────────────
-CREATE TABLE IF NOT EXISTS payments (
-  id               UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-  subscription_id  UUID REFERENCES subscriptions(id) ON DELETE SET NULL,
-  client_id        UUID REFERENCES clients(id) ON DELETE SET NULL,
-  plan_id          TEXT,
-  amount_cop       INTEGER NOT NULL,
-  currency         TEXT DEFAULT 'COP',
-  provider         TEXT,            -- 'stripe', 'wompi', 'manual', 'whatsapp'
-  provider_ref     TEXT UNIQUE,     -- ID externo del proveedor
-  status           TEXT DEFAULT 'pending',  -- pending, completed, failed, refunded
-  refunded_at      TIMESTAMPTZ,
-  refund_reason    TEXT,
-  created_at       TIMESTAMPTZ DEFAULT now()
+-- Ad Creatives
+CREATE TABLE IF NOT EXISTS public.ad_creatives (
+  id                    UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  campaign_id           UUID REFERENCES public.ad_campaigns(id) ON DELETE CASCADE,
+  empresa_id            UUID NOT NULL,
+  created_by            UUID,
+  creative_type         TEXT DEFAULT 'image',
+  variation_type        TEXT,
+  headline              TEXT,
+  description           TEXT,
+  cta                   TEXT,
+  hashtags              TEXT[],
+  image_url             TEXT,
+  video_url             TEXT,
+  thumbnail_url         TEXT,
+  media_format          TEXT,
+  source_image_link     TEXT,
+  status                TEXT DEFAULT 'draft',
+  meta_ad_id            TEXT,
+  tiktok_ad_id          TEXT,
+  instagram_post_id     TEXT,
+  impressions           INT DEFAULT 0,
+  clicks                INT DEFAULT 0,
+  spend                 NUMERIC(12,2) DEFAULT 0,
+  ctr                   NUMERIC(6,4) DEFAULT 0,
+  cpc                   NUMERIC(12,2) DEFAULT 0,
+  conversions           INT DEFAULT 0,
+  ai_decision           TEXT,
+  ai_decision_reason    TEXT,
+  ai_decision_at        TIMESTAMPTZ,
+  created_at            TIMESTAMPTZ DEFAULT now(),
+  updated_at            TIMESTAMPTZ DEFAULT now()
 );
 
-CREATE INDEX IF NOT EXISTS idx_payments_client ON payments(client_id);
-CREATE INDEX IF NOT EXISTS idx_payments_status ON payments(status);
+-- Ad Performance Logs
+CREATE TABLE IF NOT EXISTS public.ad_performance_logs (
+  id                    UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  creative_id           UUID REFERENCES public.ad_creatives(id) ON DELETE CASCADE,
+  campaign_id           UUID REFERENCES public.ad_campaigns(id) ON DELETE CASCADE,
+  empresa_id            UUID NOT NULL,
+  log_date              DATE NOT NULL,
+  platform              TEXT,
+  impressions           INT DEFAULT 0,
+  clicks                INT DEFAULT 0,
+  spend                 NUMERIC(12,2) DEFAULT 0,
+  ctr                   NUMERIC(6,4) DEFAULT 0,
+  cpc                   NUMERIC(12,2) DEFAULT 0,
+  conversions           INT DEFAULT 0,
+  reach                 INT DEFAULT 0,
+  frequency             NUMERIC(6,2) DEFAULT 0,
+  created_at            TIMESTAMPTZ DEFAULT now()
+);
 
--- ── UPDATE clients TABLE ──────────────────────────────────────────────────────
--- Ampliar la columna plan para los nuevos productos
-ALTER TABLE clients
-  ADD COLUMN IF NOT EXISTS company TEXT,
-  ADD COLUMN IF NOT EXISTS tipo_cliente TEXT DEFAULT 'agente',  -- agente, inmobiliaria, constructora, particular
-  ADD COLUMN IF NOT EXISTS whatsapp TEXT;
+-- AI Decision Logs
+CREATE TABLE IF NOT EXISTS public.ad_ai_logs (
+  id                    UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  empresa_id            UUID NOT NULL,
+  creative_id           UUID,
+  campaign_id           UUID,
+  trigger_type          TEXT,
+  metrics_snapshot      JSONB,
+  decision              TEXT,
+  reason                TEXT,
+  new_budget            NUMERIC(12,2),
+  gemini_response       JSONB,
+  created_at            TIMESTAMPTZ DEFAULT now()
+);
 
--- ── ROW LEVEL SECURITY ────────────────────────────────────────────────────────
-ALTER TABLE leads             ENABLE ROW LEVEL SECURITY;
-ALTER TABLE plans             ENABLE ROW LEVEL SECURITY;
-ALTER TABLE subscriptions     ENABLE ROW LEVEL SECURITY;
-ALTER TABLE content_calendar  ENABLE ROW LEVEL SECURITY;
-ALTER TABLE nocomm_listings   ENABLE ROW LEVEL SECURITY;
-ALTER TABLE payments          ENABLE ROW LEVEL SECURITY;
+-- Video Uploads
+CREATE TABLE IF NOT EXISTS public.ad_video_uploads (
+  id                    UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  empresa_id            UUID NOT NULL,
+  created_by            UUID,
+  campaign_id           UUID REFERENCES public.ad_campaigns(id) ON DELETE SET NULL,
+  filename              TEXT,
+  file_size_mb          NUMERIC(8,2),
+  duration_seconds      INT,
+  storage_path          TEXT,
+  public_url            TEXT,
+  thumbnail_url         TEXT,
+  title                 TEXT,
+  caption               TEXT,
+  hashtags              TEXT[],
+  publish_to_tiktok     BOOLEAN DEFAULT false,
+  publish_to_instagram_reels BOOLEAN DEFAULT false,
+  publish_to_meta       BOOLEAN DEFAULT false,
+  status                TEXT DEFAULT 'uploaded',
+  tiktok_post_id        TEXT,
+  instagram_reel_id     TEXT,
+  meta_video_ad_id      TEXT,
+  created_at            TIMESTAMPTZ DEFAULT now(),
+  updated_at            TIMESTAMPTZ DEFAULT now()
+);
 
--- Política pública para plans (todos pueden leer)
-CREATE POLICY IF NOT EXISTS "plans_public_read" ON plans FOR SELECT USING (true);
+-- Inventario Import Tracking
+CREATE TABLE IF NOT EXISTS public.ad_inventario_imports (
+  id                    UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  empresa_id            UUID NOT NULL,
+  created_by            UUID,
+  filename              TEXT,
+  file_type             TEXT,
+  rows_total            INT DEFAULT 0,
+  rows_imported         INT DEFAULT 0,
+  rows_failed           INT DEFAULT 0,
+  status                TEXT DEFAULT 'processing',
+  error_log             JSONB,
+  created_at            TIMESTAMPTZ DEFAULT now()
+);
 
--- Service role bypass para el backend (usa service_role_key)
--- Las políticas de usuario se agregan cuando se implemente auth de clientes
+-- WhatsApp Template Analytics
+CREATE TABLE IF NOT EXISTS public.whatsapp_template_analytics (
+  id                    UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  empresa_id            UUID NOT NULL,
+  template_name         TEXT NOT NULL,
+  template_id           TEXT,
+  category              TEXT,
+  language              TEXT DEFAULT 'es',
+  log_date              DATE NOT NULL,
+  sent                  INT DEFAULT 0,
+  delivered             INT DEFAULT 0,
+  read                  INT DEFAULT 0,
+  failed                INT DEFAULT 0,
+  clicked               INT DEFAULT 0,
+  delivery_rate         NUMERIC(6,4) DEFAULT 0,
+  read_rate             NUMERIC(6,4) DEFAULT 0,
+  success_rate          NUMERIC(6,4) DEFAULT 0,
+  created_at            TIMESTAMPTZ DEFAULT now(),
+  UNIQUE(empresa_id, template_name, log_date)
+);
 
--- ── STORAGE BUCKETS ───────────────────────────────────────────────────────────
--- Ejecutar en Dashboard > Storage > Create Bucket:
---   Bucket: "nocomm-images"   → público, para fotos de inmuebles Sin Comisión
---   Bucket: "generated-content" → privado, para imágenes/videos generados con IA
+-- Platform Credentials
+CREATE TABLE IF NOT EXISTS public.platform_credentials (
+  id                    UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  empresa_id            UUID NOT NULL,
+  platform              TEXT NOT NULL,
+  credentials           JSONB NOT NULL DEFAULT '{}'::jsonb,
+  is_active             BOOLEAN DEFAULT true,
+  last_tested_at        TIMESTAMPTZ,
+  last_test_status      TEXT,
+  created_at            TIMESTAMPTZ DEFAULT now(),
+  updated_at            TIMESTAMPTZ DEFAULT now(),
+  UNIQUE(empresa_id, platform)
+);
 
--- ── VIEWS ÚTILES ─────────────────────────────────────────────────────────────
+-- ── INDEXES ──
+CREATE INDEX IF NOT EXISTS idx_ad_campaigns_empresa ON public.ad_campaigns(empresa_id);
+CREATE INDEX IF NOT EXISTS idx_ad_creatives_campaign ON public.ad_creatives(campaign_id);
+CREATE INDEX IF NOT EXISTS idx_ad_creatives_empresa ON public.ad_creatives(empresa_id);
+CREATE INDEX IF NOT EXISTS idx_ad_perf_logs_empresa_date ON public.ad_performance_logs(empresa_id, log_date);
+CREATE INDEX IF NOT EXISTS idx_ad_perf_logs_campaign ON public.ad_performance_logs(campaign_id);
+CREATE INDEX IF NOT EXISTS idx_ad_ai_logs_empresa ON public.ad_ai_logs(empresa_id);
+CREATE INDEX IF NOT EXISTS idx_wa_analytics_empresa_date ON public.whatsapp_template_analytics(empresa_id, log_date);
+CREATE INDEX IF NOT EXISTS idx_platform_creds_empresa ON public.platform_credentials(empresa_id, platform);
 
--- Dashboard: leads recientes con plan
-CREATE OR REPLACE VIEW leads_dashboard AS
-SELECT
-  l.id, l.name, l.phone, l.email, l.city,
-  l.product, l.source, l.status, l.created_at,
-  p.name AS plan_name, p.price_cop
-FROM leads l
-LEFT JOIN plans p ON l.product = p.id
-ORDER BY l.created_at DESC;
-
--- Dashboard: suscripciones activas
-CREATE OR REPLACE VIEW subscriptions_active AS
-SELECT
-  s.id, s.plan_id, s.status, s.start_date, s.end_date,
-  s.amount_paid, s.next_billing_date,
-  c.name AS client_name, c.email AS client_email, c.phone AS client_phone,
-  p.name AS plan_name, p.product
-FROM subscriptions s
-JOIN clients c ON s.client_id = c.id
-JOIN plans p   ON s.plan_id   = p.id
-WHERE s.status = 'active';
-
--- Dashboard: calendar posts de hoy
-CREATE OR REPLACE VIEW todays_posts AS
-SELECT
-  cc.id, cc.platform, cc.content_type, cc.caption,
-  cc.image_url, cc.status, cc.post_date,
-  pr.tipo AS property_type, pr.ciudad,
-  c.name AS client_name, c.phone AS client_phone
-FROM content_calendar cc
-LEFT JOIN properties pr ON cc.property_id = pr.id
-LEFT JOIN subscriptions s ON cc.subscription_id = s.id
-LEFT JOIN clients c ON s.client_id = c.id
-WHERE cc.post_date = CURRENT_DATE
-ORDER BY cc.platform, cc.content_type;
-
--- ── FUNCTIONS ────────────────────────────────────────────────────────────────
-
--- Función para activar suscripción tras pago exitoso
-CREATE OR REPLACE FUNCTION activate_subscription(
-  p_payment_ref TEXT,
-  p_client_id   UUID DEFAULT NULL
-)
-RETURNS void AS $$
-BEGIN
-  UPDATE subscriptions
-  SET
-    status     = 'active',
-    start_date = now(),
-    end_date   = CASE
-      WHEN plan_id = 'nocomm' THEN now() + INTERVAL '30 days'
-      ELSE now() + INTERVAL '1 month'
-    END,
-    next_billing_date = CASE
-      WHEN plan_id = 'nocomm' THEN NULL
-      ELSE now() + INTERVAL '1 month'
-    END,
-    updated_at = now()
-  WHERE payment_reference = p_payment_ref;
-END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
-
--- Función para contar leads por producto en los últimos 30 días
-CREATE OR REPLACE FUNCTION leads_by_product()
-RETURNS TABLE(product TEXT, count BIGINT, last_7d BIGINT) AS $$
-SELECT
-  product,
-  COUNT(*) AS count,
-  COUNT(*) FILTER (WHERE created_at >= now() - INTERVAL '7 days') AS last_7d
-FROM leads
-GROUP BY product
-ORDER BY count DESC;
-$$ LANGUAGE sql;
+-- ── RLS ──
+ALTER TABLE public.ad_campaigns ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.ad_creatives ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.ad_performance_logs ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.ad_ai_logs ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.ad_video_uploads ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.ad_inventario_imports ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.whatsapp_template_analytics ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.platform_credentials ENABLE ROW LEVEL SECURITY;
