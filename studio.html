@@ -647,7 +647,7 @@ select:focus, input:focus { border-color: var(--green); box-shadow: 0 0 0 3px rg
 <div class="toast" id="toast"></div>
 
 <!-- LOGIN OVERLAY -->
-<div id="login-overlay" style="display:none;position:fixed;inset:0;background:rgba(26,33,48,0.92);z-index:9999;display:flex;align-items:center;justify-content:center;">
+<div id="login-overlay" style="display:none;position:fixed;inset:0;background:rgba(26,33,48,0.92);z-index:9999;align-items:center;justify-content:center;">
   <div style="background:#fff;border-radius:20px;padding:40px 36px;width:100%;max-width:400px;box-shadow:0 24px 64px rgba(0,0,0,0.3);text-align:center;">
     <div style="width:48px;height:48px;background:#1D9E75;border-radius:12px;display:inline-flex;align-items:center;justify-content:center;margin-bottom:20px;">
       <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
@@ -670,8 +670,20 @@ select:focus, input:focus { border-color: var(--green); box-shadow: 0 0 0 3px rg
 const LOGIN_KEY = 'rentmies_studio_key';
 
 function checkLogin() {
-  if (!sessionStorage.getItem(LOGIN_KEY)) {
-    document.getElementById('login-overlay').style.display = 'flex';
+  const overlay = document.getElementById('login-overlay');
+  if (sessionStorage.getItem(LOGIN_KEY)) {
+    overlay.style.display = 'none';
+  } else {
+    // Verificar si el servidor tiene auth activo
+    fetch('/api/data?resource=settings')
+      .then(r => {
+        if (r.status === 401) {
+          // Auth activo — mostrar login
+          overlay.style.display = 'flex';
+        }
+        // Si 200 sin key → modo dev abierto, no mostrar login
+      })
+      .catch(() => { overlay.style.display = 'flex'; });
   }
 }
 
