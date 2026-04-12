@@ -17,6 +17,7 @@
 
 const inmuebles = require('../data/inmuebles.json')
 const supabase  = require('../lib/supabase')
+const { requireAuth } = require('../lib/auth')
 
 // ── Plans (for checkout) ─────────────────────────────────────────────────────
 const PLANS = {
@@ -93,6 +94,11 @@ module.exports = async (req, res) => {
   if (req.method === 'OPTIONS') return res.status(200).end()
 
   const resource = req.query.resource || ''
+
+  // checkout y settings son públicos (pricing page, health check)
+  if (resource !== 'checkout' && resource !== 'settings') {
+    const auth = await requireAuth(req, res); if (!auth) return
+  }
 
   // ── GET /api/data?resource=inmuebles ──
   if (resource === 'inmuebles') {

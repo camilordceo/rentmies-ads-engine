@@ -13,6 +13,13 @@
 const https    = require('https')
 const supabase = require('../lib/supabase')
 
+// Cron jobs son invocados por Vercel (header x-vercel-cron) o por API key interna
+function isCronAuthorized(req) {
+  if (req.headers['x-vercel-cron'] === '1') return true
+  const apiKey = req.headers['x-api-key'] || req.query.api_key
+  return apiKey && apiKey === process.env.RENTMIES_API_KEY
+}
+
 function graphPost(path, accessToken, body) {
   return new Promise((resolve, reject) => {
     const payload = JSON.stringify(body)
@@ -116,6 +123,7 @@ async function publishImageToInstagram(igAccountId, accessToken, imageUrl, capti
 }
 
 module.exports = async (req, res) => {
+  if (!isCronAuthorized(req)) return res.status(401).json({ error: 'Unauthorized' })
   // Solo GET para Vercel Cron
   if (req.method !== 'GET') return res.status(405).json({ error: 'GET only' })
 
