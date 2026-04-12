@@ -12,6 +12,7 @@
 
 const https    = require('https')
 const supabase = require('../lib/supabase')
+const { processDay } = require('../engine/scheduler30')
 
 // Cron jobs son invocados por Vercel (header x-vercel-cron) o por API key interna
 function isCronAuthorized(req) {
@@ -181,7 +182,15 @@ module.exports = async (req, res) => {
     }
 
     const published = results.filter(r => r.status === 'published').length
-    return res.status(200).json({ success: true, published, failed: results.length - published, results })
+
+    // También procesar posts del content_calendar (producto 30 Días)
+    const calendarResults = await processDay({ dryRun: req.query.dry_run === '1' })
+
+    return res.status(200).json({
+      success: true,
+      social_posts: { published, failed: results.length - published, results },
+      content_calendar: calendarResults,
+    })
 
   } catch (err) {
     console.error('[cron-publish] Error:', err.message)

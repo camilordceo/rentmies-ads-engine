@@ -14,6 +14,7 @@
 require('dotenv').config()
 const supabase = require('../lib/supabase')
 const { normalizeCity } = require('../lib/normalize')
+const { publishToInstagram } = require('../lib/instagram')
 
 // ── Constantes ────────────────────────────────────────────────────────────────
 const POSTING_DAYS   = [1, 3, 5]    // Lun=1, Mié=3, Vie=5
@@ -204,16 +205,39 @@ async function processDay({ date, dryRun = false } = {}) {
     }
 
     try {
-      // TODO: call Instagram/Facebook publisher
-      // const publisher = require('./publisher')
-      // await publisher.publishPost({ ...post })
+      // Obtener credenciales de Instagram del cliente o desde env
+      const igAccountId = post.subscriptions?.clients?.ig_account_id || process.env.META_IG_ACCOUNT_ID
+      const accessToken = process.env.META_ACCESS_TOKEN // TODO step 9: buscar en social_tokens por client_id
+
+      if (!igAccountId || !accessToken) {
+        throw new Error('Faltan META_IG_ACCOUNT_ID o META_ACCESS_TOKEN')
+      }
+
+      if (!post.image_url) {
+        throw new Error('Post sin image_url — se requiere imagen pública')
+      }
+
+      const format = post.content_type === 'video' ? 'video' : 'image'
+      const result = await publishToInstagram({
+        igAccountId,
+        accessToken,
+        imageUrl:  format === 'image' ? post.image_url : undefined,
+        videoUrl:  format === 'video' ? post.image_url : undefined,
+        caption:   post.caption,
+        format,
+      })
 
       await supabase
         .from('content_calendar')
-        .update({ status: 'published', published_at: new Date().toISOString() })
+        .update({
+          status:       'published',
+          post_id:      result.mediaId,
+          published_at: new Date().toISOString(),
+          meta:         { permalink: result.permalink },
+        })
         .eq('id', post.id)
 
-      console.log(`[scheduler30] ✓ Published post ${post.id} on ${post.platform}`)
+      console.log(`[scheduler30] ✓ Published post ${post.id} → ${result.permalink}`)
       results.succeeded++
 
     } catch (err) {
