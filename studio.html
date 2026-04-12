@@ -646,7 +646,68 @@ select:focus, input:focus { border-color: var(--green); box-shadow: 0 0 0 3px rg
 
 <div class="toast" id="toast"></div>
 
+<!-- LOGIN OVERLAY -->
+<div id="login-overlay" style="display:none;position:fixed;inset:0;background:rgba(26,33,48,0.92);z-index:9999;display:flex;align-items:center;justify-content:center;">
+  <div style="background:#fff;border-radius:20px;padding:40px 36px;width:100%;max-width:400px;box-shadow:0 24px 64px rgba(0,0,0,0.3);text-align:center;">
+    <div style="width:48px;height:48px;background:#1D9E75;border-radius:12px;display:inline-flex;align-items:center;justify-content:center;margin-bottom:20px;">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </div>
+    <h2 style="font-size:22px;font-weight:800;margin-bottom:6px;color:#1a2130;">Rentmies Studio</h2>
+    <p style="color:#5a6472;font-size:14px;margin-bottom:28px;">Ingresa tu API key para continuar</p>
+    <input id="login-key-input" type="password" placeholder="API Key..." autocomplete="off"
+      style="width:100%;padding:13px 16px;border:2px solid #eef0f3;border-radius:10px;font-size:15px;outline:none;margin-bottom:12px;color:#1a2130;"
+      onkeydown="if(event.key==='Enter')doLogin()">
+    <div id="login-error" style="color:#e53935;font-size:13px;margin-bottom:10px;display:none;">API key incorrecta. Intenta de nuevo.</div>
+    <button onclick="doLogin()"
+      style="width:100%;padding:14px;background:#1D9E75;color:white;border:none;border-radius:10px;font-size:16px;font-weight:700;cursor:pointer;">
+      Entrar
+    </button>
+  </div>
+</div>
+
 <script>
+// ── LOGIN ──
+const LOGIN_KEY = 'rentmies_studio_key';
+
+function checkLogin() {
+  if (!sessionStorage.getItem(LOGIN_KEY)) {
+    document.getElementById('login-overlay').style.display = 'flex';
+  }
+}
+
+function doLogin() {
+  const val = document.getElementById('login-key-input').value.trim();
+  if (!val) return;
+  // Verify against /api/data?resource=settings (public endpoint) using the key
+  fetch('/api/data?resource=settings', { headers: { 'x-api-key': val } })
+    .then(r => {
+      if (r.ok) {
+        sessionStorage.setItem(LOGIN_KEY, val);
+        document.getElementById('login-overlay').style.display = 'none';
+        document.getElementById('login-error').style.display = 'none';
+      } else {
+        document.getElementById('login-error').style.display = 'block';
+      }
+    })
+    .catch(() => {
+      document.getElementById('login-error').style.display = 'block';
+    });
+}
+
+// ── PATCH fetch — inyecta x-api-key en todas las llamadas a /api/ ──
+const _origFetch = window.fetch;
+window.fetch = function(url, opts = {}) {
+  if (typeof url === 'string' && url.startsWith('/api/')) {
+    const key = sessionStorage.getItem(LOGIN_KEY);
+    if (key) {
+      opts.headers = Object.assign({}, opts.headers || {}, { 'x-api-key': key });
+    }
+  }
+  return _origFetch.call(this, url, opts);
+};
+
+checkLogin();
+
 // ── STATE ──
 let uploadedPhotoDataUrl = null;
 

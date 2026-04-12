@@ -95,8 +95,8 @@ module.exports = async (req, res) => {
 
   const resource = req.query.resource || ''
 
-  // checkout y settings son públicos (pricing page, health check)
-  if (resource !== 'checkout' && resource !== 'settings') {
+  // checkout es público (pricing page en landing)
+  if (resource !== 'checkout') {
     const auth = await requireAuth(req, res); if (!auth) return
   }
 
