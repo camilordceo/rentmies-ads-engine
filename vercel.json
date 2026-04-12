@@ -1,4 +1,5 @@
 {
+  "installCommand": "npm install --omit=dev",
   "rewrites": [
     { "source": "/studio",        "destination": "/studio.html" },
     { "source": "/studio/(.*)",   "destination": "/studio.html" },
