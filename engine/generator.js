@@ -8,6 +8,7 @@ require('dotenv').config()
 const { GoogleGenerativeAI } = require('@google/genai')
 const { PROMPTS } = require('../config/prompts')
 const { PLATFORMS } = require('../config/platforms')
+const { normalizeCity } = require('../lib/normalize')
 
 // ── Colores para logs en consola ──
 const LOG = {
@@ -203,7 +204,7 @@ async function generateCampaign(params, wsEmit) {
 
       const copy = await generateAdCopy(
         variationType,
-        ciudad.toLowerCase().replace('á', 'a').replace('é', 'e').replace('ó', 'o'),
+        normalizeCity(ciudad),
         tipoInmueble,
         presupuesto,
         platformId,
@@ -253,7 +254,7 @@ function generateHashtags(ciudad, tipoInmueble) {
     casa: ['#Casa', '#CasaModerna', '#CasaFamiliar'],
     oficina: ['#Oficina', '#EspacioComercial', '#LocalComercial']
   }
-  const cidadKey = ciudad.toLowerCase().replace('á', 'a').replace('é', 'e').replace('ó', 'o')
+  const cidadKey = normalizeCity(ciudad)
   return [
     ...base,
     ...(cityTags[cidadKey] || []),

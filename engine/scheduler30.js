@@ -13,6 +13,7 @@
 
 require('dotenv').config()
 const supabase = require('../lib/supabase')
+const { normalizeCity } = require('../lib/normalize')
 
 // ── Constantes ────────────────────────────────────────────────────────────────
 const POSTING_DAYS   = [1, 3, 5]    // Lun=1, Mié=3, Vie=5
@@ -62,7 +63,7 @@ function formatPrice(precio) {
 }
 
 function hashtags(p) {
-  const city = (p.ciudad || 'Colombia').toLowerCase().replace(/á/g,'a').replace(/é/g,'e').replace(/í/g,'i').replace(/ó/g,'o').replace(/ú/g,'u').replace(/\s+/g,'')
+  const city = normalizeCity(p.ciudad || 'Colombia')
   const tipo = (p.tipo || 'inmueble').toLowerCase()
   return `#${tipo} #${city} #inmuebles #arriendos #rentmies #proptech #bienesinmuebles #colombia`
 }
