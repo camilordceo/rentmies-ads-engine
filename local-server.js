@@ -74,7 +74,7 @@ app.post('/api/social-post', require('./api/social-post'))
 const { seedSupabase, seedMemory, memoryStore, DEMO_EMPRESA_ID } = require('./engine/seeder')
 
 // ── Supabase DB layer ─────────────────────────────────────────
-const db = require('./api/supabase')
+const db = require('./lib/supabase-db')
 
 // ── Engine imports ────────────────────────────────────────────
 let generateAdCopy, generateAdImage, runAnalysis
