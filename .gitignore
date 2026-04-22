@@ -1,7 +1,33 @@
+# Vercel
 .vercel
+
+# Dependencies
 node_modules/
-.env
-output/
 venv/
 __pycache__/
 *.pyc
+*.pyo
+
+# Environment files — NEVER commit these
+.env
+.env.local
+.env.*.local
+adsplatform.env
+*.env
+!.env.example
+
+# Build output
+output/
+uploads/
+
+# Logs
+*.log
+npm-debug.log*
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
