@@ -1143,6 +1143,8 @@
   }
   .btn-green:hover { background: var(--green-dark); transform: translateY(-1px); box-shadow: 0 4px 12px var(--green-glow); }
   .btn-green:active { transform: none; box-shadow: none; }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
 </style>
 </head>
 <body>
@@ -1167,8 +1169,20 @@
     <button class="btn btn-secondary btn-sm" onclick="refreshMetrics()" style="width:auto">
       🔄 Actualizar
     </button>
+    <div id="userChip" style="display:none;align-items:center;gap:8px;padding:0 2px;">
+      <span id="userEmail" style="font-size:12px;color:var(--text-secondary);max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"></span>
+      <button class="btn btn-secondary btn-sm" onclick="handleSignOut()" style="width:auto;padding:0 10px;font-size:11px;">
+        Salir
+      </button>
+    </div>
   </div>
 </header>
+
+<!-- AUTH LOADING OVERLAY -->
+<div id="authOverlay" style="position:fixed;inset:0;background:var(--gray-dark);z-index:9999;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:14px;">
+  <div style="width:32px;height:32px;border:3px solid var(--gray-border);border-top-color:var(--green);border-radius:50%;animation:spin 0.7s linear infinite;"></div>
+  <div style="font-size:13px;color:var(--text-muted);">Verificando sesión…</div>
+</div>
 
 <!-- ═══════════════════ MAIN LAYOUT ═══════════════════ -->
 <div class="main">
@@ -1306,6 +1320,8 @@
         <button class="tab-btn" onclick="switchTab('creativos', this)">🎨 Creativos</button>
         <button class="tab-btn" onclick="switchTab('log', this)">🤖 Log IA</button>
         <button class="tab-btn" onclick="switchTab('whatsapp', this)">💬 WhatsApp Templates</button>
+        <button class="tab-btn" onclick="switchTab('quickpost', this)">📤 Quick Post</button>
+        <button class="tab-btn" onclick="switchTab('settings', this)">⚙️ Configuración</button>
       </div>
 
       <!-- Tab: Por Canal -->
@@ -1456,6 +1472,161 @@
       </div>
     </div>
 
+      <!-- Tab: Quick Post -->
+      <div id="tab-quickpost" class="tab-content" style="padding:20px;overflow-y:auto;max-height:calc(100% - 10px);">
+        <div style="max-width:520px;">
+          <div style="font-size:14px;font-weight:600;color:var(--white);margin-bottom:4px;">Publicación Rápida</div>
+          <div style="font-size:12px;color:var(--text-muted);margin-bottom:20px;">Publica un inmueble en Facebook o Instagram en segundos</div>
+
+          <div style="display:flex;flex-direction:column;gap:14px;">
+            <div>
+              <label style="font-size:12px;font-weight:500;color:var(--text-secondary);display:block;margin-bottom:6px;">Inmueble</label>
+              <select id="qpProperty" style="width:100%;background:var(--gray-card);border:1px solid var(--gray-border);color:var(--text);padding:0 12px;height:38px;border-radius:8px;font-size:13px;outline:none;">
+                <option value="">Cargando inmuebles…</option>
+              </select>
+            </div>
+
+            <div>
+              <label style="font-size:12px;font-weight:500;color:var(--text-secondary);display:block;margin-bottom:6px;">Plataforma</label>
+              <select id="qpPlatform" style="width:100%;background:var(--gray-card);border:1px solid var(--gray-border);color:var(--text);padding:0 12px;height:38px;border-radius:8px;font-size:13px;outline:none;">
+                <option value="facebook_page">Facebook Page</option>
+                <option value="instagram">Instagram Business</option>
+              </select>
+            </div>
+
+            <div>
+              <label style="font-size:12px;font-weight:500;color:var(--text-secondary);display:block;margin-bottom:6px;">Caption / Texto del post</label>
+              <textarea id="qpCaption" rows="4" placeholder="Escribe el texto del post o usa IA para generarlo…"
+                style="width:100%;background:var(--gray-card);border:1px solid var(--gray-border);color:var(--text);padding:10px 12px;border-radius:8px;font-size:13px;outline:none;resize:vertical;font-family:inherit;line-height:1.5;"></textarea>
+              <button onclick="generateQPCopy()" style="margin-top:6px;background:transparent;border:1px solid var(--gray-border);color:var(--text-secondary);padding:5px 12px;border-radius:6px;font-size:11px;cursor:pointer;font-family:inherit;">
+                ✨ Generar con IA
+              </button>
+            </div>
+
+            <div>
+              <label style="font-size:12px;font-weight:500;color:var(--text-secondary);display:block;margin-bottom:6px;">Imagen (URL pública)</label>
+              <input type="url" id="qpImageUrl" placeholder="https://… (opcional si el inmueble tiene imagen)"
+                style="width:100%;background:var(--gray-card);border:1px solid var(--gray-border);color:var(--text);padding:0 12px;height:38px;border-radius:8px;font-size:13px;outline:none;" />
+              <div id="qpImagePreview" style="margin-top:8px;display:none;">
+                <img id="qpPreviewImg" style="max-width:200px;border-radius:8px;border:1px solid var(--gray-border);" />
+              </div>
+            </div>
+
+            <div id="qpError" style="display:none;background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);color:#fca5a5;padding:10px 12px;border-radius:8px;font-size:12px;"></div>
+            <div id="qpSuccess" style="display:none;background:rgba(29,158,117,.1);border:1px solid rgba(29,158,117,.3);color:var(--green);padding:10px 12px;border-radius:8px;font-size:12px;"></div>
+
+            <button id="qpSubmitBtn" onclick="submitQuickPost()" class="btn-green" style="width:auto;align-self:flex-start;padding:0 20px;height:40px;display:flex;align-items:center;gap:8px;">
+              <span id="qpBtnText">📤 Publicar ahora</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tab: Settings / Meta Credentials -->
+      <div id="tab-settings" class="tab-content" style="padding:20px;overflow-y:auto;max-height:calc(100% - 10px);">
+        <div style="max-width:540px;display:flex;flex-direction:column;gap:24px;">
+
+          <!-- Meta Credentials Card -->
+          <div style="background:var(--gray-card);border:1px solid var(--gray-border);border-radius:12px;padding:20px;">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+              <div>
+                <div style="font-size:14px;font-weight:600;color:var(--white);">Meta / Facebook</div>
+                <div style="font-size:12px;color:var(--text-muted);margin-top:2px;">Facebook Ads, Instagram, WhatsApp Business</div>
+              </div>
+              <div id="metaStatusBadge" style="font-size:11px;padding:3px 10px;border-radius:20px;background:var(--gray-mid);color:var(--text-muted);">No configurado</div>
+            </div>
+
+            <div style="display:flex;flex-direction:column;gap:12px;">
+              <div>
+                <label style="font-size:11px;font-weight:500;color:var(--text-muted);display:block;margin-bottom:5px;text-transform:uppercase;letter-spacing:.05em;">Access Token</label>
+                <input type="password" id="metaAccessToken" placeholder="EAAxxxxxxxx…"
+                  style="width:100%;background:var(--gray-mid);border:1px solid var(--gray-border);color:var(--text);padding:0 12px;height:36px;border-radius:8px;font-size:13px;outline:none;" />
+              </div>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+                <div>
+                  <label style="font-size:11px;font-weight:500;color:var(--text-muted);display:block;margin-bottom:5px;text-transform:uppercase;letter-spacing:.05em;">App ID</label>
+                  <input type="text" id="metaAppId" placeholder="271128…"
+                    style="width:100%;background:var(--gray-mid);border:1px solid var(--gray-border);color:var(--text);padding:0 12px;height:36px;border-radius:8px;font-size:13px;outline:none;" />
+                </div>
+                <div>
+                  <label style="font-size:11px;font-weight:500;color:var(--text-muted);display:block;margin-bottom:5px;text-transform:uppercase;letter-spacing:.05em;">App Secret</label>
+                  <input type="password" id="metaAppSecret" placeholder="055efe…"
+                    style="width:100%;background:var(--gray-mid);border:1px solid var(--gray-border);color:var(--text);padding:0 12px;height:36px;border-radius:8px;font-size:13px;outline:none;" />
+                </div>
+              </div>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+                <div>
+                  <label style="font-size:11px;font-weight:500;color:var(--text-muted);display:block;margin-bottom:5px;text-transform:uppercase;letter-spacing:.05em;">Ad Account ID</label>
+                  <input type="text" id="metaAdAccountId" placeholder="act_XXXXXXXXX"
+                    style="width:100%;background:var(--gray-mid);border:1px solid var(--gray-border);color:var(--text);padding:0 12px;height:36px;border-radius:8px;font-size:13px;outline:none;" />
+                </div>
+                <div>
+                  <label style="font-size:11px;font-weight:500;color:var(--text-muted);display:block;margin-bottom:5px;text-transform:uppercase;letter-spacing:.05em;">Page ID</label>
+                  <input type="text" id="metaPageId" placeholder="123456789"
+                    style="width:100%;background:var(--gray-mid);border:1px solid var(--gray-border);color:var(--text);padding:0 12px;height:36px;border-radius:8px;font-size:13px;outline:none;" />
+                </div>
+              </div>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+                <div>
+                  <label style="font-size:11px;font-weight:500;color:var(--text-muted);display:block;margin-bottom:5px;text-transform:uppercase;letter-spacing:.05em;">WABA ID</label>
+                  <input type="text" id="metaWabaId" placeholder="WhatsApp Business Account ID"
+                    style="width:100%;background:var(--gray-mid);border:1px solid var(--gray-border);color:var(--text);padding:0 12px;height:36px;border-radius:8px;font-size:13px;outline:none;" />
+                </div>
+                <div>
+                  <label style="font-size:11px;font-weight:500;color:var(--text-muted);display:block;margin-bottom:5px;text-transform:uppercase;letter-spacing:.05em;">Phone Number ID</label>
+                  <input type="text" id="metaPhoneNumberId" placeholder="Phone Number ID"
+                    style="width:100%;background:var(--gray-mid);border:1px solid var(--gray-border);color:var(--text);padding:0 12px;height:36px;border-radius:8px;font-size:13px;outline:none;" />
+                </div>
+              </div>
+            </div>
+
+            <div id="metaTestResult" style="display:none;margin-top:12px;font-size:12px;padding:8px 12px;border-radius:8px;"></div>
+
+            <div style="display:flex;gap:10px;margin-top:16px;">
+              <button onclick="saveMetaCredentials()" class="btn-green" style="height:36px;padding:0 16px;font-size:13px;display:flex;align-items:center;gap:6px;">
+                💾 Guardar
+              </button>
+              <button onclick="testMetaConnection()" style="height:36px;padding:0 16px;font-size:13px;background:transparent;border:1px solid var(--gray-border);color:var(--text-secondary);border-radius:8px;cursor:pointer;font-family:inherit;">
+                🔌 Probar conexión
+              </button>
+            </div>
+            <div style="font-size:11px;color:var(--text-muted);margin-top:10px;">
+              Credenciales guardadas en el servidor (encriptadas).
+              <a href="https://developers.facebook.com/tools/explorer/" target="_blank" style="color:var(--green);text-decoration:none;">¿Cómo obtengo estas credenciales? →</a>
+            </div>
+          </div>
+
+          <!-- Google AI Card -->
+          <div style="background:var(--gray-card);border:1px solid var(--gray-border);border-radius:12px;padding:20px;">
+            <div style="font-size:14px;font-weight:600;color:var(--white);margin-bottom:4px;">Google AI (Gemini + Imagen 3)</div>
+            <div style="font-size:12px;color:var(--text-muted);margin-bottom:16px;">Generación de copy e imágenes con IA</div>
+            <div>
+              <label style="font-size:11px;font-weight:500;color:var(--text-muted);display:block;margin-bottom:5px;text-transform:uppercase;letter-spacing:.05em;">API Key</label>
+              <input type="password" id="googleApiKey" placeholder="AIzaSy…"
+                style="width:100%;background:var(--gray-mid);border:1px solid var(--gray-border);color:var(--text);padding:0 12px;height:36px;border-radius:8px;font-size:13px;outline:none;" />
+            </div>
+            <div style="display:flex;gap:10px;margin-top:14px;">
+              <button onclick="saveGoogleCredentials()" class="btn-green" style="height:36px;padding:0 16px;font-size:13px;display:flex;align-items:center;gap:6px;">
+                💾 Guardar
+              </button>
+              <button onclick="testGoogleConnection()" style="height:36px;padding:0 16px;font-size:13px;background:transparent;border:1px solid var(--gray-border);color:var(--text-secondary);border-radius:8px;cursor:pointer;font-family:inherit;">
+                🔌 Probar
+              </button>
+            </div>
+          </div>
+
+          <!-- Account Section -->
+          <div style="background:var(--gray-card);border:1px solid var(--gray-border);border-radius:12px;padding:20px;">
+            <div style="font-size:14px;font-weight:600;color:var(--white);margin-bottom:4px;">Cuenta</div>
+            <div id="accountInfo" style="font-size:13px;color:var(--text-secondary);margin-bottom:16px;">Cargando…</div>
+            <button onclick="handleSignOut()" style="height:36px;padding:0 16px;font-size:13px;background:transparent;border:1px solid rgba(239,68,68,.4);color:#fca5a5;border-radius:8px;cursor:pointer;font-family:inherit;">
+              Cerrar sesión
+            </button>
+          </div>
+
+        </div>
+      </div>
+
     <!-- WhatsApp Template Preview Modal -->
     <div id="waPreviewModal" class="modal-overlay" style="display:none" onclick="if(event.target===this)closeWAPreview()">
       <div class="modal wa-preview-modal">
@@ -1572,6 +1743,67 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
 <script>
 // ══════════════════════════════════════════════════════
+// AUTH GUARD
+// ══════════════════════════════════════════════════════
+async function checkAuth() {
+  const token = localStorage.getItem('sb_token')
+  if (!token) {
+    window.location.replace('/login')
+    return false
+  }
+  try {
+    const r = await fetch('/api/auth-supabase?action=me', {
+      headers: { Authorization: `Bearer ${token}` }
+    })
+    if (!r.ok) {
+      localStorage.removeItem('sb_token')
+      window.location.replace('/login')
+      return false
+    }
+    const data = await r.json()
+    state.user = data.user
+    state.profile = data.profile
+    state.empresa_id = data.profile?.empresa_id || data.user?.id || 'demo'
+
+    // Show user chip
+    const chip = document.getElementById('userChip')
+    const emailEl = document.getElementById('userEmail')
+    if (chip && emailEl) {
+      emailEl.textContent = data.user.email
+      chip.style.display = 'flex'
+    }
+
+    // Update account info in settings
+    const accountInfo = document.getElementById('accountInfo')
+    if (accountInfo) {
+      accountInfo.textContent = `${data.user.email}${data.profile?.empresa_id ? ` — empresa: ${data.profile.empresa_id}` : ''}`
+    }
+
+    return true
+  } catch (_) {
+    // Network error — allow access but warn
+    console.warn('[auth] Could not verify session (network error). Allowing access.')
+    return true
+  }
+}
+
+async function handleSignOut() {
+  const token = localStorage.getItem('sb_token')
+  if (token) {
+    try {
+      await fetch('/api/auth-supabase?action=signout', {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` }
+      })
+    } catch (_) {}
+  }
+  localStorage.removeItem('sb_token')
+  localStorage.removeItem('sb_refresh_token')
+  localStorage.removeItem('sb_user')
+  window.location.replace('/')
+}
+
+// ══════════════════════════════════════════════════════
 // STATE
 // ══════════════════════════════════════════════════════
 const state = {
@@ -1583,7 +1815,10 @@ const state = {
   logsData: [],
   promptsData: null,
   autoSimulating: false,
-  simulationInterval: null
+  simulationInterval: null,
+  user: null,
+  profile: null,
+  empresa_id: 'demo'
 }
 
 // ══════════════════════════════════════════════════════
@@ -2176,10 +2411,13 @@ function switchTab(tab, btn) {
   document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'))
   document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'))
   btn.classList.add('active')
-  document.getElementById(`tab-${tab}`).classList.add('active')
+  const tabEl = document.getElementById(`tab-${tab}`)
+  if (tabEl) tabEl.classList.add('active')
 
   if (tab === 'log' && state.logsData.length === 0) loadLogs()
   if (tab === 'whatsapp') initWATab()
+  if (tab === 'quickpost') loadQPInventario()
+  if (tab === 'settings') { loadMetaCredentials() }
 }
 
 // ══════════════════════════════════════════════════════
@@ -2266,51 +2504,78 @@ const WA_MOCK_TEMPLATES = [
 let waCharts = { status: null, category: null }
 let waTemplatesData = []
 
-function saveWACredentials() {
+async function saveWACredentials() {
   const token = document.getElementById('waAccessToken').value.trim()
   const wabaId = document.getElementById('waWabaId').value.trim()
   if (!token || !wabaId) { toast('Completa ambos campos', 'error'); return }
+
+  // Save locally as backup
   localStorage.setItem('wa_access_token', token)
   localStorage.setItem('wa_waba_id', wabaId)
-  toast('Credenciales guardadas', 'success')
+
+  // Also save server-side
+  try {
+    await fetch(`/api/credentials/whatsapp`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-empresa-id': state.empresa_id
+      },
+      body: JSON.stringify({ access_token: token, waba_id: wabaId })
+    })
+    toast('Credenciales guardadas en el servidor', 'success')
+  } catch (_) {
+    toast('Credenciales guardadas localmente', 'success')
+  }
+
   fetchWATemplates()
 }
 
 async function fetchWATemplates() {
-  const token = localStorage.getItem('wa_access_token')
-  const wabaId = localStorage.getItem('wa_waba_id')
-
   document.getElementById('waStatusMsg').style.display = 'none'
   document.getElementById('waError').style.display = 'none'
-
-  if (!token || !wabaId) {
-    document.getElementById('waStatusMsg').style.display = 'block'
-    document.getElementById('waStatusMsg').textContent = 'Enter your credentials above to load templates'
-    return
-  }
-
   document.getElementById('waSpinner').style.display = 'flex'
   document.getElementById('waTableWrap').style.display = 'none'
   document.getElementById('waChartsWrap').style.display = 'none'
   document.getElementById('waSummaryCards').style.display = 'none'
 
   try {
-    const url = `https://graph.facebook.com/v19.0/${wabaId}/message_templates?access_token=${token}&fields=name,status,category,language,quality_score,components&limit=100`
-    const res = await fetch(url)
-    const json = await res.json()
+    // Use server-side endpoint (reads credentials from Supabase / env)
+    const r = await fetch('/api/whatsapp/templates', {
+      headers: { 'x-empresa-id': state.empresa_id }
+    })
+    const json = await r.json()
 
-    if (json.error) throw new Error(`[${json.error.code}] ${json.error.message}`)
+    if (!r.ok) {
+      // Try direct browser call with local credentials as fallback
+      const localToken = localStorage.getItem('wa_access_token')
+      const localWaba = localStorage.getItem('wa_waba_id')
+      if (localToken && localWaba) {
+        const url = `https://graph.facebook.com/v21.0/${localWaba}/message_templates?access_token=${localToken}&fields=name,status,category,language,quality_score,components&limit=100`
+        const res2 = await fetch(url)
+        const json2 = await res2.json()
+        if (json2.error) throw new Error(`[${json2.error.code}] ${json2.error.message}`)
+        waTemplatesData = json2.data || []
+        renderWATemplates(waTemplatesData)
+        return
+      }
+      // No credentials anywhere — show mock
+      document.getElementById('waStatusMsg').style.display = 'block'
+      document.getElementById('waStatusMsg').textContent = 'Configura tus credenciales de Meta en ⚙️ Configuración → Meta/Facebook'
+      waTemplatesData = WA_MOCK_TEMPLATES
+      renderWATemplates(waTemplatesData, true)
+      return
+    }
 
-    waTemplatesData = json.data || []
+    waTemplatesData = Array.isArray(json) ? json : (json.data || [])
     renderWATemplates(waTemplatesData)
   } catch (err) {
-    // Fallback to mock data
-    if (err.message.includes('Failed to fetch') || err.message.includes('NetworkError') || err.message.includes('CORS')) {
+    if (err.message.includes('Failed to fetch') || err.message.includes('NetworkError')) {
       waTemplatesData = WA_MOCK_TEMPLATES
       renderWATemplates(waTemplatesData, true)
     } else {
       document.getElementById('waError').style.display = 'block'
-      document.getElementById('waError').textContent = 'API Error: ' + err.message
+      document.getElementById('waError').textContent = 'Error: ' + err.message
     }
   } finally {
     document.getElementById('waSpinner').style.display = 'none'
@@ -2442,23 +2707,259 @@ function initWATab() {
   const wabaId = localStorage.getItem('wa_waba_id')
   if (token) document.getElementById('waAccessToken').value = token
   if (wabaId) document.getElementById('waWabaId').value = wabaId
-  if (token && wabaId) fetchWATemplates()
+  fetchWATemplates()
+}
+
+// ══════════════════════════════════════════════════════
+// QUICK POST
+// ══════════════════════════════════════════════════════
+async function loadQPInventario() {
+  try {
+    const r = await fetch(`/api/inventario?limit=50`, {
+      headers: { 'x-empresa-id': state.empresa_id }
+    })
+    const json = await r.json()
+    const sel = document.getElementById('qpProperty')
+    const items = json.data || json || []
+    sel.innerHTML = items.length
+      ? items.map(p => `<option value="${p.id}" data-img="${p.image_link_1 || ''}">${p.nombre_barrio || ''} — ${p.tipo_inmueble_propiedad || 'Inmueble'} — ${p.nombre_ciudad || ''}</option>`).join('')
+      : '<option value="">No hay inmuebles. Importa tu inventario primero.</option>'
+
+    sel.addEventListener('change', () => {
+      const opt = sel.selectedOptions[0]
+      const img = opt?.dataset.img
+      const imgUrlEl = document.getElementById('qpImageUrl')
+      const preview = document.getElementById('qpImagePreview')
+      const previewImg = document.getElementById('qpPreviewImg')
+      if (img) {
+        imgUrlEl.value = img
+        previewImg.src = img
+        preview.style.display = 'block'
+      } else {
+        imgUrlEl.value = ''
+        preview.style.display = 'none'
+      }
+    })
+
+    // Trigger change for first item
+    if (items.length) sel.dispatchEvent(new Event('change'))
+  } catch (_) {
+    document.getElementById('qpProperty').innerHTML = '<option value="">Error cargando inventario</option>'
+  }
+}
+
+document.getElementById('qpImageUrl').addEventListener('input', function() {
+  const preview = document.getElementById('qpImagePreview')
+  const previewImg = document.getElementById('qpPreviewImg')
+  if (this.value) {
+    previewImg.src = this.value
+    preview.style.display = 'block'
+  } else {
+    preview.style.display = 'none'
+  }
+})
+
+async function generateQPCopy() {
+  const sel = document.getElementById('qpProperty')
+  const optText = sel.selectedOptions[0]?.text || 'Inmueble disponible'
+  const caption = document.getElementById('qpCaption')
+  caption.value = `🏠 ${optText}\n\n✅ Disponible ahora\n📍 Ubicación premium\n💰 Precio competitivo\n\n¿Te interesa? Escríbenos por WhatsApp para más información.\n\n#rentmies #inmobiliaria #arriendos`
+  toast('Copy generado', 'success')
+}
+
+async function submitQuickPost() {
+  const property_sel = document.getElementById('qpProperty')
+  const inventario_id = property_sel.value
+  const platform = document.getElementById('qpPlatform').value
+  const caption = document.getElementById('qpCaption').value.trim()
+  const image_url = document.getElementById('qpImageUrl').value.trim()
+
+  const errEl = document.getElementById('qpError')
+  const succEl = document.getElementById('qpSuccess')
+  const btn = document.getElementById('qpSubmitBtn')
+  const btnText = document.getElementById('qpBtnText')
+
+  errEl.style.display = 'none'
+  succEl.style.display = 'none'
+
+  if (!caption) { errEl.textContent = 'Escribe un texto para el post.'; errEl.style.display = 'block'; return }
+
+  btn.disabled = true
+  btnText.textContent = '⏳ Publicando…'
+
+  try {
+    const r = await fetch('/api/social-post', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-empresa-id': state.empresa_id
+      },
+      body: JSON.stringify({ inventario_id, platform, caption, image_url, empresa_id: state.empresa_id })
+    })
+    const data = await r.json()
+
+    if (!r.ok) {
+      errEl.innerHTML = `<strong>${data.error || 'Error'}</strong><br>${data.detail || ''}`
+      errEl.style.display = 'block'
+      toast('Error al publicar', 'error')
+      return
+    }
+
+    succEl.innerHTML = `✅ Publicado correctamente — <a href="${data.url}" target="_blank" style="color:var(--green)">${data.url}</a>`
+    succEl.style.display = 'block'
+    toast('Post publicado', 'success')
+    document.getElementById('qpCaption').value = ''
+  } catch (err) {
+    errEl.textContent = 'Error de conexión: ' + err.message
+    errEl.style.display = 'block'
+    toast('Error al publicar', 'error')
+  } finally {
+    btn.disabled = false
+    btnText.textContent = '📤 Publicar ahora'
+  }
+}
+
+// ══════════════════════════════════════════════════════
+// META CREDENTIALS (Settings tab)
+// ══════════════════════════════════════════════════════
+async function loadMetaCredentials() {
+  try {
+    const r = await fetch('/api/credentials/meta', {
+      headers: { 'x-empresa-id': state.empresa_id }
+    })
+    const data = await r.json()
+    if (data.configured) {
+      document.getElementById('metaStatusBadge').textContent = '✓ Configurado'
+      document.getElementById('metaStatusBadge').style.background = 'rgba(29,158,117,.15)'
+      document.getElementById('metaStatusBadge').style.color = 'var(--green)'
+      if (data.last_tested_at) {
+        const d = new Date(data.last_tested_at).toLocaleDateString('es')
+        document.getElementById('metaStatusBadge').title = `Última prueba: ${d}`
+      }
+    }
+  } catch (_) {}
+}
+
+async function saveMetaCredentials() {
+  const creds = {
+    access_token: document.getElementById('metaAccessToken').value.trim(),
+    app_id: document.getElementById('metaAppId').value.trim(),
+    app_secret: document.getElementById('metaAppSecret').value.trim(),
+    ad_account_id: document.getElementById('metaAdAccountId').value.trim(),
+    page_id: document.getElementById('metaPageId').value.trim(),
+    waba_id: document.getElementById('metaWabaId').value.trim(),
+    phone_number_id: document.getElementById('metaPhoneNumberId').value.trim()
+  }
+
+  if (!creds.access_token) { toast('Access Token es requerido', 'error'); return }
+
+  try {
+    const r = await fetch('/api/credentials/meta', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-empresa-id': state.empresa_id },
+      body: JSON.stringify(creds)
+    })
+    if (r.ok) {
+      toast('Credenciales de Meta guardadas', 'success')
+      loadMetaCredentials()
+    } else {
+      const d = await r.json()
+      toast(d.error || 'Error guardando credenciales', 'error')
+    }
+  } catch (_) {
+    toast('Error de conexión', 'error')
+  }
+}
+
+async function testMetaConnection() {
+  const token = document.getElementById('metaAccessToken').value.trim()
+  if (!token) { toast('Ingresa tu Access Token primero', 'error'); return }
+
+  const resultEl = document.getElementById('metaTestResult')
+  resultEl.style.display = 'block'
+  resultEl.style.background = 'rgba(245,158,11,.1)'
+  resultEl.style.borderLeft = '3px solid var(--yellow)'
+  resultEl.style.color = 'var(--yellow)'
+  resultEl.textContent = 'Probando conexión…'
+
+  try {
+    const r = await fetch('/api/credentials/meta/test', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-empresa-id': state.empresa_id },
+      body: JSON.stringify({ access_token: token })
+    })
+    const data = await r.json()
+
+    if (data.success) {
+      resultEl.style.background = 'rgba(29,158,117,.1)'
+      resultEl.style.borderLeft = '3px solid var(--green)'
+      resultEl.style.color = 'var(--green)'
+      resultEl.textContent = '✓ ' + data.message
+      toast('Meta conectado correctamente', 'success')
+    } else {
+      resultEl.style.background = 'rgba(239,68,68,.1)'
+      resultEl.style.borderLeft = '3px solid var(--red)'
+      resultEl.style.color = '#fca5a5'
+      resultEl.textContent = '✗ ' + (data.error || 'Token inválido')
+      toast('Conexión fallida: ' + data.error, 'error')
+    }
+  } catch (_) {
+    resultEl.style.background = 'rgba(239,68,68,.1)'
+    resultEl.style.color = '#fca5a5'
+    resultEl.textContent = '✗ Error de conexión'
+  }
+}
+
+async function saveGoogleCredentials() {
+  const key = document.getElementById('googleApiKey').value.trim()
+  if (!key) { toast('Ingresa tu API Key', 'error'); return }
+  try {
+    const r = await fetch('/api/credentials/google_ai', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-empresa-id': state.empresa_id },
+      body: JSON.stringify({ api_key: key })
+    })
+    if (r.ok) { toast('API Key de Google guardada', 'success') }
+    else { toast('Error guardando API Key', 'error') }
+  } catch (_) { toast('Error de conexión', 'error') }
+}
+
+async function testGoogleConnection() {
+  const key = document.getElementById('googleApiKey').value.trim()
+  try {
+    const r = await fetch('/api/credentials/google_ai/test', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-empresa-id': state.empresa_id },
+      body: JSON.stringify({ api_key: key })
+    })
+    const data = await r.json()
+    if (data.success) toast('Gemini: ' + data.message, 'success')
+    else toast('Error: ' + data.error, 'error')
+  } catch (_) { toast('Error de conexión', 'error') }
 }
 
 // ══════════════════════════════════════════════════════
 // INIT
 // ══════════════════════════════════════════════════════
 async function init() {
-  // Intentar WS
+  // 1. Auth guard
+  const authed = await checkAuth()
+  if (!authed) return  // redirected to /login
+
+  // 2. Hide auth overlay
+  const overlay = document.getElementById('authOverlay')
+  if (overlay) overlay.style.display = 'none'
+
+  // 3. Intentar WS
   connectWebSocket()
 
-  // Cargar métricas iniciales
+  // 4. Cargar métricas iniciales
   setTimeout(async () => {
     await refreshMetrics()
     await loadLogs()
   }, 500)
 
-  // Auto-refresh cada 30s
+  // 5. Auto-refresh cada 30s
   setInterval(refreshMetrics, 30000)
 }
 

@@ -1,30 +1,97 @@
-# Rentmies — Ads Generator
+# Rentmies Ads Engine
 
-Genera 5 ads de Instagram (imagen 1080x1080 + copy) usando Gemini 1.5 Flash e Imagen 3.
+AI-powered ad generation and publishing platform for real estate agencies.
+Part of the Rentmies Growth Suite. Built for inmobiliarias in Colombia.
 
-Cada ad ataca un pain point real de arrendatarios en Colombia y produce:
-- `ad_N.png` — imagen cuadrada lista para Instagram
-- `ad_N.txt` — headline + descripción corta
+## Features
 
-## Setup
+- **Meta Publishing** — post to Facebook Page and Instagram Business
+- **WhatsApp Template Analytics** — delivery, read, and click rates per template
+- **AI Ad Generation** — Gemini creates copy in 4 psychological angles
+- **Imagen 3 Visuals** — AI-generated property visuals per listing
+- **Campaign Manager** — create, track, and analyze ad campaigns
+- **Auto-pause** — Gemini pauses underperforming ads every 6h, scales winners
+- **Inventario Import** — CSV/XLSX upload for property database
+- **Multi-tenant** — multi-agency architecture with role-based access
+- **Supabase Auth** — real login/signup, no mock credentials
 
-```powershell
-cd C:\Users\camil\rentmies-growth-agents\ads-generator
-python -m venv venv
-.\venv\Scripts\Activate.ps1
-pip install -r requirements.txt
+## Routes
+
+| Route | Description |
+|---|---|
+| `/` | Marketing landing page |
+| `/login` | Sign in |
+| `/signup` | Create account |
+| `/app` | Authenticated dashboard |
+| `/api/health` | Health check (env + DB status) |
+| `/api/inventario` | Property CRUD |
+| `/api/campaigns` | Campaign CRUD |
+| `/api/creatives` | Creative CRUD |
+| `/api/generate` | AI ad generation pipeline |
+| `/api/whatsapp/templates` | Fetch WA templates from Meta |
+| `/api/social-post` | Publish to Facebook/Instagram |
+| `/api/credentials/:platform` | Save/load platform credentials |
+| `/api/analytics/*` | Performance analytics |
+| `/api/auth-supabase` | Auth (signup/signin/me/signout) |
+
+## Local Setup
+
+```bash
+git clone https://github.com/camilordceo/rentmies-ads-engine
+cd ads-generator
+npm install
+cp .env.example adsplatform.env
+# Fill in adsplatform.env with real Supabase + Meta + Google keys
+npm run dev
+# Open http://localhost:3000
 ```
 
-## Correr
+## Deployment
 
-```powershell
-python generate_post.py
+Deployed to Vercel. See [VERCEL_SETUP.md](VERCEL_SETUP.md) for environment variable setup.
+
+```bash
+git push origin main
+# Vercel auto-deploys on push
 ```
 
-Los archivos se guardan en `output/`.
+## Stack
 
-## Variables requeridas en `../adsplatform.env`
+- **Node.js + Express** — local dev server (`local-server.js`)
+- **Vercel Serverless Functions** — production (`api/*.js`)
+- **Supabase** — auth + PostgreSQL database
+- **Google Gemini 1.5 Flash** — ad copy generation
+- **Google Imagen 3** — AI image generation
+- **Meta Graph API v21** — Facebook/Instagram/WhatsApp
+- **Vanilla JS** — dashboard frontend (no framework)
+
+## Project Structure
 
 ```
-GOOGLE_AI_API_KEY=...
+ads-generator/
+├── api/                    Vercel serverless functions
+│   ├── auth-supabase.js    Supabase auth (signup/signin/me)
+│   ├── health.js           Health check endpoint
+│   ├── social-post.js      Publish to Facebook/Instagram
+│   └── ...
+├── config/                 AI prompts, campaign configs
+├── dashboard/
+│   └── index.html          App dashboard (post-auth)
+├── engine/                 AI generators, analyzers
+├── lib/                    Shared utilities
+├── public/
+│   ├── index.html          Marketing landing
+│   ├── login.html          Sign in
+│   └── signup.html         Create account
+├── supabase/               Schema migrations
+├── local-server.js         Express dev server
+├── .env.example            Env var template
+├── VERCEL_SETUP.md         Deployment guide
+└── KNOWN_ISSUES.md         Pending work
 ```
+
+## Supabase Schema
+
+Run `supabase/schema-v2.sql` in Supabase SQL Editor to create all tables.
+
+Required tables: `empresas`, `profiles`, `inventario_sql`, `ad_campaigns`, `ad_creatives`, `platform_credentials`, `social_posts`, `wa_template_logs`, `video_uploads`, `ai_decision_logs`

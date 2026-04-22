@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Crear cuenta — Rentmies</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=Inter:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --teal: #40d99d;
+  --teal-dark: #2fb87d;
+  --black: #1a1a1a;
+  --muted: #6b7280;
+  --bg: #fff;
+  --bg2: #f8f8f8;
+  --border: #e5e5e5;
+  --error: #ef4444;
+  --success: #10b981;
+  --radius: 8px;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  font-family: 'Inter', sans-serif;
+  color: var(--black);
+  background: var(--bg2);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+h1, h2, h3, .logo-text { font-family: 'DM Sans', sans-serif; }
+a { text-decoration: none; color: inherit; }
+
+nav {
+  height: 60px;
+  background: #fff;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  padding: 0 32px;
+}
+.logo-text { font-size: 17px; font-weight: 600; color: var(--teal); }
+.logo-sub { font-size: 11px; color: var(--muted); margin-left: 6px; }
+
+main {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 48px 24px;
+}
+
+.auth-card {
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 40px;
+  width: 100%;
+  max-width: 440px;
+  box-shadow: 0 4px 24px rgba(0,0,0,.06);
+}
+
+.auth-header {
+  text-align: center;
+  margin-bottom: 32px;
+}
+
+.auth-logo {
+  width: 44px;
+  height: 44px;
+  background: var(--teal);
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 16px;
+}
+.auth-logo svg { stroke: #fff; }
+
+.auth-header h1 {
+  font-size: 22px;
+  font-weight: 500;
+  margin-bottom: 6px;
+}
+.auth-header p { font-size: 14px; color: var(--muted); }
+
+.form-group { margin-bottom: 18px; }
+label {
+  display: block;
+  font-size: 13px;
+  font-weight: 500;
+  margin-bottom: 6px;
+  color: var(--black);
+}
+input {
+  width: 100%;
+  height: 44px;
+  padding: 0 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  font-size: 14px;
+  font-family: 'Inter', sans-serif;
+  color: var(--black);
+  outline: none;
+  transition: border-color 200ms ease;
+  background: #fff;
+}
+input:hover { border-color: #ccc; }
+input:focus { border-color: var(--teal); box-shadow: 0 0 0 3px rgba(64,217,157,.15); }
+
+.hint {
+  font-size: 11px;
+  color: var(--muted);
+  margin-top: 5px;
+}
+
+.btn-submit {
+  width: 100%;
+  height: 44px;
+  background: var(--teal);
+  color: #fff;
+  border: none;
+  border-radius: var(--radius);
+  font-size: 15px;
+  font-weight: 500;
+  font-family: 'DM Sans', sans-serif;
+  cursor: pointer;
+  transition: background 200ms ease;
+  margin-top: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+.btn-submit:hover { background: var(--teal-dark); }
+.btn-submit:focus { outline: 2px solid var(--teal); outline-offset: 2px; }
+.btn-submit:disabled { opacity: .6; cursor: not-allowed; }
+
+.alert {
+  display: none;
+  border-radius: var(--radius);
+  padding: 10px 14px;
+  font-size: 13px;
+  margin-bottom: 16px;
+  line-height: 1.5;
+}
+.alert.show { display: block; }
+.alert.error { background: #fef2f2; border: 1px solid #fecaca; color: var(--error); }
+.alert.success { background: #f0fdf4; border: 1px solid #bbf7d0; color: var(--success); }
+
+.auth-footer {
+  text-align: center;
+  margin-top: 24px;
+  font-size: 13px;
+  color: var(--muted);
+}
+.auth-footer a { color: var(--teal); font-weight: 500; }
+.auth-footer a:hover { text-decoration: underline; }
+
+.divider {
+  border-top: 1px solid var(--border);
+  margin: 24px 0;
+}
+
+.benefits {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 28px;
+}
+.benefit {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 13px;
+  color: var(--muted);
+}
+.benefit-dot {
+  width: 8px;
+  height: 8px;
+  background: var(--teal);
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.spinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(255,255,255,.4);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: spin .7s linear infinite;
+  display: none;
+}
+.spinner.show { display: block; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+#authOverlay {
+  display: flex;
+  position: fixed;
+  inset: 0;
+  background: #fff;
+  z-index: 999;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Inter', sans-serif;
+  color: var(--muted);
+  font-size: 14px;
+}
+</style>
+</head>
+<body>
+
+<div id="authOverlay">Verificando sesión…</div>
+
+<nav>
+  <a href="/">
+    <span class="logo-text">rentmies</span><span class="logo-sub">Growth Suite</span>
+  </a>
+</nav>
+
+<main>
+  <div class="auth-card">
+    <div class="auth-header">
+      <div class="auth-logo">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/>
+          <circle cx="9" cy="7" r="4"/>
+          <line x1="19" y1="8" x2="19" y2="14"/>
+          <line x1="22" y1="11" x2="16" y2="11"/>
+        </svg>
+      </div>
+      <h1>Crea tu cuenta gratis</h1>
+      <p>Empieza a generar ads en menos de 5 minutos</p>
+    </div>
+
+    <div class="benefits">
+      <div class="benefit"><div class="benefit-dot"></div>Sin tarjeta de crédito requerida</div>
+      <div class="benefit"><div class="benefit-dot"></div>Genera tus primeros ads hoy</div>
+      <div class="benefit"><div class="benefit-dot"></div>Cancela cuando quieras</div>
+    </div>
+
+    <div id="alertMsg" class="alert"></div>
+
+    <form id="signupForm" onsubmit="handleSignup(event)">
+      <div class="form-group">
+        <label for="empresa">Nombre de tu inmobiliaria</label>
+        <input type="text" id="empresa" name="empresa" placeholder="Inmobiliaria XYZ" required autocomplete="organization">
+      </div>
+      <div class="form-group">
+        <label for="email">Correo electrónico</label>
+        <input type="email" id="email" name="email" placeholder="tu@inmobiliaria.com" required autocomplete="email">
+      </div>
+      <div class="form-group">
+        <label for="password">Contraseña</label>
+        <input type="password" id="password" name="password" placeholder="Mínimo 8 caracteres" required minlength="8" autocomplete="new-password">
+        <div class="hint">Mínimo 8 caracteres</div>
+      </div>
+
+      <button type="submit" class="btn-submit" id="submitBtn">
+        <div class="spinner" id="spinner"></div>
+        <span id="btnText">Crear cuenta gratis</span>
+      </button>
+    </form>
+
+    <div class="auth-footer">
+      ¿Ya tienes cuenta? <a href="/login">Inicia sesión</a>
+    </div>
+  </div>
+</main>
+
+<script>
+  async function checkExistingSession() {
+    const token = localStorage.getItem('sb_token')
+    if (!token) { hideOverlay(); return }
+    try {
+      const r = await fetch('/api/auth-supabase?action=me', {
+        headers: { Authorization: `Bearer ${token}` }
+      })
+      if (r.ok) { window.location.replace('/app'); return }
+    } catch (_) {}
+    localStorage.removeItem('sb_token')
+    hideOverlay()
+  }
+
+  function hideOverlay() {
+    document.getElementById('authOverlay').style.display = 'none'
+  }
+
+  async function handleSignup(e) {
+    e.preventDefault()
+    const email = document.getElementById('email').value.trim()
+    const password = document.getElementById('password').value
+    const empresa_name = document.getElementById('empresa').value.trim()
+    const alertEl = document.getElementById('alertMsg')
+    const btn = document.getElementById('submitBtn')
+    const spinner = document.getElementById('spinner')
+    const btnText = document.getElementById('btnText')
+
+    alertEl.className = 'alert'
+    btn.disabled = true
+    spinner.classList.add('show')
+    btnText.textContent = 'Creando cuenta…'
+
+    try {
+      const r = await fetch('/api/auth-supabase?action=signup', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password, empresa_name })
+      })
+      const data = await r.json()
+
+      if (!r.ok) {
+        showAlert('error', data.error || 'Error al crear la cuenta')
+        return
+      }
+
+      if (data.session?.access_token) {
+        localStorage.setItem('sb_token', data.session.access_token)
+        localStorage.setItem('sb_refresh_token', data.session.refresh_token || '')
+        localStorage.setItem('sb_user', JSON.stringify({ id: data.user.id, email: data.user.email }))
+        window.location.replace('/app')
+      } else {
+        // Email confirmation required
+        showAlert('success', '¡Cuenta creada! Revisa tu correo para confirmar tu cuenta, luego inicia sesión.')
+        document.getElementById('signupForm').style.display = 'none'
+      }
+    } catch (err) {
+      showAlert('error', 'Error de conexión. Intenta de nuevo.')
+    } finally {
+      btn.disabled = false
+      spinner.classList.remove('show')
+      btnText.textContent = 'Crear cuenta gratis'
+    }
+  }
+
+  function showAlert(type, msg) {
+    const el = document.getElementById('alertMsg')
+    el.textContent = msg
+    el.className = `alert ${type} show`
+  }
+
+  checkExistingSession()
+</script>
+</body>
+</html>

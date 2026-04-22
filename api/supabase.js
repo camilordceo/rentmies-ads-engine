@@ -3,14 +3,15 @@
  * All database operations go through here.
  */
 
-require('dotenv').config()
 const { createClient } = require('@supabase/supabase-js')
 
 let supabase = null
 
 function getClient() {
-  if (!supabase && process.env.SUPABASE_URL && process.env.SUPABASE_SERVICE_KEY) {
-    supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_KEY)
+  if (!supabase && process.env.SUPABASE_URL) {
+    // Accept either SUPABASE_SERVICE_KEY or SUPABASE_SERVICE_ROLE_KEY
+    const key = process.env.SUPABASE_SERVICE_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY
+    if (key) supabase = createClient(process.env.SUPABASE_URL, key)
   }
   return supabase
 }

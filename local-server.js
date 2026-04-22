@@ -3,7 +3,18 @@
  * Express + WebSocket + Supabase
  */
 
-require('dotenv').config()
+// Local dev: try adsplatform.env first, fallback to .env
+// On Vercel: env vars come from the Vercel dashboard (no file needed)
+if (!process.env.VERCEL) {
+  const dotenv = require('dotenv')
+  const fs = require('fs')
+  const path = require('path')
+  const envFile = fs.existsSync(path.join(__dirname, 'adsplatform.env'))
+    ? 'adsplatform.env'
+    : '.env'
+  dotenv.config({ path: envFile })
+  console.log(`[env] Loaded from: ${envFile}`)
+}
 const express = require('express')
 const http = require('http')
 const WebSocket = require('ws')
@@ -54,6 +65,11 @@ const csvStorage = multer.diskStorage({
 const uploadVideo = multer({ storage: videoStorage, limits: { fileSize: 500 * 1024 * 1024 } })
 const uploadCSV = multer({ storage: csvStorage, limits: { fileSize: 50 * 1024 * 1024 } })
 
+// ── New API routes (delegate to serverless function files) ────────────────
+app.all('/api/auth-supabase', require('./api/auth-supabase'))
+app.all('/api/health', require('./api/health'))
+app.post('/api/social-post', require('./api/social-post'))
+
 // ── Seeder + memory store ─────────────────────────────────────
 const { seedSupabase, seedMemory, memoryStore, DEMO_EMPRESA_ID } = require('./engine/seeder')
 
@@ -97,7 +113,10 @@ function toCache(key, data) { cache.set(key, { data, ts: Date.now() }) }
 // ════════════════════════════════════════════════════════════════
 
 app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'public/index.html')))
+app.get('/login', (req, res) => res.sendFile(path.join(__dirname, 'public/login.html')))
+app.get('/signup', (req, res) => res.sendFile(path.join(__dirname, 'public/signup.html')))
 app.get('/app', (req, res) => res.sendFile(path.join(__dirname, 'dashboard/index.html')))
+app.get('/dashboard', (req, res) => res.sendFile(path.join(__dirname, 'dashboard/index.html')))
 app.use(express.static(path.join(__dirname, 'public')))
 app.use('/dashboard', express.static(path.join(__dirname, 'dashboard')))
 

@@ -8,6 +8,10 @@ __pycache__/
 *.pyc
 *.pyo
 
+# Python legacy prototype (removed from project)
+generate_post.py
+requirements.txt
+
 # Environment files — NEVER commit these
 .env
 .env.local
