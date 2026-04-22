@@ -15,7 +15,17 @@ function getClient() {
 
 const DEMO_EMPRESA_ID = 'demo-empresa-001'
 
-// Realistic Bogotá properties using picsum for consistent demo images
+// Real property images from Domus (inmobiliaria_1122)
+const DOMUS_IMGS = [
+  'https://s3-us-west-2.amazonaws.com/pictures.domus.la/inmobiliaria_1122/249_1_1776777076.jpg',
+  'https://s3-us-west-2.amazonaws.com/pictures.domus.la/inmobiliaria_1122/1_1_1774537428_1.jpg',
+  'https://s3-us-west-2.amazonaws.com/pictures.domus.la/inmobiliaria_1122/211_1_1774968499.jpg',
+  'https://s3-us-west-2.amazonaws.com/pictures.domus.la/inmobiliaria_1122/2_1_1774537429_1.jpg',
+  'https://s3-us-west-2.amazonaws.com/pictures.domus.la/inmobiliaria_1122/3_1_1774537438_1.jpg',
+  'https://s3-us-west-2.amazonaws.com/pictures.domus.la/inmobiliaria_1122/5_1_1774537455_1.jpg',
+  'https://s3-us-west-2.amazonaws.com/pictures.domus.la/inmobiliaria_1122/4_1_1774537444_1.jpg',
+]
+
 const DEMO_PROPERTIES = [
   {
     id: 'demo-prop-001', empresa_id: DEMO_EMPRESA_ID,
@@ -25,9 +35,7 @@ const DEMO_PROPERTIES = [
     area_construida: 68, numero_habitaciones: 2, numero_banos: 2, numero_garajes: 1,
     descripcion_inmueble_publica: 'Moderno apartamento en Chapinero Alto con excelente iluminación natural, cocina integral y zona de lavandería. Piso 8, vista despejada.',
     broker_name: 'Valentina Torres', broker_email: 'v.torres@rentmies.co',
-    image_link_1: 'https://picsum.photos/seed/prop1a/800/600',
-    image_link_2: 'https://picsum.photos/seed/prop1b/800/600',
-    image_link_3: 'https://picsum.photos/seed/prop1c/800/600',
+    image_link_1: DOMUS_IMGS[0], image_link_2: DOMUS_IMGS[1], image_link_3: DOMUS_IMGS[2],
     activo: true
   },
   {
@@ -38,9 +46,7 @@ const DEMO_PROPERTIES = [
     area_construida: 120, numero_habitaciones: 3, numero_banos: 3, numero_garajes: 2,
     descripcion_inmueble_publica: 'Exclusivo apartamento en El Chicó con acabados de lujo, terraza privada y vista panorámica. Edificio con portería 24h, gimnasio y salón social.',
     broker_name: 'Sebastián Morales', broker_email: 's.morales@rentmies.co',
-    image_link_1: 'https://picsum.photos/seed/prop2a/800/600',
-    image_link_2: 'https://picsum.photos/seed/prop2b/800/600',
-    image_link_3: 'https://picsum.photos/seed/prop2c/800/600',
+    image_link_1: DOMUS_IMGS[3], image_link_2: DOMUS_IMGS[4], image_link_3: DOMUS_IMGS[5],
     activo: true
   },
   {
@@ -51,9 +57,7 @@ const DEMO_PROPERTIES = [
     area_construida: 180, numero_habitaciones: 4, numero_banos: 3, numero_garajes: 2,
     descripcion_inmueble_publica: 'Casa campestre en El Poblado con jardín privado, piscina y BBQ. Zona residencial tranquila a 5 minutos del Parque El Poblado.',
     broker_name: 'Camila Ríos', broker_email: 'c.rios@rentmies.co',
-    image_link_1: 'https://picsum.photos/seed/prop3a/800/600',
-    image_link_2: 'https://picsum.photos/seed/prop3b/800/600',
-    image_link_3: null,
+    image_link_1: DOMUS_IMGS[6], image_link_2: DOMUS_IMGS[0], image_link_3: DOMUS_IMGS[1],
     activo: true
   },
   {
@@ -64,8 +68,7 @@ const DEMO_PROPERTIES = [
     area_construida: 52, numero_habitaciones: 1, numero_banos: 1, numero_garajes: 1,
     descripcion_inmueble_publica: 'Apartamento tipo estudio moderno en Laureles. Ideal para profesionales. Amoblado disponible bajo solicitud. Cerca a metro Estadio.',
     broker_name: 'Juan Pablo Gómez', broker_email: 'jp.gomez@rentmies.co',
-    image_link_1: 'https://picsum.photos/seed/prop4a/800/600',
-    image_link_2: null, image_link_3: null,
+    image_link_1: DOMUS_IMGS[2], image_link_2: DOMUS_IMGS[3], image_link_3: null,
     activo: true
   },
   {
@@ -76,9 +79,7 @@ const DEMO_PROPERTIES = [
     area_construida: 95, numero_habitaciones: 0, numero_banos: 1, numero_garajes: 1,
     descripcion_inmueble_publica: 'Local comercial en zona rosa de Usaquén. Alta circulación peatonal, frente a vía principal. Ideal para restaurante o boutique premium.',
     broker_name: 'Valentina Torres', broker_email: 'v.torres@rentmies.co',
-    image_link_1: 'https://picsum.photos/seed/prop5a/800/600',
-    image_link_2: 'https://picsum.photos/seed/prop5b/800/600',
-    image_link_3: null,
+    image_link_1: DOMUS_IMGS[4], image_link_2: DOMUS_IMGS[5], image_link_3: null,
     activo: true
   },
   {
@@ -89,9 +90,7 @@ const DEMO_PROPERTIES = [
     area_construida: 88, numero_habitaciones: 3, numero_banos: 2, numero_garajes: 1,
     descripcion_inmueble_publica: 'Apartamento en Ciudad Jardín con excelentes acabados. Conjunto cerrado con piscina, cancha de tennis y zona BBQ. Entrega inmediata.',
     broker_name: 'Andrés Vargas', broker_email: 'a.vargas@rentmies.co',
-    image_link_1: 'https://picsum.photos/seed/prop6a/800/600',
-    image_link_2: 'https://picsum.photos/seed/prop6b/800/600',
-    image_link_3: 'https://picsum.photos/seed/prop6c/800/600',
+    image_link_1: DOMUS_IMGS[6], image_link_2: DOMUS_IMGS[0], image_link_3: DOMUS_IMGS[1],
     activo: true
   },
   {
@@ -102,9 +101,7 @@ const DEMO_PROPERTIES = [
     area_construida: 210, numero_habitaciones: 4, numero_banos: 4, numero_garajes: 3,
     descripcion_inmueble_publica: 'Exclusivo penthouse en Santa Bárbara con terraza de 80m², vista 360° de Bogotá. Cocina europea, jacuzzi y cuarto de servicio independiente.',
     broker_name: 'Sebastián Morales', broker_email: 's.morales@rentmies.co',
-    image_link_1: 'https://picsum.photos/seed/prop7a/800/600',
-    image_link_2: 'https://picsum.photos/seed/prop7b/800/600',
-    image_link_3: 'https://picsum.photos/seed/prop7c/800/600',
+    image_link_1: DOMUS_IMGS[2], image_link_2: DOMUS_IMGS[3], image_link_3: DOMUS_IMGS[4],
     activo: true
   },
   {
@@ -115,8 +112,7 @@ const DEMO_PROPERTIES = [
     area_construida: 58, numero_habitaciones: 2, numero_banos: 1, numero_garajes: 0,
     descripcion_inmueble_publica: 'Cómodo apartamento en Cedritos, segundo piso, buena iluminación. Zona residencial tranquila, cerca a centros comerciales y colegios.',
     broker_name: 'Camila Ríos', broker_email: 'c.rios@rentmies.co',
-    image_link_1: 'https://picsum.photos/seed/prop8a/800/600',
-    image_link_2: null, image_link_3: null,
+    image_link_1: DOMUS_IMGS[5], image_link_2: DOMUS_IMGS[6], image_link_3: null,
     activo: true
   },
   {
@@ -127,9 +123,7 @@ const DEMO_PROPERTIES = [
     area_construida: 220, numero_habitaciones: 5, numero_banos: 4, numero_garajes: 2,
     descripcion_inmueble_publica: 'Casa familiar en Envigado con jardín amplio, estudio independiente y zona de BBQ. Excelente valorización en el sector. Escritura inmediata.',
     broker_name: 'Juan Pablo Gómez', broker_email: 'jp.gomez@rentmies.co',
-    image_link_1: 'https://picsum.photos/seed/prop9a/800/600',
-    image_link_2: 'https://picsum.photos/seed/prop9b/800/600',
-    image_link_3: null,
+    image_link_1: DOMUS_IMGS[1], image_link_2: DOMUS_IMGS[2], image_link_3: null,
     activo: true
   },
   {
@@ -140,9 +134,7 @@ const DEMO_PROPERTIES = [
     area_construida: 72, numero_habitaciones: 0, numero_banos: 2, numero_garajes: 2,
     descripcion_inmueble_publica: 'Oficina moderna en Chicó Norte, edificio clase A con recepción, auditorio y parking. Ideal para firmas de consultoría o tecnología.',
     broker_name: 'Andrés Vargas', broker_email: 'a.vargas@rentmies.co',
-    image_link_1: 'https://picsum.photos/seed/prop10a/800/600',
-    image_link_2: 'https://picsum.photos/seed/prop10b/800/600',
-    image_link_3: null,
+    image_link_1: DOMUS_IMGS[3], image_link_2: DOMUS_IMGS[4], image_link_3: null,
     activo: true
   },
 ]
@@ -279,7 +271,7 @@ function seedMemory() {
         descripcion_inmueble_publica: item.descripcion_inmueble_propiedad || item.descripcion_inmueble_publica || '',
         broker_name: item.Broker_Name || item.broker_name || '',
         broker_email: item.broker_email || '',
-        image_link_1: item.image_link_1 || `https://picsum.photos/seed/json${idx}a/800/600`,
+        image_link_1: item.image_link_1 || DOMUS_IMGS[idx % DOMUS_IMGS.length],
         image_link_2: item.image_link_2 || null,
         image_link_3: item.image_link_3 || null,
         video: item.video || null,
