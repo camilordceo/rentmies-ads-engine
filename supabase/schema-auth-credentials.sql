@@ -63,11 +63,17 @@ ALTER TABLE social_posts ENABLE ROW LEVEL SECURITY;
 -- Service role bypasses RLS automatically.
 -- For anon access, add policies as needed.
 
--- Allow users to read their own profile
-CREATE POLICY IF NOT EXISTS "Users can read own profile"
+-- Allow users to read/update their own profile
+-- (DROP first so this script is re-runnable)
+DO $$ BEGIN
+  DROP POLICY IF EXISTS "Users can read own profile" ON profiles;
+  DROP POLICY IF EXISTS "Users can update own profile" ON profiles;
+END $$;
+
+CREATE POLICY "Users can read own profile"
   ON profiles FOR SELECT
   USING (auth.uid() = id);
 
-CREATE POLICY IF NOT EXISTS "Users can update own profile"
+CREATE POLICY "Users can update own profile"
   ON profiles FOR UPDATE
   USING (auth.uid() = id);
