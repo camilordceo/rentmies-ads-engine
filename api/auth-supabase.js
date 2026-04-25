@@ -46,6 +46,15 @@ module.exports = async (req, res) => {
     const token = (req.headers.authorization || '').replace('Bearer ', '').trim()
     if (!token) return res.status(401).json({ error: 'No token provided' })
 
+    // Demo bypass — used when Supabase env vars are not set so the user can
+    // still see the dashboard. Token format: "demo_<anything>".
+    if (token.startsWith('demo_')) {
+      return res.json({
+        user: { id: 'demo-user', email: 'demo@rentmies.com' },
+        profile: { id: 'demo-user', empresa_id: 'demo', nombre: 'Demo', rol: 'Admin', activo: true }
+      })
+    }
+
     const sb = getServiceClient()
     if (!sb) return res.status(503).json({ error: 'Auth service not configured' })
 

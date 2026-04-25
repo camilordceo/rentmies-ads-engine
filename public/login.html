@@ -152,6 +152,35 @@ input:focus { border-color: var(--teal); box-shadow: 0 0 0 3px rgba(64,217,157,.
 .auth-footer a { color: var(--teal); font-weight: 500; }
 .auth-footer a:hover { text-decoration: underline; }
 
+/* Demo mode (when Supabase is not configured) */
+.demo-banner {
+  display: none;
+  background: #fff8e1;
+  border: 1px solid #ffe082;
+  color: #8a6d00;
+  border-radius: var(--radius);
+  padding: 10px 14px;
+  font-size: 12px;
+  line-height: 1.5;
+  margin-bottom: 16px;
+}
+.demo-banner.show { display: block; }
+.btn-demo {
+  width: 100%;
+  height: 44px;
+  background: #fff;
+  color: var(--black);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  font-size: 14px;
+  font-weight: 500;
+  font-family: 'DM Sans', sans-serif;
+  cursor: pointer;
+  margin-top: 12px;
+  transition: border-color 200ms ease, background 200ms ease;
+}
+.btn-demo:hover { border-color: var(--teal); background: #f8fffd; }
+
 /* Spinner */
 .spinner {
   width: 16px;
@@ -205,6 +234,10 @@ input:focus { border-color: var(--teal); box-shadow: 0 0 0 3px rgba(64,217,157,.
 
     <div id="errorMsg" class="error-msg"></div>
 
+    <div id="demoBanner" class="demo-banner">
+      Supabase aún no está configurado en este entorno. Puedes entrar en <strong>modo demo</strong> para revisar el dashboard.
+    </div>
+
     <form id="loginForm" onsubmit="handleLogin(event)">
       <div class="form-group">
         <label for="email">Correo electrónico</label>
@@ -218,6 +251,10 @@ input:focus { border-color: var(--teal); box-shadow: 0 0 0 3px rgba(64,217,157,.
       <button type="submit" class="btn-submit" id="submitBtn">
         <div class="spinner" id="spinner"></div>
         <span id="btnText">Iniciar sesión</span>
+      </button>
+
+      <button type="button" class="btn-demo" id="demoBtn" style="display:none" onclick="enterDemoMode()">
+        Entrar en modo demo →
       </button>
     </form>
 
@@ -239,6 +276,20 @@ input:focus { border-color: var(--teal); box-shadow: 0 0 0 3px rgba(64,217,157,.
       SUPABASE_URL = cfg.supabaseUrl || ''
       SUPABASE_ANON_KEY = cfg.supabaseAnonKey || ''
     } catch (_) {}
+
+    // If Supabase is not configured, surface the demo entry point so the
+    // dashboard is still reachable without credentials.
+    if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
+      document.getElementById('demoBanner').classList.add('show')
+      document.getElementById('demoBtn').style.display = 'block'
+    }
+  }
+
+  function enterDemoMode() {
+    const demoToken = 'demo_' + Date.now().toString(36)
+    localStorage.setItem('sb_token', demoToken)
+    localStorage.setItem('sb_user', JSON.stringify({ id: 'demo-user', email: 'demo@rentmies.com' }))
+    window.location.replace('/app')
   }
 
   // ── Check existing session ───────────────────────────────────
