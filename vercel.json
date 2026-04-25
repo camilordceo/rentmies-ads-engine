@@ -1,13 +1,9 @@
 {
   "rewrites": [
-    { "source": "/login",        "destination": "/public/login.html" },
-    { "source": "/signup",       "destination": "/public/signup.html" },
-    { "source": "/app",          "destination": "/dashboard/index.html" },
-    { "source": "/app/(.*)",     "destination": "/dashboard/index.html" },
-    { "source": "/dashboard",    "destination": "/dashboard/index.html" },
-    { "source": "/dashboard/((?!index\\.html).*)", "destination": "/dashboard/$1" },
-    { "source": "/",             "destination": "/public/index.html" },
-    { "source": "/((?!api/).*)", "destination": "/public/index.html" }
+    { "source": "/login",    "destination": "/login.html" },
+    { "source": "/signup",   "destination": "/signup.html" },
+    { "source": "/app",      "destination": "/app/index.html" },
+    { "source": "/app/(.*)", "destination": "/app/index.html" }
   ],
   "functions": {
     "api/generate.js":      { "maxDuration": 30 },

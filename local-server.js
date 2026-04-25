@@ -115,10 +115,8 @@ function toCache(key, data) { cache.set(key, { data, ts: Date.now() }) }
 app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'public/index.html')))
 app.get('/login', (req, res) => res.sendFile(path.join(__dirname, 'public/login.html')))
 app.get('/signup', (req, res) => res.sendFile(path.join(__dirname, 'public/signup.html')))
-app.get('/app', (req, res) => res.sendFile(path.join(__dirname, 'dashboard/index.html')))
-app.get('/dashboard', (req, res) => res.sendFile(path.join(__dirname, 'dashboard/index.html')))
+app.get('/app', (req, res) => res.sendFile(path.join(__dirname, 'public/app/index.html')))
 app.use(express.static(path.join(__dirname, 'public')))
-app.use('/dashboard', express.static(path.join(__dirname, 'dashboard')))
 
 // ════════════════════════════════════════════════════════════════
 // INVENTARIO ENDPOINTS
