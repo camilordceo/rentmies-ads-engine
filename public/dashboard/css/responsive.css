@@ -28,20 +28,16 @@
 /* ── Mobile breakpoint ── */
 
 @media (max-width: 768px) {
-  /* Shell collapses to rail + canvas. Camilord hides until FAB toggles. */
+  /* Shell collapses to rail + (topbar / main). Camilord hidden, no FAB. */
   .ae-app {
-    grid-template-columns: var(--rail-w) 1fr !important;
-    grid-template-areas: "rail canvas" !important;
+    grid-template-columns: var(--rail-w) minmax(0, 1fr) !important;
+    grid-template-areas:
+      "rail topbar"
+      "rail main" !important;
   }
   .ae-camilord {
-    display: none;
-    position: fixed;
-    inset: 0;
-    width: 100vw;
-    z-index: 95;
-    border-left: none;
+    display: none !important;
   }
-  .ae-camilord.open-mobile { display: flex; }
 
   /* Topnav: hide nav links, expose hamburger. Logo + launch keep */
   .ae-topnav { gap: 12px; padding: 0 14px; }

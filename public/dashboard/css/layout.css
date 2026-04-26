@@ -25,6 +25,7 @@
   max-height: 100vh;
   background: var(--rm-bg);
   overflow: hidden;          /* contain children — no horizontal scroll on body */
+  position: relative;        /* positioning context for overlays (palette, drawers, toasts) */
 }
 
 /* ── Grid children: every one needs min-width: 0 so its content

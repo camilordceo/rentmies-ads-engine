@@ -46,8 +46,7 @@
   background: transparent;
   border: none;
   cursor: pointer;
-  position: relative;
-  transition: color 0.15s, background 0.15s;
+  transition: color 0.15s, background 0.15s, box-shadow 0.15s;
   outline: none;
 }
 
@@ -76,16 +75,10 @@
   color: var(--rm-teal);
 }
 
-/* Active accent — 3px teal bar at the rail's left edge */
-.ae-rail-link.active::before {
-  content: "";
-  position: absolute;
-  left: -10px;
-  top: 10px;
-  bottom: 10px;
-  width: 3px;
-  background: var(--rm-teal);
-  border-radius: 0 3px 3px 0;
+/* Active accent — inset box-shadow on the LEFT edge of the button.
+   No position:absolute, no negative offsets, nothing escaping bounds. */
+.ae-rail-link.active {
+  box-shadow: inset 3px 0 0 0 var(--rm-teal);
 }
 
 /* ── Spacers and footer (settings + avatar) ── */
