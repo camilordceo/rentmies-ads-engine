@@ -1,0 +1,133 @@
+/* ─────────────────────────────────────────────────────────────
+   RENTMIES ADS ENGINE — BUTTON SYSTEM (FASE 1)
+   SKILL §12 — primary (dark), authority (deep green), ghost.
+   All buttons: active:scale(0.98), focus-visible: teal outline,
+   min touch target 36px (44px for rail icons).
+   ───────────────────────────────────────────────────────────── */
+
+/* ── Base shared by all .ae-btn-* ── */
+
+.ae-btn-primary,
+.ae-btn-authority,
+.ae-btn-ghost,
+.ae-launch-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  border: none;
+  cursor: pointer;
+  font-family: var(--rm-mono);
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  transition: background 0.15s, color 0.15s, border-color 0.15s, transform 0.15s;
+  user-select: none;
+  white-space: nowrap;
+  min-height: 36px;
+}
+
+.ae-btn-primary:focus-visible,
+.ae-btn-authority:focus-visible,
+.ae-btn-ghost:focus-visible,
+.ae-launch-btn:focus-visible {
+  outline: 2px solid var(--rm-teal);
+  outline-offset: 2px;
+}
+
+.ae-btn-primary:active,
+.ae-btn-authority:active,
+.ae-btn-ghost:active,
+.ae-launch-btn:active {
+  transform: scale(0.98);
+}
+
+.ae-btn-primary:disabled,
+.ae-btn-authority:disabled,
+.ae-btn-ghost:disabled,
+.ae-launch-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* ── Primary (dark ink) ── */
+
+.ae-btn-primary {
+  background: var(--rm-ink);
+  color: #fff;
+  padding: 9px 16px;
+  border-radius: 4px;
+  font-size: 11px;
+}
+.ae-btn-primary:hover { background: var(--rm-green-deep); }
+
+/* ── Authority (deep green — most emphatic) ── */
+
+.ae-btn-authority {
+  background: var(--rm-green-deep);
+  color: #fff;
+  padding: 9px 16px;
+  border-radius: 4px;
+  font-size: 11px;
+}
+.ae-btn-authority:hover { background: var(--rm-green); }
+
+/* ── Ghost (secondary, white surface, sentence case allowed) ── */
+
+.ae-btn-ghost {
+  background: var(--rm-surface);
+  color: var(--rm-ink);
+  border: 1px solid var(--rm-border);
+  padding: 7px 12px;
+  border-radius: 4px;
+  font-family: var(--rm-font);
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0;
+  text-transform: none;
+}
+.ae-btn-ghost:hover {
+  border-color: var(--rm-border-strong);
+  background: var(--rm-surface-2);
+}
+
+/* ── Launch button (the LANZAR CAMPAÑA CTA) ── */
+
+.ae-launch-btn {
+  background: var(--rm-ink);
+  color: #fff;
+  padding: 9px 14px;
+  border-radius: 4px;
+  font-size: 11px;
+}
+.ae-launch-btn:hover { background: var(--rm-green-deep); }
+
+.ae-launch-btn svg {
+  width: 11px; height: 11px;
+  fill: var(--ae-bolt);
+  flex-shrink: 0;
+}
+
+/* ── Tiny icon-only ghost (for row actions, dismissibles) ── */
+
+.ae-btn-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: 1px solid var(--rm-border);
+  border-radius: 4px;
+  padding: 6px;
+  cursor: pointer;
+  color: var(--rm-ink-2);
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+  min-width: 28px;
+  min-height: 28px;
+}
+.ae-btn-icon:hover {
+  background: var(--rm-surface-2);
+  border-color: var(--rm-border-strong);
+  color: var(--rm-ink);
+}
+.ae-btn-icon svg { width: 14px; height: 14px; stroke: currentColor; stroke-width: 1.8; fill: none; }
