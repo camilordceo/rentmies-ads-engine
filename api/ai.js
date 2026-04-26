@@ -84,27 +84,59 @@ function buildCaptionUserMessage(inmueble, platform, vibe) {
   return lines.join('\n')
 }
 
-function buildImagePrompt(inmueble, custom, hasReference) {
-  if (custom && custom.trim()) return custom.trim()
+function buildImagePrompt({ inmueble, customPrompt, customInstructions, hasReference, platform, size }) {
+  // If user provided a fully custom prompt, use it verbatim.
+  if (customPrompt && customPrompt.trim()) return customPrompt.trim()
+
   const tipo = (inmueble.tipo || inmueble.tipo_inmueble_propiedad || 'apartamento').toLowerCase()
   const ciudad = inmueble.ciudad || inmueble.nombre_ciudad || 'Colombia'
-  const proyecto = inmueble.proyecto ? ` (proyecto ${inmueble.proyecto})` : ''
-  const desc = inmueble.descripcion ? ` Estilo: ${inmueble.descripcion}.` : ''
+  const proyecto = inmueble.proyecto ? ` (project: ${inmueble.proyecto})` : ''
+  const desc = inmueble.descripcion ? ` Style note: ${inmueble.descripcion}.` : ''
+  const wantsText = !!(customInstructions && customInstructions.trim())
+
+  // Aspect-aware composition guide so gpt-image-1 frames the shot correctly.
+  let composition = 'square 1:1 composition, centered architectural focal point'
+  if (size === '1536x1024') composition = 'wide 3:2 landscape composition, generous sky, architecture on the right third'
+  else if (size === '1024x1536') composition = 'tall 2:3 portrait composition, vertical emphasis on the building, sky and ground softly framing'
+
+  const platformGuide = platform === 'instagram'
+    ? 'Optimized for Instagram feed: high contrast, vibrant tones, eye-catching at thumbnail size, single clear focal point.'
+    : 'Optimized for social media feed: high contrast, eye-catching at thumbnail size.'
+
+  const parts = []
 
   if (hasReference) {
-    return (
-      `Reinterpret the reference photo as a polished editorial real estate marketing image of a ${tipo} in ${ciudad}, Colombia${proyecto}.${desc} ` +
-      `Keep the building's architecture, layout and proportions faithful to the reference. ` +
-      `Upgrade lighting to golden hour with warm natural tones, deepen colors, add subtle atmosphere (light haze, soft sky), polish surfaces. ` +
-      `Magazine-quality real estate photography aesthetic. No people. Square 1:1 aspect ratio. ` +
-      `Strict: no text, no logos, no watermarks, no signage overlays.`
+    parts.push(
+      `Reinterpret the supplied reference photo into a polished editorial real estate marketing image of a ${tipo} in ${ciudad}, Colombia${proyecto}.${desc}`,
+      `Keep the building's architecture, materials, layout and proportions faithful to the reference — do NOT redesign the structure.`,
+      `Upgrade lighting to golden hour with warm natural tones, deepen colors, add subtle atmosphere (light haze, soft sky, soft shadows), polish surfaces and textures.`,
+      `Magazine-quality real estate photography aesthetic. No people visible.`,
+      composition + '.',
+      platformGuide
+    )
+  } else {
+    parts.push(
+      `Editorial real estate marketing photograph of a modern ${tipo} in ${ciudad}, Colombia${proyecto}.${desc}`,
+      `Premium magazine quality, golden hour natural lighting, clean architectural composition, no people, aspirational minimalist mood.`,
+      composition + '.',
+      platformGuide
     )
   }
-  return (
-    `Editorial real estate marketing photograph of a modern ${tipo} in ${ciudad}, Colombia${proyecto}.${desc} ` +
-    `Premium magazine quality, golden hour natural lighting, clean architectural composition, no people, aspirational minimalist mood. ` +
-    `Square 1:1 aspect ratio, high resolution. Strict: no text, no logos, no watermarks, no signage.`
-  )
+
+  if (wantsText) {
+    // Client wants text/price/branding rendered in the image.
+    parts.push(
+      `CLIENT INSTRUCTIONS — follow exactly: ${customInstructions.trim()}`,
+      `When rendering any text, price, label or call-to-action: use clean modern sans-serif typography (Inter or similar), ensure high contrast against the background, place it tastefully (e.g. a bottom band, a corner badge, or a clean card overlay) without obscuring key architectural elements.`,
+      `If brand colors are referenced, Rentmies green is #006c4a (deep) and #40d99d (vibrant). Keep accents minimal — one or two colors max.`,
+      `Spell every word in the client instructions correctly and exactly as written. Do not paraphrase, do not translate.`
+    )
+  } else {
+    parts.push('Strict: no text, no logos, no watermarks, no signage, no UI overlays.')
+  }
+
+  parts.push('High resolution, photorealistic.')
+  return parts.join(' ')
 }
 
 // ─── Caption via Responses API ────────────────────────────────────────────
@@ -287,9 +319,23 @@ module.exports = async (req, res) => {
     }
 
     if (action === 'image') {
-      const { inmueble, prompt: userPrompt, reference_image_url, size } = req.body || {}
+      const {
+        inmueble,
+        prompt: userPrompt,
+        custom_instructions,
+        reference_image_url,
+        platform,
+        size
+      } = req.body || {}
       const refUrl = reference_image_url || (inmueble && inmueble.image_link_1) || ''
-      const finalPrompt = buildImagePrompt(inmueble || {}, userPrompt, !!refUrl)
+      const finalPrompt = buildImagePrompt({
+        inmueble: inmueble || {},
+        customPrompt: userPrompt,
+        customInstructions: custom_instructions,
+        hasReference: !!refUrl,
+        platform,
+        size
+      })
 
       let image
       try {
@@ -312,6 +358,8 @@ module.exports = async (req, res) => {
         persisted: persisted.persisted,
         prompt: finalPrompt,
         reference_used: !!refUrl,
+        reference_url: refUrl || null,
+        custom_instructions_applied: !!(custom_instructions && custom_instructions.trim()),
         warning: persisted.warning
       })
     }

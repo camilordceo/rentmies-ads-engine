@@ -1502,6 +1502,41 @@
                 <span style="font-size:10px;font-weight:500;color:var(--text-muted);margin-left:auto;">Caption + imagen</span>
               </label>
               <div id="qpAIControls" style="display:none;margin-top:14px;">
+
+                <!-- Reference image + project context -->
+                <div style="display:flex;gap:12px;align-items:center;margin-bottom:12px;padding:10px 12px;background:var(--gray-card);border:1px solid var(--gray-border);border-radius:8px;">
+                  <div id="qpAIRefWrap" style="flex-shrink:0;">
+                    <img id="qpAIRefPreview" alt="Foto de referencia"
+                      style="display:none;width:64px;height:64px;border-radius:6px;object-fit:cover;border:1px solid var(--gray-border);" />
+                    <div id="qpAIRefPlaceholder" style="display:none;width:64px;height:64px;border-radius:6px;border:1px dashed var(--gray-border);background:var(--gray-mid);display:flex;align-items:center;justify-content:center;font-size:18px;color:var(--text-muted);">📷</div>
+                  </div>
+                  <div style="flex:1;min-width:0;font-size:11px;line-height:1.45;">
+                    <div style="color:var(--text-muted);text-transform:uppercase;letter-spacing:0.5px;font-size:9px;font-weight:600;margin-bottom:3px;">Proyecto</div>
+                    <div id="qpAIProjectInfo" style="color:var(--white);font-weight:600;font-size:13px;">Selecciona un inmueble arriba</div>
+                    <div id="qpAIRefStatus" style="color:var(--text-muted);margin-top:4px;font-size:10px;"></div>
+                  </div>
+                </div>
+
+                <!-- Custom instructions for image -->
+                <div style="margin-bottom:12px;">
+                  <label style="font-size:11px;font-weight:500;color:var(--text-secondary);display:block;margin-bottom:5px;">
+                    Instrucciones extras para la imagen <span style="color:var(--text-muted);">(opcional)</span>
+                  </label>
+                  <textarea id="qpAIInstructions" rows="2" placeholder="Ej: agrega una banda inferior con el precio &quot;$1.200M&quot; en verde Rentmies. O &quot;EN ARRIENDO&quot; en la esquina superior derecha. La IA renderizará el texto legible."
+                    style="width:100%;background:var(--gray-card);border:1px solid var(--gray-border);color:var(--text);padding:8px 10px;border-radius:6px;font-size:12px;outline:none;resize:vertical;font-family:inherit;line-height:1.4;"></textarea>
+                </div>
+
+                <!-- Format selector -->
+                <div style="display:flex;gap:8px;align-items:center;margin-bottom:12px;">
+                  <label style="font-size:11px;font-weight:500;color:var(--text-secondary);">Formato:</label>
+                  <select id="qpAISize" style="background:var(--gray-card);border:1px solid var(--gray-border);color:var(--text);padding:5px 8px;border-radius:6px;font-size:11px;outline:none;cursor:pointer;font-family:inherit;">
+                    <option value="1024x1024">Cuadrado 1:1 — Feed IG (recomendado)</option>
+                    <option value="1536x1024">Horizontal 3:2 — Feed IG/FB</option>
+                    <option value="1024x1536">Vertical 2:3 — Stories/Reels</option>
+                  </select>
+                </div>
+
+                <!-- Action buttons -->
                 <div style="display:flex;gap:8px;flex-wrap:wrap;">
                   <button type="button" id="qpAICaptionBtn" onclick="generateAICaption()"
                     style="background:var(--gray-card);border:1px solid var(--gray-border);color:var(--text);padding:7px 12px;border-radius:6px;font-size:12px;cursor:pointer;font-family:inherit;font-weight:500;">
@@ -2830,14 +2865,18 @@ async function generateQPCopy() {
   toast('Copy generado', 'success')
 }
 
-// ── Asistente IA (Azure OpenAI) ────────────────────────────────
+// ── Asistente IA (OpenAI) ─────────────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
   const useAI = document.getElementById('qpUseAI')
   if (useAI) {
     useAI.addEventListener('change', e => {
       document.getElementById('qpAIControls').style.display = e.target.checked ? 'block' : 'none'
+      if (e.target.checked) updateAIRefPanel()
     })
   }
+  // Refresh AI panel whenever the property dropdown changes
+  const propSel = document.getElementById('qpProperty')
+  if (propSel) propSel.addEventListener('change', updateAIRefPanel)
 })
 
 function getSelectedInmueble() {
@@ -2854,6 +2893,42 @@ function getSelectedInmueble() {
     nombre_ciudad: (parts[2] || '').replace(/\s*\(muestra\)\s*$/, '').trim(),
     descripcion: opt.dataset.desc || '',
     image_link_1: opt.dataset.img || ''
+  }
+}
+
+function updateAIRefPanel() {
+  const inmueble = getSelectedInmueble()
+  const refImg = document.getElementById('qpAIRefPreview')
+  const refPh = document.getElementById('qpAIRefPlaceholder')
+  const projInfo = document.getElementById('qpAIProjectInfo')
+  const refStatus = document.getElementById('qpAIRefStatus')
+  if (!projInfo) return  // panel not in DOM (page not loaded yet)
+
+  if (!inmueble) {
+    projInfo.textContent = 'Selecciona un inmueble arriba'
+    refStatus.textContent = ''
+    if (refImg) { refImg.style.display = 'none'; refImg.src = '' }
+    if (refPh) refPh.style.display = 'flex'
+    return
+  }
+
+  const tipo = inmueble.tipo_inmueble_propiedad ? ` · ${inmueble.tipo_inmueble_propiedad}` : ''
+  const ciudad = inmueble.nombre_ciudad ? ` · ${inmueble.nombre_ciudad}` : ''
+  projInfo.textContent = `${inmueble.proyecto || 'Inmueble'}${tipo}${ciudad}`
+
+  if (inmueble.image_link_1) {
+    if (refImg) {
+      refImg.src = inmueble.image_link_1
+      refImg.style.display = 'block'
+    }
+    if (refPh) refPh.style.display = 'none'
+    refStatus.textContent = '✓ Foto del inmueble — la IA la usará como base y mantendrá la arquitectura'
+    refStatus.style.color = 'var(--green)'
+  } else {
+    if (refImg) { refImg.style.display = 'none'; refImg.src = '' }
+    if (refPh) refPh.style.display = 'flex'
+    refStatus.textContent = 'Sin foto de referencia — la IA generará desde cero'
+    refStatus.style.color = 'var(--text-muted)'
   }
 }
 
@@ -2899,15 +2974,22 @@ async function generateAIImage() {
   const inmueble = getSelectedInmueble()
   if (!inmueble) { toast('Selecciona un inmueble primero', 'error'); return }
   const btn = document.getElementById('qpAIImageBtn')
+  const customInstructions = (document.getElementById('qpAIInstructions')?.value || '').trim()
+  const size = document.getElementById('qpAISize')?.value || '1024x1024'
 
-  setAIStatus('⏳ Generando imagen con IA (puede tomar 20–50 segundos)…', 'info')
+  setAIStatus('⏳ Generando imagen con IA (puede tomar 30–60 segundos)…', 'info')
   btn.disabled = true; btn.style.opacity = '0.6'
 
   try {
     const r = await fetch('/api/ai?action=image', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'x-empresa-id': state.empresa_id },
-      body: JSON.stringify({ inmueble })
+      body: JSON.stringify({
+        inmueble,
+        custom_instructions: customInstructions,
+        size,
+        platform: document.getElementById('qpPlatform').value
+      })
     })
     const text = await r.text()
     let data = {}
@@ -2918,10 +3000,11 @@ async function generateAIImage() {
     document.getElementById('qpPreviewImg').src = data.url
     document.getElementById('qpImagePreview').style.display = 'block'
 
-    const refMsg = data.reference_used ? ' usando la foto del inmueble como referencia' : ' (generada de cero)'
-    const persistMsg = data.persisted ? ' · guardada en Supabase' : ' · (no persistida)'
+    const refMsg = data.reference_used ? ' · usó la foto del inmueble como base' : ' · generada de cero'
+    const instrMsg = data.custom_instructions_applied ? ' · con tus instrucciones extras' : ''
+    const persistMsg = data.persisted ? ' · guardada en Supabase' : ''
     const warn = data.warning ? ` · ⚠ ${data.warning}` : ''
-    setAIStatus(`✓ Imagen lista${refMsg}${persistMsg}${warn}`, 'success')
+    setAIStatus(`✓ Imagen lista${refMsg}${instrMsg}${persistMsg}${warn}`, 'success')
     toast('Imagen generada', 'success')
   } catch (err) {
     setAIStatus('✗ ' + err.message, 'error')
