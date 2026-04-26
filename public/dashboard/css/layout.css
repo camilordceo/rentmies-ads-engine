@@ -30,7 +30,17 @@
 .ae-content {
   flex: 1;
   overflow-y: auto;
-  padding: var(--margin-main);
+  padding: 0;   /* page sections own their padding via .ae-page-shell */
+}
+
+/* ── Page sections: hidden by default, only the active one shows ──
+   Hard-coded in CSS (with !important) so JS errors can't leave the
+   user with multiple pages stacked on top of each other. */
+.ae-content > section[data-page] {
+  display: none !important;
+}
+.ae-content > section[data-page].is-active {
+  display: block !important;
 }
 .ae-content::-webkit-scrollbar { width: 8px; }
 .ae-content::-webkit-scrollbar-track { background: transparent; }

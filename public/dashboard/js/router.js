@@ -19,10 +19,11 @@
     if (!VALID_PAGES.includes(name)) name = DEFAULT_PAGE
 
     // Show only the matching page SECTION (not buttons!).
-    // The selector targets <section data-page="..."> nodes inside .ae-content
-    // — never topnav links or rail buttons that also carry data-page.
+    // CSS controls visibility via .is-active class — display:none/block
+    // declared with !important in layout.css so a JS race can never
+    // leave multiple pages stacked.
     document.querySelectorAll('.ae-content > section[data-page]').forEach(section => {
-      section.style.display = section.dataset.page === name ? '' : 'none'
+      section.classList.toggle('is-active', section.dataset.page === name)
     })
 
     // Topnav active state — buttons keep their display, only .active toggles
