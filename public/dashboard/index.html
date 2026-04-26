@@ -15,6 +15,7 @@
   <link rel="stylesheet" href="css/typography.css">
   <link rel="stylesheet" href="css/layout.css">
   <link rel="stylesheet" href="css/rail.css">
+  <link rel="stylesheet" href="css/topnav.css">
   <link rel="stylesheet" href="css/buttons.css">
   <link rel="stylesheet" href="css/cards-forms.css">
 </head>
@@ -56,7 +57,25 @@
   <!-- ═══════════ MAIN CANVAS ═══════════ -->
   <main class="ae-canvas">
     <header class="ae-topnav">
-      <!-- populated in step 6 -->
+      <div class="ae-topnav-logo">AdEngine AI</div>
+
+      <nav class="ae-topnav-nav">
+        <button class="ae-topnav-link active" data-page="studio" onclick="showPage('studio')">Creative Studio</button>
+        <button class="ae-topnav-link" data-page="dashboard" onclick="showPage('dashboard')">Dashboard</button>
+        <button class="ae-topnav-link" data-page="history" onclick="showPage('history')">History</button>
+      </nav>
+
+      <div class="ae-topnav-spacer"></div>
+
+      <div class="ae-search">
+        <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <input type="text" placeholder="Buscar campañas...">
+      </div>
+
+      <button class="ae-launch-btn" onclick="showPage('studio')" title="Lanzar nueva campaña">
+        <svg viewBox="0 0 24 24" width="11" height="11" fill="currentColor"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+        <span>Lanzar Campaña</span>
+      </button>
     </header>
 
     <div class="ae-content hide-scrollbar">

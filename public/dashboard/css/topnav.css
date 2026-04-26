@@ -1,0 +1,122 @@
+/* ─────────────────────────────────────────────────────────────
+   RENTMIES ADS ENGINE — TOP NAVIGATION (FASE 1)
+   SKILL §4 — horizontal in-canvas nav, the Ad Engine signature.
+   ───────────────────────────────────────────────────────────── */
+
+.ae-topnav {
+  display: flex;
+  align-items: center;
+  gap: 28px;
+  padding: 0 var(--margin-main);
+  height: var(--topnav-h);
+  background: var(--rm-surface);
+  border-bottom: 1px solid var(--rm-border);
+  position: relative;
+}
+
+/* ── Logo wordmark — Instrument Serif italic ── */
+
+.ae-topnav-logo {
+  font-family: var(--rm-serif);
+  font-style: italic;
+  font-weight: 600;
+  font-size: 17px;
+  letter-spacing: -0.01em;
+  color: var(--rm-ink);
+  user-select: none;
+  flex-shrink: 0;
+}
+
+/* ── Nav links — mono UPPERCASE ── */
+
+.ae-topnav-nav {
+  display: flex;
+  align-items: stretch;
+  gap: 0;
+  height: 100%;
+}
+
+.ae-topnav-link {
+  font-family: var(--rm-mono);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--rm-muted);
+  padding: 0 14px;
+  display: inline-flex;
+  align-items: center;
+  height: 100%;
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;
+  cursor: pointer;
+  transition: color 0.15s, border-color 0.15s;
+}
+.ae-topnav-link:hover { color: var(--rm-ink); }
+
+.ae-topnav-link.active {
+  color: var(--rm-green-deep);
+  border-bottom-color: var(--rm-green-deep);
+}
+
+.ae-topnav-link:focus-visible {
+  outline: 2px solid var(--rm-teal);
+  outline-offset: -2px;
+  border-radius: 2px;
+}
+
+/* ── Search bar (center spacer pushes it right) ── */
+
+.ae-topnav-spacer { flex: 1; }
+
+.ae-search {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--rm-surface-2);
+  border: 1px solid var(--rm-border);
+  border-radius: 4px;
+  padding: 6px 10px;
+  width: 240px;
+  transition: border-color 0.15s, background 0.15s;
+}
+.ae-search:focus-within {
+  border-color: var(--rm-teal);
+  background: var(--rm-surface);
+}
+
+.ae-search svg {
+  width: 13px;
+  height: 13px;
+  stroke: var(--rm-muted);
+  stroke-width: 1.8;
+  fill: none;
+  flex-shrink: 0;
+}
+
+.ae-search input {
+  border: none;
+  background: transparent;
+  outline: none;
+  font-family: var(--rm-mono);
+  font-size: 11px;
+  color: var(--rm-ink);
+  width: 100%;
+}
+.ae-search input::placeholder {
+  color: var(--rm-muted);
+  letter-spacing: 0.04em;
+}
+
+/* ── Launch CTA — defined fully in buttons.css; topnav alignment only here ── */
+
+.ae-topnav .ae-launch-btn { flex-shrink: 0; }
+
+/* ── Mobile compaction ── */
+
+@media (max-width: 960px) {
+  .ae-search { width: 160px; }
+  .ae-topnav { gap: 14px; padding: 0 18px; }
+  .ae-topnav-link { padding: 0 10px; }
+}
