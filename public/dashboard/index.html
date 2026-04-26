@@ -19,6 +19,26 @@
   <link rel="stylesheet" href="css/camilord.css">
   <link rel="stylesheet" href="css/buttons.css">
   <link rel="stylesheet" href="css/cards-forms.css">
+
+  <script>
+    // ── FASE 1 navigation stub. Real route swapping lands in FASE 2.
+    function showPage(name) {
+      document.querySelectorAll('.ae-topnav-link').forEach(el => {
+        el.classList.toggle('active', el.dataset.page === name)
+      })
+      // For now we only have one page rendered — log intent so we can verify the click wires.
+      console.log('[FASE 1] showPage:', name)
+    }
+    // Rail click delegation — switches the active accent without routing yet.
+    document.addEventListener('DOMContentLoaded', () => {
+      document.querySelectorAll('.ae-rail-link').forEach(el => {
+        el.addEventListener('click', () => {
+          document.querySelectorAll('.ae-rail-link').forEach(b => b.classList.remove('active'))
+          el.classList.add('active')
+        })
+      })
+    })
+  </script>
 </head>
 <body>
 
@@ -80,8 +100,106 @@
     </header>
 
     <div class="ae-content hide-scrollbar">
-      <div class="ae-page">
-        <!-- Page content will be wired in step 10 -->
+      <div class="ae-page ae-rise">
+
+        <!-- ── Editorial header ── -->
+        <header class="ae-page-head">
+          <span class="ae-eyebrow">CREATIVE STUDIO · CAMPAÑA NUEVA</span>
+          <h1 class="ae-display">Fuel your Ads: <span class="ae-display-prefix">Villa Victoria Luxury</span></h1>
+          <p class="ae-subhead">Editorial display test for FASE 1 foundation. Mezcla Inter para UI con Instrument Serif italic en los momentos editoriales y JetBrains Mono para data e identificadores. Revisa que las tipografías cargan, las superficies son cálidas (no blanco puro), y el shadow XS se siente como apenas levantado del canvas.</p>
+        </header>
+
+        <!-- ── Stats row ── -->
+        <section class="ae-stats-row ae-rise ae-rise-d-1">
+          <div class="ae-stat">
+            <span class="ae-stat-label">Ads Generados</span>
+            <span class="ae-stat-value">247</span>
+            <span class="ae-stat-delta up">▲ 18% vs. semana</span>
+          </div>
+          <div class="ae-stat energy">
+            <span class="ae-stat-label">Potencia IA</span>
+            <span class="ae-stat-value">84%</span>
+            <span class="ae-stat-delta up">▲ Optimizada</span>
+          </div>
+          <div class="ae-stat">
+            <span class="ae-stat-label">CTR Promedio</span>
+            <span class="ae-stat-value">2.4%</span>
+            <span class="ae-stat-delta down">▼ 0.3pp</span>
+          </div>
+          <div class="ae-stat">
+            <span class="ae-stat-label">Spend Hoy (COP)</span>
+            <span class="ae-stat-value rm-mono">$142k</span>
+            <span class="ae-stat-delta up">▲ 12%</span>
+          </div>
+        </section>
+
+        <!-- ── Sample formcard ── -->
+        <section class="ae-formcard ae-rise ae-rise-d-2">
+          <div class="ae-formcard-h">
+            <span>Contexto del inmueble</span>
+            <span class="ae-formcard-h-accessory">
+              <span class="ae-ai-badge">AI Active</span>
+            </span>
+          </div>
+
+          <div class="ae-grid-2">
+            <div class="ae-field">
+              <label class="ae-field-label" for="t-proyecto">Proyecto</label>
+              <input id="t-proyecto" class="ae-input" type="text" value="Primavera" placeholder="Ej: Villa Victoria">
+            </div>
+            <div class="ae-field">
+              <label class="ae-field-label" for="t-ciudad">Ciudad</label>
+              <select id="t-ciudad" class="ae-select">
+                <option>Bogotá</option>
+                <option>Medellín</option>
+                <option>Cali</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="ae-field" style="margin-top:16px;">
+            <label class="ae-field-label" for="t-desc">Descripción / contexto</label>
+            <textarea id="t-desc" class="ae-textarea" placeholder="Apartamento de 39m², acabados premium, vista al parque…">Apartamento de 39m² con balcón hacia el parque, acabados premium en materiales colombianos, ideal para un perfil profesional joven que busca arriendo de un solo cuarto.</textarea>
+            <div class="ae-field-hint">Camilord usará este contexto para generar headlines, ángulos psicológicos e imágenes IA. Mientras más concreto, mejor.</div>
+          </div>
+
+          <div style="display:flex; gap:10px; margin-top:18px; align-items:center; flex-wrap:wrap;">
+            <button class="ae-btn-primary">
+              <svg viewBox="0 0 24 24" width="11" height="11" fill="currentColor"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+              Generar campaña
+            </button>
+            <button class="ae-btn-authority">Confirmar</button>
+            <button class="ae-btn-ghost">Cancelar</button>
+            <span class="ae-status scheduled">Scheduled</span>
+            <span class="ae-status live">Live</span>
+            <span class="ae-status pending">Pending</span>
+            <span class="ae-status paused">Paused</span>
+          </div>
+        </section>
+
+        <!-- ── Recommendation block (deep green editorial) ── -->
+        <section class="ae-reco ae-rise ae-rise-d-3">
+          <div class="ae-reco-eyebrow">CAMILORD RECOMIENDA</div>
+          <p class="ae-reco-body">Para apartamentos en Bogotá-Chapinero, el ángulo de <em style="font-family:var(--rm-serif);">"Estatus profesional"</em> está rindiendo un 40% mejor en CTR vs. <em style="font-family:var(--rm-serif);">"Precio competitivo"</em>. ¿Quieres que ajuste el copy automáticamente?</p>
+          <button class="ae-reco-cta">
+            APLICAR SUGERENCIA
+            <svg viewBox="0 0 24 24" width="10" height="10" stroke="currentColor" stroke-width="2.2" fill="none"><polyline points="9 18 15 12 9 6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </button>
+        </section>
+
+        <!-- ── Channel pills row + AI badges (visual sanity) ── -->
+        <section class="ae-formcard compact ae-rise ae-rise-d-4">
+          <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
+            <span class="ae-eyebrow muted" style="margin:0 8px 0 0;">DISTRIBUCIÓN</span>
+            <span class="ae-ch">📷 Instagram</span>
+            <span class="ae-ch">📘 Facebook</span>
+            <span class="ae-ch">🎵 TikTok</span>
+            <span class="ae-ch">💬 WhatsApp</span>
+            <span class="ae-ai-badge">4 generados</span>
+            <span class="ae-ai-badge">Camilord active</span>
+          </div>
+        </section>
+
       </div>
     </div>
   </main>
