@@ -22,15 +22,12 @@
   <link rel="stylesheet" href="css/studio.css">
 
   <script>
-    // ── FASE 1 navigation stub. Real route swapping lands in FASE 2.
+    // Topnav active state — full routing lives in FASE 3
     function showPage(name) {
       document.querySelectorAll('.ae-topnav-link').forEach(el => {
         el.classList.toggle('active', el.dataset.page === name)
       })
-      // For now we only have one page rendered — log intent so we can verify the click wires.
-      console.log('[FASE 1] showPage:', name)
     }
-    // Rail click delegation — switches the active accent without routing yet.
     document.addEventListener('DOMContentLoaded', () => {
       document.querySelectorAll('.ae-rail-link').forEach(el => {
         el.addEventListener('click', () => {
@@ -40,6 +37,10 @@
       })
     })
   </script>
+
+  <!-- Studio modules — order matters: store first, then dependents. -->
+  <script src="js/store.js" defer></script>
+  <script src="js/energy.js" defer></script>
 </head>
 <body>
 

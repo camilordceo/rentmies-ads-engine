@@ -69,3 +69,77 @@
   background: var(--rm-surface-3);
   color: var(--rm-muted);
 }
+
+/* ── Energy meter (SKILL §6) ── */
+
+.ae-energy {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.ae-energy-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.ae-energy-title {
+  font-family: var(--rm-font);
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--rm-ink);
+  letter-spacing: -0.01em;
+}
+
+.ae-energy-score {
+  font-family: var(--rm-font);
+  font-size: 30px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: var(--rm-green-deep);
+  line-height: 1;
+}
+.ae-energy-score span {
+  font-size: 16px;
+  font-weight: 700;
+  margin-left: 2px;
+  color: var(--rm-green-deep);
+}
+
+.ae-energy-bars {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+  height: 12px;
+}
+
+.ae-energy-bar {
+  height: 12px;
+  background: var(--rm-surface-3);
+  border-radius: 3px;
+  transition: background 0.4s ease;
+}
+
+.ae-energy-bar.is-on {
+  background: linear-gradient(90deg, var(--ae-energy-3), var(--ae-energy-4));
+}
+
+.ae-energy-labels {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+}
+.ae-energy-labels span {
+  font-family: var(--rm-mono);
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--rm-muted);
+}
+.ae-energy-labels span.active {
+  color: var(--rm-green-deep);
+  font-weight: 700;
+}
