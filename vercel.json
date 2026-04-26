@@ -12,7 +12,8 @@
     "api/auth-supabase.js": { "maxDuration": 15 },
     "api/data.js":          { "maxDuration": 30 },
     "api/health.js":        { "maxDuration": 10 },
-    "api/social-post.js":   { "maxDuration": 30 }
+    "api/social-post.js":   { "maxDuration": 30 },
+    "api/ai.js":            { "maxDuration": 60 }
   },
   "crons": [
     { "path": "/api/cron-publish", "schedule": "55 13 * * *" }

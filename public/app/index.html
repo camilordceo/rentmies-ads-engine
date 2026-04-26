@@ -1494,12 +1494,34 @@
               </select>
             </div>
 
+            <!-- ─── Asistente IA ─── -->
+            <div style="background:rgba(64,217,157,.06);border:1px solid rgba(64,217,157,.25);border-radius:10px;padding:14px 16px;">
+              <label style="display:flex;align-items:center;gap:10px;cursor:pointer;font-size:13px;font-weight:600;color:var(--white);">
+                <input type="checkbox" id="qpUseAI" style="width:16px;height:16px;accent-color:var(--green);cursor:pointer;" />
+                <span>✨ Usar asistente IA</span>
+                <span style="font-size:10px;font-weight:500;color:var(--text-muted);margin-left:auto;">Caption + imagen</span>
+              </label>
+              <div id="qpAIControls" style="display:none;margin-top:14px;">
+                <div style="display:flex;gap:8px;flex-wrap:wrap;">
+                  <button type="button" id="qpAICaptionBtn" onclick="generateAICaption()"
+                    style="background:var(--gray-card);border:1px solid var(--gray-border);color:var(--text);padding:7px 12px;border-radius:6px;font-size:12px;cursor:pointer;font-family:inherit;font-weight:500;">
+                    ✨ Generar caption
+                  </button>
+                  <button type="button" id="qpAIImageBtn" onclick="generateAIImage()"
+                    style="background:var(--gray-card);border:1px solid var(--gray-border);color:var(--text);padding:7px 12px;border-radius:6px;font-size:12px;cursor:pointer;font-family:inherit;font-weight:500;">
+                    ✨ Generar imagen
+                  </button>
+                </div>
+                <div id="qpAIStatus" style="display:none;margin-top:10px;font-size:11px;color:var(--text-secondary);line-height:1.5;"></div>
+              </div>
+            </div>
+
             <div>
               <label style="font-size:12px;font-weight:500;color:var(--text-secondary);display:block;margin-bottom:6px;">Caption / Texto del post</label>
-              <textarea id="qpCaption" rows="4" placeholder="Escribe el texto del post o usa IA para generarlo…"
+              <textarea id="qpCaption" rows="5" placeholder="Escribe el texto del post o actívalo con el asistente IA arriba…"
                 style="width:100%;background:var(--gray-card);border:1px solid var(--gray-border);color:var(--text);padding:10px 12px;border-radius:8px;font-size:13px;outline:none;resize:vertical;font-family:inherit;line-height:1.5;"></textarea>
               <button onclick="generateQPCopy()" style="margin-top:6px;background:transparent;border:1px solid var(--gray-border);color:var(--text-secondary);padding:5px 12px;border-radius:6px;font-size:11px;cursor:pointer;font-family:inherit;">
-                ✨ Generar con IA
+                Plantilla rápida (sin IA)
               </button>
             </div>
 
@@ -2806,6 +2828,106 @@ async function generateQPCopy() {
   const caption = document.getElementById('qpCaption')
   caption.value = `🏠 ${optText}\n\n✅ Disponible ahora\n📍 Ubicación premium\n💰 Precio competitivo\n\n¿Te interesa? Escríbenos por WhatsApp para más información.\n\n#rentmies #inmobiliaria #arriendos`
   toast('Copy generado', 'success')
+}
+
+// ── Asistente IA (Azure OpenAI) ────────────────────────────────
+document.addEventListener('DOMContentLoaded', () => {
+  const useAI = document.getElementById('qpUseAI')
+  if (useAI) {
+    useAI.addEventListener('change', e => {
+      document.getElementById('qpAIControls').style.display = e.target.checked ? 'block' : 'none'
+    })
+  }
+})
+
+function getSelectedInmueble() {
+  const sel = document.getElementById('qpProperty')
+  const opt = sel?.selectedOptions[0]
+  if (!opt || !opt.value) return null
+  // Parse the option text: "{barrio} — {tipo} — {ciudad}{(muestra)?}"
+  const parts = (opt.textContent || '').split('—').map(s => s.trim())
+  return {
+    id: opt.value,
+    proyecto: parts[0] || '',
+    nombre_barrio: parts[0] || '',
+    tipo_inmueble_propiedad: parts[1] || '',
+    nombre_ciudad: (parts[2] || '').replace(/\s*\(muestra\)\s*$/, '').trim(),
+    descripcion: opt.dataset.desc || '',
+    image_link_1: opt.dataset.img || ''
+  }
+}
+
+function setAIStatus(msg, kind) {
+  const el = document.getElementById('qpAIStatus')
+  if (!el) return
+  el.style.display = 'block'
+  el.textContent = msg
+  el.style.color = kind === 'error' ? '#fca5a5' : kind === 'success' ? 'var(--green)' : 'var(--text-secondary)'
+}
+
+async function generateAICaption() {
+  const inmueble = getSelectedInmueble()
+  if (!inmueble) { toast('Selecciona un inmueble primero', 'error'); return }
+  const platform = document.getElementById('qpPlatform').value
+  const btn = document.getElementById('qpAICaptionBtn')
+
+  setAIStatus('⏳ Generando caption con IA…', 'info')
+  btn.disabled = true; btn.style.opacity = '0.6'
+
+  try {
+    const r = await fetch('/api/ai?action=caption', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-empresa-id': state.empresa_id },
+      body: JSON.stringify({ inmueble, platform })
+    })
+    const text = await r.text()
+    let data = {}
+    try { data = JSON.parse(text) } catch (_) { data = { error: 'Respuesta inesperada del servidor (' + r.status + ')' } }
+    if (!r.ok) throw new Error(data.error || 'HTTP ' + r.status)
+    document.getElementById('qpCaption').value = data.caption
+    setAIStatus('✓ Caption generado. Edítalo si quieres.', 'success')
+    toast('Caption generado', 'success')
+  } catch (err) {
+    setAIStatus('✗ ' + err.message, 'error')
+    toast('Error generando caption', 'error')
+  } finally {
+    btn.disabled = false; btn.style.opacity = '1'
+  }
+}
+
+async function generateAIImage() {
+  const inmueble = getSelectedInmueble()
+  if (!inmueble) { toast('Selecciona un inmueble primero', 'error'); return }
+  const btn = document.getElementById('qpAIImageBtn')
+
+  setAIStatus('⏳ Generando imagen con IA (puede tomar 20–50 segundos)…', 'info')
+  btn.disabled = true; btn.style.opacity = '0.6'
+
+  try {
+    const r = await fetch('/api/ai?action=image', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-empresa-id': state.empresa_id },
+      body: JSON.stringify({ inmueble })
+    })
+    const text = await r.text()
+    let data = {}
+    try { data = JSON.parse(text) } catch (_) { data = { error: 'Respuesta inesperada del servidor (' + r.status + ')', detail: text.slice(0, 200) } }
+    if (!r.ok) throw new Error((data.error || 'HTTP ' + r.status) + (data.detail ? ' — ' + data.detail : ''))
+
+    document.getElementById('qpImageUrl').value = data.url
+    document.getElementById('qpPreviewImg').src = data.url
+    document.getElementById('qpImagePreview').style.display = 'block'
+
+    const persistMsg = data.persisted ? 'guardada permanentemente en Supabase' : 'URL temporal de Azure (~1h)'
+    const warn = data.warning ? ` · ⚠ ${data.warning}` : ''
+    setAIStatus(`✓ Imagen lista (${persistMsg})${warn}`, 'success')
+    toast('Imagen generada', 'success')
+  } catch (err) {
+    setAIStatus('✗ ' + err.message, 'error')
+    toast('Error generando imagen', 'error')
+  } finally {
+    btn.disabled = false; btn.style.opacity = '1'
+  }
 }
 
 async function submitQuickPost() {
