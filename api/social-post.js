@@ -29,7 +29,8 @@ async function getMetaCredentials(empresa_id, headers) {
       page_id: headers['x-meta-page-id'] || '',
       ad_account_id: headers['x-meta-ad-account-id'] || '',
       waba_id: headers['x-waba-id'] || '',
-      phone_number_id: headers['x-meta-phone-number-id'] || ''
+      phone_number_id: headers['x-meta-phone-number-id'] || '',
+      ig_user_id: headers['x-meta-ig-user-id'] || ''   // direct IG bypass
     }
   }
 
@@ -237,7 +238,7 @@ async function publishToInstagram(igUserId, accessToken, { caption, imageUrl }) 
 module.exports = async (req, res) => {
   res.setHeader('Access-Control-Allow-Origin', '*')
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS')
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, x-empresa-id, x-meta-token, x-meta-page-id, x-meta-ad-account-id, x-waba-id, x-meta-phone-number-id')
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, x-empresa-id, x-meta-token, x-meta-page-id, x-meta-ad-account-id, x-waba-id, x-meta-phone-number-id, x-meta-ig-user-id')
 
   if (req.method === 'OPTIONS') return res.status(200).end()
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' })
@@ -274,23 +275,30 @@ module.exports = async (req, res) => {
 
     let result
     if (platform === 'instagram') {
-      if (!creds.page_id) {
-        return res.status(400).json({
-          error: 'Falta Page ID de Facebook',
-          detail: 'Para publicar en Instagram necesitas el Page ID de la página de Facebook que tiene la cuenta de IG Business vinculada. Guárdalo en ⚙️ Configuración → Meta/Facebook.'
-        })
-      }
       if (!image_url || !image_url.startsWith('http')) {
         return res.status(400).json({
           error: 'Imagen requerida',
-          detail: 'Instagram requiere una URL de imagen pública. Selecciona un inmueble que tenga foto o pega una URL en el campo de imagen.'
+          detail: 'Instagram requiere una URL de imagen pública.'
         })
       }
-      let igAccountId
-      try {
-        igAccountId = await fetchInstagramAccountId(creds.page_id, creds.access_token)
-      } catch (err) {
-        return res.status(400).json({ error: 'No se pudo obtener la cuenta de Instagram', detail: err.message })
+      // Direct IG user_id bypass: skips the FB Page lookup entirely.
+      // Useful when the token can publish but doesn't have read access to the page.
+      let igAccountId = creds.ig_user_id || ''
+      if (!igAccountId) {
+        if (!creds.page_id) {
+          return res.status(400).json({
+            error: 'Falta Page ID de Facebook o IG Business Account ID',
+            detail: 'Necesitas EITHER el Page ID (para que detectemos la IG vinculada) O el IG Business Account ID directo. Guárdalos en ⚙️ Configuración o en la caja "Credenciales Meta" de la tab Campañas.'
+          })
+        }
+        try {
+          igAccountId = await fetchInstagramAccountId(creds.page_id, creds.access_token)
+        } catch (err) {
+          return res.status(400).json({
+            error: 'No se pudo obtener la cuenta de Instagram',
+            detail: err.message + ' — Tip: si tu token tiene permisos para postear pero no para leer la página, guarda directamente el IG Business Account ID en la tab Campañas y se saltará este paso.'
+          })
+        }
       }
       result = await publishToInstagram(igAccountId, creds.access_token, { caption, imageUrl: image_url })
     } else {

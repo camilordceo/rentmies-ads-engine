@@ -40,6 +40,7 @@ module.exports = async (req, res) => {
     if (action === 'meta' && req.method === 'GET')        return res.json(await readCreds(empresaId, 'meta'))
     if (action === 'meta' && req.method === 'POST')       return res.json(await saveCreds(empresaId, 'meta', req.body || {}))
     if (action === 'meta-test' && req.method === 'POST')  return res.json(await testMetaToken((req.body && req.body.access_token) || ''))
+    if (action === 'meta-detect-ig' && req.method === 'POST') return res.json(await detectInstagramAccount((req.body && req.body.access_token) || '', (req.body && req.body.page_id) || ''))
 
     if (action === 'whatsapp' && req.method === 'POST')   return res.json(await saveCreds(empresaId, 'whatsapp', req.body || {}))
 
@@ -98,6 +99,25 @@ async function testMetaToken(token) {
       timeout: 10000
     })
     return { success: true, message: `Conectado como ${data.name || data.id}` }
+  } catch (err) {
+    const fb = err.response && err.response.data && err.response.data.error
+    if (fb) return { success: false, error: `[${fb.code}] ${fb.message}` }
+    return { success: false, error: err.message }
+  }
+}
+
+async function detectInstagramAccount(token, pageId) {
+  if (!token) return { success: false, error: 'access_token es requerido' }
+  if (!pageId) return { success: false, error: 'page_id es requerido' }
+  try {
+    const { data } = await axios.get(`${META_GRAPH}/${pageId}`, {
+      params: { fields: 'instagram_business_account,name', access_token: token },
+      timeout: 10000
+    })
+    if (!data.instagram_business_account || !data.instagram_business_account.id) {
+      return { success: false, error: `La página "${data.name || pageId}" no tiene una cuenta de Instagram Business vinculada.` }
+    }
+    return { success: true, ig_user_id: data.instagram_business_account.id, page_name: data.name || null }
   } catch (err) {
     const fb = err.response && err.response.data && err.response.data.error
     if (fb) return { success: false, error: `[${fb.code}] ${fb.message}` }

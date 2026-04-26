@@ -1618,36 +1618,45 @@
           </div>
 
           <!-- Meta token quick-update — for when the token expires mid-campaign -->
-          <details style="background:var(--gray-card);border:1px solid var(--gray-border);border-radius:8px;margin-bottom:14px;">
+          <details open style="background:var(--gray-card);border:1px solid var(--gray-border);border-radius:8px;margin-bottom:14px;">
             <summary id="campMetaSummary" style="cursor:pointer;padding:10px 14px;font-size:12px;font-weight:600;color:var(--text-secondary);user-select:none;list-style:none;display:flex;align-items:center;gap:8px;">
               <span id="campMetaIcon">🔑</span>
               <span>Credenciales Meta — <span id="campMetaStatusInline" style="color:var(--text-muted);font-weight:400;">verificando…</span></span>
-              <span style="margin-left:auto;font-size:10px;color:var(--text-muted);font-weight:400;">expandir para actualizar el token</span>
             </summary>
             <div style="padding:0 14px 14px;display:flex;flex-direction:column;gap:10px;border-top:1px solid var(--gray-border);">
               <div style="font-size:11px;color:var(--text-muted);line-height:1.5;margin-top:10px;">
-                Si tu Access Token venció a mitad de campaña, pega uno nuevo aquí sin salir de la tab.
-                Los demás campos (Page ID, etc.) se mantienen como están en ⚙️ Configuración.
+                Pega un Access Token nuevo aquí cuando se venza. Al guardar lo probamos automáticamente contra Graph <code style="background:rgba(0,0,0,0.2);padding:1px 4px;border-radius:3px;font-size:10px;">/me</code>.
+                <br>
+                <strong>Tip IG-only:</strong> si tu token sólo tiene permisos para postear (no para leer la página), guarda directamente el <strong>IG Business Account ID</strong> y saltamos el paso de detectar la página.
               </div>
-              <div>
-                <label style="font-size:10px;font-weight:500;color:var(--text-muted);display:block;margin-bottom:4px;text-transform:uppercase;letter-spacing:.05em;">Access Token (Meta)</label>
-                <input type="password" id="campMetaTokenInput" placeholder="EAAxxxxxxxxxxxx…"
-                  style="width:100%;background:var(--gray-mid);border:1px solid var(--gray-border);color:var(--text);padding:7px 10px;border-radius:6px;font-size:12px;outline:none;font-family:inherit;" />
+
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+                <div>
+                  <label style="font-size:10px;font-weight:500;color:var(--text-muted);display:block;margin-bottom:4px;text-transform:uppercase;letter-spacing:.05em;">Access Token (Meta)</label>
+                  <input type="password" id="campMetaTokenInput" placeholder="EAAxxxxxxxxxxxx…"
+                    style="width:100%;background:var(--gray-mid);border:1px solid var(--gray-border);color:var(--text);padding:7px 10px;border-radius:6px;font-size:12px;outline:none;font-family:inherit;" />
+                </div>
+                <div>
+                  <label style="font-size:10px;font-weight:500;color:var(--text-muted);display:block;margin-bottom:4px;text-transform:uppercase;letter-spacing:.05em;">IG Business Account ID <span style="text-transform:none;color:var(--text-muted);font-weight:400;">(opcional, salta page lookup)</span></label>
+                  <input type="text" id="campMetaIgIdInput" placeholder="17841400000000000"
+                    style="width:100%;background:var(--gray-mid);border:1px solid var(--gray-border);color:var(--text);padding:7px 10px;border-radius:6px;font-size:12px;outline:none;font-family:inherit;" />
+                </div>
               </div>
-              <div style="display:flex;gap:8px;flex-wrap:wrap;">
-                <button type="button" onclick="updateCampMetaToken()"
+
+              <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
+                <button type="button" onclick="updateCampMetaCreds()"
                   style="background:var(--green);color:white;border:none;padding:7px 14px;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;font-family:inherit;">
-                  💾 Guardar token
+                  💾 Guardar y probar
                 </button>
-                <button type="button" onclick="testCampMetaToken()"
-                  style="background:transparent;border:1px solid var(--gray-border);color:var(--text-secondary);padding:7px 14px;border-radius:6px;font-size:11px;font-weight:500;cursor:pointer;font-family:inherit;">
-                  🔌 Probar
+                <button type="button" onclick="detectCampIgId()"
+                  style="background:transparent;border:1px solid rgba(64,217,157,.3);color:var(--green);padding:7px 14px;border-radius:6px;font-size:11px;font-weight:500;cursor:pointer;font-family:inherit;">
+                  🆔 Detectar IG ID
                 </button>
                 <button type="button" onclick="retryAllFailedScheduled()"
-                  style="background:transparent;border:1px solid rgba(64,217,157,.3);color:var(--green);padding:7px 14px;border-radius:6px;font-size:11px;font-weight:500;cursor:pointer;font-family:inherit;">
+                  style="background:transparent;border:1px solid var(--gray-border);color:var(--text-secondary);padding:7px 14px;border-radius:6px;font-size:11px;font-weight:500;cursor:pointer;font-family:inherit;">
                   ↻ Reintentar fallidos
                 </button>
-                <span id="campMetaTokenStatus" style="font-size:11px;color:var(--text-muted);align-self:center;"></span>
+                <span id="campMetaTokenStatus" style="font-size:11px;color:var(--text-muted);align-self:center;flex:1;min-width:200px;"></span>
               </div>
             </div>
           </details>
@@ -3298,6 +3307,7 @@ async function submitQuickPost() {
     if (meta.ad_account_id) headers['x-meta-ad-account-id'] = meta.ad_account_id
     if (meta.waba_id) headers['x-waba-id'] = meta.waba_id
     if (meta.phone_number_id) headers['x-meta-phone-number-id'] = meta.phone_number_id
+    if (meta.ig_user_id) headers['x-meta-ig-user-id'] = meta.ig_user_id
   } catch (_) {}
 
   if (!headers['x-meta-token']) {
@@ -3364,74 +3374,125 @@ async function initCampaignsMulti() {
   _campTickerId = setInterval(renderCampScheduledList, 1000)
 }
 
+function getStoredMeta() {
+  try { return JSON.parse(localStorage.getItem('meta_creds') || '{}') } catch (_) { return {} }
+}
+function setStoredMeta(meta) {
+  localStorage.setItem('meta_creds', JSON.stringify(meta))
+  if (meta.access_token) localStorage.setItem('wa_access_token', meta.access_token)
+  if (meta.waba_id) localStorage.setItem('wa_waba_id', meta.waba_id)
+}
+
 function refreshCampMetaStatus() {
   const inline = document.getElementById('campMetaStatusInline')
   const icon = document.getElementById('campMetaIcon')
-  const summary = document.getElementById('campMetaSummary')
   if (!inline) return
-  let meta = {}
-  try { meta = JSON.parse(localStorage.getItem('meta_creds') || '{}') } catch (_) {}
+  const meta = getStoredMeta()
+  const bits = []
   if (!meta.access_token) {
     inline.textContent = 'sin token guardado'
     inline.style.color = '#fca5a5'
     if (icon) icon.textContent = '⚠'
-  } else {
-    const masked = meta.access_token.slice(0, 6) + '…' + meta.access_token.slice(-4)
-    inline.textContent = `token guardado (${masked})`
-    inline.style.color = 'var(--green)'
-    if (icon) icon.textContent = '🔑'
+    return
   }
+  const masked = meta.access_token.slice(0, 6) + '…' + meta.access_token.slice(-4)
+  bits.push(`token ${masked}`)
+  if (meta.ig_user_id) bits.push(`IG ${meta.ig_user_id}`)
+  else if (meta.page_id) bits.push(`Page ${meta.page_id}`)
+  inline.textContent = bits.join(' · ')
+  inline.style.color = 'var(--green)'
+  if (icon) icon.textContent = '🔑'
 }
 
-function updateCampMetaToken() {
-  const input = document.getElementById('campMetaTokenInput')
+async function updateCampMetaCreds() {
+  const tokenInput = document.getElementById('campMetaTokenInput')
+  const igIdInput = document.getElementById('campMetaIgIdInput')
   const status = document.getElementById('campMetaTokenStatus')
-  const newToken = input.value.trim()
-  if (!newToken) {
-    status.textContent = 'Pega un token primero'
+
+  const newToken = tokenInput.value.trim()
+  const newIgId = igIdInput.value.trim()
+
+  if (!newToken && !newIgId) {
+    status.textContent = 'Pega un token o un IG Business Account ID primero'
     status.style.color = '#fca5a5'
     return
   }
-  let meta = {}
-  try { meta = JSON.parse(localStorage.getItem('meta_creds') || '{}') } catch (_) {}
-  meta.access_token = newToken
-  localStorage.setItem('meta_creds', JSON.stringify(meta))
-  // Keep WhatsApp helpers in sync if WABA is set
-  localStorage.setItem('wa_access_token', newToken)
-  input.value = ''
-  status.textContent = '✓ Token guardado en navegador'
-  status.style.color = 'var(--green)'
-  refreshCampMetaStatus()
-  // Also refresh the Settings tab form if it's mounted
-  if (typeof loadMetaCredentials === 'function') { try { loadMetaCredentials() } catch (_) {} }
-  toast('Token actualizado — reintenta los posts fallidos si los hay', 'success')
-}
 
-async function testCampMetaToken() {
-  const input = document.getElementById('campMetaTokenInput')
-  const status = document.getElementById('campMetaTokenStatus')
-  let token = input.value.trim()
-  if (!token) {
-    // Use saved token if input is empty
-    try { token = (JSON.parse(localStorage.getItem('meta_creds') || '{}')).access_token || '' } catch (_) {}
-  }
-  if (!token) { status.textContent = 'Pega un token o guarda uno primero'; status.style.color = '#fca5a5'; return }
-  status.textContent = '⏳ Probando contra Graph /me…'
-  status.style.color = 'var(--text-secondary)'
-  try {
-    const r = await fetch('/api/credentials?action=meta-test', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'x-empresa-id': state.empresa_id },
-      body: JSON.stringify({ access_token: token })
-    })
-    const json = await r.json()
-    if (json.success) {
-      status.textContent = '✓ ' + (json.message || 'Conectado')
-      status.style.color = 'var(--green)'
-    } else {
-      status.textContent = '✗ ' + (json.error || 'Token inválido')
+  const meta = getStoredMeta()
+  if (newToken) meta.access_token = newToken
+  if (newIgId) meta.ig_user_id = newIgId
+  setStoredMeta(meta)
+  tokenInput.value = ''
+  igIdInput.value = ''
+  refreshCampMetaStatus()
+
+  // Auto-test the token immediately so the user knows if it's valid.
+  if (newToken) {
+    status.textContent = '⏳ Probando contra Graph /me…'
+    status.style.color = 'var(--text-secondary)'
+    try {
+      const r = await fetch('/api/credentials?action=meta-test', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'x-empresa-id': state.empresa_id },
+        body: JSON.stringify({ access_token: newToken })
+      })
+      const json = await r.json()
+      if (json.success) {
+        status.textContent = '✓ ' + (json.message || 'Token válido') + (newIgId ? ' · IG ID guardado' : '')
+        status.style.color = 'var(--green)'
+        toast('Token guardado y verificado', 'success')
+      } else {
+        status.textContent = '✗ Token guardado pero falló la prueba: ' + (json.error || 'inválido')
+        status.style.color = '#fca5a5'
+        toast('Token guardado pero NO funciona — pega uno válido', 'error')
+      }
+    } catch (err) {
+      status.textContent = '✗ ' + err.message
       status.style.color = '#fca5a5'
     }
+  } else {
+    status.textContent = '✓ IG Business Account ID guardado (sin tocar token)'
+    status.style.color = 'var(--green)'
+    toast('IG ID guardado', 'success')
+  }
+  // Refresh Settings tab form if it's mounted
+  if (typeof loadMetaCredentials === 'function') { try { loadMetaCredentials() } catch (_) {} }
+}
+
+async function detectCampIgId() {
+  const status = document.getElementById('campMetaTokenStatus')
+  const tokenInput = document.getElementById('campMetaTokenInput')
+  const meta = getStoredMeta()
+  const token = tokenInput.value.trim() || meta.access_token
+  const pageId = meta.page_id
+
+  if (!token) { status.textContent = 'Pega un Access Token primero (o guarda uno)'; status.style.color = '#fca5a5'; return }
+  if (!pageId) { status.textContent = 'Necesitas guardar el Page ID en ⚙️ Configuración primero'; status.style.color = '#fca5a5'; return }
+
+  status.textContent = '⏳ Detectando IG vinculada al Page ' + pageId + '…'
+  status.style.color = 'var(--text-secondary)'
+  try {
+    const r = await fetch('/api/credentials?action=meta-detect-ig', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-empresa-id': state.empresa_id },
+      body: JSON.stringify({ access_token: token, page_id: pageId })
+    })
+    const json = await r.json()
+    if (!json.success) {
+      status.textContent = '✗ ' + (json.error || 'No se pudo detectar')
+      status.style.color = '#fca5a5'
+      return
+    }
+    // Save it
+    const m = getStoredMeta()
+    m.ig_user_id = json.ig_user_id
+    if (token && !m.access_token) m.access_token = token
+    setStoredMeta(m)
+    document.getElementById('campMetaIgIdInput').value = ''
+    refreshCampMetaStatus()
+    status.textContent = `✓ IG detectada: ${json.ig_user_id} (página: ${json.page_name || pageId})`
+    status.style.color = 'var(--green)'
+    toast('IG Business Account ID detectado y guardado', 'success')
   } catch (err) {
     status.textContent = '✗ ' + err.message
     status.style.color = '#fca5a5'
@@ -3439,6 +3500,22 @@ async function testCampMetaToken() {
 }
 
 function retryAllFailedScheduled() {
+  // Auto-save the input fields if the user typed something but didn't click Guardar.
+  const tokenInput = document.getElementById('campMetaTokenInput')
+  const igInput = document.getElementById('campMetaIgIdInput')
+  if (tokenInput && (tokenInput.value.trim() || (igInput && igInput.value.trim()))) {
+    const meta = getStoredMeta()
+    const t = tokenInput.value.trim()
+    const ig = igInput && igInput.value.trim()
+    if (t) meta.access_token = t
+    if (ig) meta.ig_user_id = ig
+    setStoredMeta(meta)
+    tokenInput.value = ''
+    if (igInput) igInput.value = ''
+    refreshCampMetaStatus()
+    toast('Credenciales guardadas antes de reintentar', 'info')
+  }
+
   const all = loadScheduled()
   const targets = all.filter(p => p.status === 'failed' || p.status === 'expired')
   if (!targets.length) { toast('No hay posts fallidos ni expirados', 'info'); return }
@@ -3770,6 +3847,7 @@ async function publishScheduledPost(id) {
     if (meta.ad_account_id) headers['x-meta-ad-account-id'] = meta.ad_account_id
     if (meta.waba_id) headers['x-waba-id'] = meta.waba_id
     if (meta.phone_number_id) headers['x-meta-phone-number-id'] = meta.phone_number_id
+    if (meta.ig_user_id) headers['x-meta-ig-user-id'] = meta.ig_user_id
 
     const r = await fetch('/api/social-post', {
       method: 'POST',
