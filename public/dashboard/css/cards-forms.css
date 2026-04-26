@@ -52,7 +52,17 @@
   padding: 22px 24px;
   position: relative;
   overflow: hidden;
-  min-height: 200px;
+  min-height: 220px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 18px;
+}
+
+.ae-reco-body em {
+  font-family: var(--rm-serif);
+  font-style: italic;
+  font-weight: 400;
 }
 .ae-reco::after {
   content: "⚡";
