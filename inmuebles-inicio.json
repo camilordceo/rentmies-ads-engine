@@ -1,0 +1,47 @@
+[
+  {
+    "id": "#ID353535646",
+    "descripcion": "Foto Portada Primavera",
+    "proyecto": "Primavera",
+    "imagen": "https://e53ac8dd9dbc25adfb5c5a0f4789280e.cdn.bubble.io/f1774583996124x164002751572678300/Primavera%20Portada.png?",
+    "tipo": "apartamento",
+    "ciudad": "Bogotá",
+    "estado": "disponible"
+  },
+  {
+    "id": "#ID353535647",
+    "descripcion": "Planos 39 metros",
+    "proyecto": "Primavera",
+    "imagen": "https://e53ac8dd9dbc25adfb5c5a0f4789280e.cdn.bubble.io/f1774584137349x295042396637372540/Primavera%20planta%20aptotipo%2039m.png?",
+    "tipo": "apartamento",
+    "ciudad": "Bogotá",
+    "estado": "disponible"
+  },
+  {
+    "id": "#ID353535648",
+    "descripcion": "Fachada Portada Nueva",
+    "proyecto": "Castelo",
+    "imagen": "https://e53ac8dd9dbc25adfb5c5a0f4789280e.cdn.bubble.io/f1774584307614x572776565201879230/Castelo%20Portada%20Fachada%20Nueva.png?",
+    "tipo": "apartamento",
+    "ciudad": "Medellín",
+    "estado": "disponible"
+  },
+  {
+    "id": "#ID353535649",
+    "descripcion": "Tipo C 72 metros",
+    "proyecto": "Praseo",
+    "imagen": "https://e53ac8dd9dbc25adfb5c5a0f4789280e.cdn.bubble.io/f1774584771052x569102592266325500/Praseo%20Tipo%20C%2072%20metros.png?",
+    "tipo": "casa",
+    "ciudad": "Cali",
+    "estado": "disponible"
+  },
+  {
+    "id": "#ID353535650",
+    "descripcion": "Fachada Strada",
+    "proyecto": "Strada",
+    "imagen": "https://e53ac8dd9dbc25adfb5c5a0f4789280e.cdn.bubble.io/f1774584976532x644827882542291100/Strada%20Fachada.png?",
+    "tipo": "apartamento",
+    "ciudad": "Medellín",
+    "estado": "disponible"
+  }
+]

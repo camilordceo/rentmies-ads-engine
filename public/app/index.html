@@ -2515,7 +2515,7 @@ async function saveWACredentials() {
 
   // Also save server-side
   try {
-    await fetch(`/api/credentials/whatsapp`, {
+    await fetch(`/api/credentials?action=whatsapp`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -2548,7 +2548,7 @@ async function fetchWATemplates() {
     if (localToken) headers['x-meta-token'] = localToken
     if (localWaba) headers['x-waba-id'] = localWaba
 
-    const r = await fetch('/api/whatsapp/templates', { headers })
+    const r = await fetch('/api/whatsapp?action=templates', { headers })
     const text = await r.text()
     let json = {}
     try { json = JSON.parse(text) } catch (_) {
@@ -2722,38 +2722,71 @@ function initWATab() {
 // QUICK POST
 // ══════════════════════════════════════════════════════
 async function loadQPInventario() {
+  const sel = document.getElementById('qpProperty')
+  let items = []
+  let usingStarter = false
+
+  // 1. Try real inventory from /api/data?resource=inmuebles
   try {
-    const r = await fetch(`/api/inventario?limit=50`, {
+    const r = await fetch('/api/data?resource=inmuebles', {
       headers: { 'x-empresa-id': state.empresa_id }
     })
-    const json = await r.json()
-    const sel = document.getElementById('qpProperty')
-    const items = json.data || json || []
-    sel.innerHTML = items.length
-      ? items.map(p => `<option value="${p.id}" data-img="${p.image_link_1 || ''}">${p.nombre_barrio || ''} — ${p.tipo_inmueble_propiedad || 'Inmueble'} — ${p.nombre_ciudad || ''}</option>`).join('')
-      : '<option value="">No hay inmuebles. Importa tu inventario primero.</option>'
+    if (r.ok) {
+      const json = await r.json()
+      items = json.inmuebles || json.data || []
+    }
+  } catch (_) {}
 
-    sel.addEventListener('change', () => {
-      const opt = sel.selectedOptions[0]
-      const img = opt?.dataset.img
-      const imgUrlEl = document.getElementById('qpImageUrl')
-      const preview = document.getElementById('qpImagePreview')
-      const previewImg = document.getElementById('qpPreviewImg')
-      if (img) {
-        imgUrlEl.value = img
-        previewImg.src = img
-        preview.style.display = 'block'
-      } else {
-        imgUrlEl.value = ''
-        preview.style.display = 'none'
+  // 2. Fallback to starter inmuebles bundled in /data/inmuebles-inicio.json
+  if (!items.length) {
+    try {
+      const r2 = await fetch('/data/inmuebles-inicio.json')
+      if (r2.ok) {
+        const starters = await r2.json()
+        items = starters.map(p => ({
+          id: p.id,
+          nombre_barrio: p.proyecto,
+          tipo_inmueble_propiedad: p.tipo,
+          nombre_ciudad: p.ciudad,
+          descripcion: p.descripcion,
+          image_link_1: p.imagen
+        }))
+        usingStarter = true
       }
-    })
-
-    // Trigger change for first item
-    if (items.length) sel.dispatchEvent(new Event('change'))
-  } catch (_) {
-    document.getElementById('qpProperty').innerHTML = '<option value="">Error cargando inventario</option>'
+    } catch (_) {}
   }
+
+  if (!items.length) {
+    sel.innerHTML = '<option value="">No hay inmuebles disponibles.</option>'
+    return
+  }
+
+  const label = usingStarter ? ' (muestra)' : ''
+  sel.innerHTML = items.map(p => {
+    const title = `${p.nombre_barrio || ''} — ${p.tipo_inmueble_propiedad || 'Inmueble'} — ${p.nombre_ciudad || ''}${label}`
+    return `<option value="${p.id}" data-img="${p.image_link_1 || ''}" data-desc="${(p.descripcion || '').replace(/"/g, '&quot;')}">${title}</option>`
+  }).join('')
+
+  if (usingStarter) toast('Usando inmuebles de muestra para empezar', 'info')
+
+  sel.addEventListener('change', () => {
+    const opt = sel.selectedOptions[0]
+    const img = opt?.dataset.img
+    const imgUrlEl = document.getElementById('qpImageUrl')
+    const preview = document.getElementById('qpImagePreview')
+    const previewImg = document.getElementById('qpPreviewImg')
+    if (img) {
+      imgUrlEl.value = img
+      previewImg.src = img
+      preview.style.display = 'block'
+    } else {
+      imgUrlEl.value = ''
+      preview.style.display = 'none'
+    }
+  })
+
+  // Trigger change for first item
+  sel.dispatchEvent(new Event('change'))
 }
 
 document.getElementById('qpImageUrl').addEventListener('input', function() {
@@ -2795,16 +2828,37 @@ async function submitQuickPost() {
   btn.disabled = true
   btnText.textContent = '⏳ Publicando…'
 
+  // Pull saved Meta creds and forward via headers (works in demo mode without Supabase).
+  const headers = {
+    'Content-Type': 'application/json',
+    'x-empresa-id': state.empresa_id
+  }
+  try {
+    const meta = JSON.parse(localStorage.getItem('meta_creds') || '{}')
+    if (meta.access_token) headers['x-meta-token'] = meta.access_token
+    if (meta.page_id) headers['x-meta-page-id'] = meta.page_id
+    if (meta.ad_account_id) headers['x-meta-ad-account-id'] = meta.ad_account_id
+    if (meta.waba_id) headers['x-waba-id'] = meta.waba_id
+    if (meta.phone_number_id) headers['x-meta-phone-number-id'] = meta.phone_number_id
+  } catch (_) {}
+
+  if (!headers['x-meta-token']) {
+    errEl.innerHTML = '<strong>Faltan credenciales de Meta.</strong><br>Ve a ⚙️ Configuración → Meta/Facebook y guarda al menos Access Token y Page ID.'
+    errEl.style.display = 'block'
+    btn.disabled = false
+    btnText.textContent = '📤 Publicar ahora'
+    return
+  }
+
   try {
     const r = await fetch('/api/social-post', {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-empresa-id': state.empresa_id
-      },
+      headers,
       body: JSON.stringify({ inventario_id, platform, caption, image_url, empresa_id: state.empresa_id })
     })
-    const data = await r.json()
+    const text = await r.text()
+    let data = {}
+    try { data = JSON.parse(text) } catch (_) { data = { error: 'Respuesta inesperada del servidor', detail: text.slice(0, 200) } }
 
     if (!r.ok) {
       errEl.innerHTML = `<strong>${data.error || 'Error'}</strong><br>${data.detail || ''}`
@@ -2856,7 +2910,7 @@ async function loadMetaCredentials() {
 
   // Then check server-side (Supabase) — overrides badge if persisted there.
   try {
-    const r = await fetch('/api/credentials/meta', {
+    const r = await fetch('/api/credentials?action=meta', {
       headers: { 'x-empresa-id': state.empresa_id }
     })
     if (!r.ok) return
@@ -2892,7 +2946,7 @@ async function saveMetaCredentials() {
   if (creds.waba_id) localStorage.setItem('wa_waba_id', creds.waba_id)
 
   try {
-    const r = await fetch('/api/credentials/meta', {
+    const r = await fetch('/api/credentials?action=meta', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'x-empresa-id': state.empresa_id },
       body: JSON.stringify(creds)
@@ -2925,7 +2979,7 @@ async function testMetaConnection() {
   resultEl.textContent = 'Probando conexión…'
 
   try {
-    const r = await fetch('/api/credentials/meta/test', {
+    const r = await fetch('/api/credentials?action=meta-test', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'x-empresa-id': state.empresa_id },
       body: JSON.stringify({ access_token: token })
@@ -2956,7 +3010,7 @@ async function saveGoogleCredentials() {
   const key = document.getElementById('googleApiKey').value.trim()
   if (!key) { toast('Ingresa tu API Key', 'error'); return }
   try {
-    const r = await fetch('/api/credentials/google_ai', {
+    const r = await fetch('/api/credentials?action=google_ai', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'x-empresa-id': state.empresa_id },
       body: JSON.stringify({ api_key: key })
@@ -2969,7 +3023,7 @@ async function saveGoogleCredentials() {
 async function testGoogleConnection() {
   const key = document.getElementById('googleApiKey').value.trim()
   try {
-    const r = await fetch('/api/credentials/google_ai/test', {
+    const r = await fetch('/api/credentials?action=google_ai-test', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'x-empresa-id': state.empresa_id },
       body: JSON.stringify({ api_key: key })

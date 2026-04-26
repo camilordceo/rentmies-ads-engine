@@ -1,12 +1,11 @@
 /**
- * RENTMIES — WhatsApp API (catch-all, Meta Graph proxy)
+ * RENTMIES — WhatsApp API (Meta Graph proxy)
  *
- *   GET /api/whatsapp/templates  → list message templates for a WABA
+ *   GET /api/whatsapp?action=templates → list message templates for a WABA
  *
  * Credentials priority:
- *   1. Request headers `x-meta-token` and `x-waba-id` (sent by the dashboard
- *      from localStorage when user is in demo mode without Supabase).
- *   2. Env vars META_ACCESS_TOKEN / META_WABA_ID (production fallback).
+ *   1. Headers x-meta-token / x-waba-id (sent by dashboard from localStorage in demo mode).
+ *   2. Env vars META_ACCESS_TOKEN / META_WABA_ID (server-level fallback).
  */
 
 const axios = require('axios')
@@ -20,13 +19,12 @@ module.exports = async (req, res) => {
 
   if (req.method === 'OPTIONS') return res.status(200).end()
 
-  const segs = Array.isArray(req.query.path) ? req.query.path : (req.query.path ? [req.query.path] : [])
-  const route = segs.join('/')
+  const action = (req.query.action || '').toString()
 
   const token = req.headers['x-meta-token'] || process.env.META_ACCESS_TOKEN || ''
   const wabaId = req.headers['x-waba-id'] || process.env.META_WABA_ID || ''
 
-  if (route === 'templates' && req.method === 'GET') {
+  if (action === 'templates' && req.method === 'GET') {
     if (!token || !wabaId) {
       return res.status(400).json({
         error: 'Faltan credenciales de Meta. Guarda Access Token y WABA ID en ⚙️ Configuración → Meta/Facebook.'
@@ -49,5 +47,5 @@ module.exports = async (req, res) => {
     }
   }
 
-  return res.status(404).json({ error: `Ruta no encontrada: /api/whatsapp/${route}` })
+  return res.status(400).json({ error: `Acción no válida: '${action}'. Usa templates` })
 }

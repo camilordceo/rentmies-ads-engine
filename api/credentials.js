@@ -1,19 +1,17 @@
 /**
- * RENTMIES — Credentials API (catch-all)
+ * RENTMIES — Credentials API
  *
- * Routes:
- *   GET  /api/credentials/meta          → status (configured?)
- *   POST /api/credentials/meta          → save Meta credentials
- *   POST /api/credentials/meta/test     → validate Meta access_token against Graph /me
- *   POST /api/credentials/whatsapp      → save WhatsApp credentials
- *   GET  /api/credentials/google_ai     → status
- *   POST /api/credentials/google_ai     → save Google AI key
- *   POST /api/credentials/google_ai/test → validate against generativelanguage API
+ *   GET  /api/credentials?action=meta              → status (configured?)
+ *   POST /api/credentials?action=meta              → save Meta credentials
+ *   POST /api/credentials?action=meta-test         → validate access_token against Graph /me
+ *   POST /api/credentials?action=whatsapp          → save WhatsApp credentials
+ *   GET  /api/credentials?action=google_ai         → status
+ *   POST /api/credentials?action=google_ai         → save Google AI key
+ *   POST /api/credentials?action=google_ai-test    → validate key against Gemini list-models
  *
- * Behavior:
- *   - If Supabase is configured, credentials are upserted into platform_credentials.
- *   - If not (demo mode), the endpoint acknowledges the save but reports
- *     persisted=false so the client knows to keep them in localStorage.
+ * Persistence:
+ *   - With Supabase env vars set, upserts to platform_credentials.
+ *   - Without them, returns persisted=false so the client keeps creds in localStorage.
  */
 
 const axios = require('axios')
@@ -35,22 +33,21 @@ module.exports = async (req, res) => {
 
   if (req.method === 'OPTIONS') return res.status(200).end()
 
-  const segs = Array.isArray(req.query.path) ? req.query.path : (req.query.path ? [req.query.path] : [])
-  const route = segs.join('/')
+  const action = (req.query.action || '').toString()
   const empresaId = req.headers['x-empresa-id'] || 'demo'
 
   try {
-    if (route === 'meta' && req.method === 'GET')        return res.json(await readCreds(empresaId, 'meta'))
-    if (route === 'meta' && req.method === 'POST')       return res.json(await saveCreds(empresaId, 'meta', req.body || {}))
-    if (route === 'meta/test' && req.method === 'POST')  return res.json(await testMetaToken((req.body && req.body.access_token) || ''))
+    if (action === 'meta' && req.method === 'GET')        return res.json(await readCreds(empresaId, 'meta'))
+    if (action === 'meta' && req.method === 'POST')       return res.json(await saveCreds(empresaId, 'meta', req.body || {}))
+    if (action === 'meta-test' && req.method === 'POST')  return res.json(await testMetaToken((req.body && req.body.access_token) || ''))
 
-    if (route === 'whatsapp' && req.method === 'POST')   return res.json(await saveCreds(empresaId, 'whatsapp', req.body || {}))
+    if (action === 'whatsapp' && req.method === 'POST')   return res.json(await saveCreds(empresaId, 'whatsapp', req.body || {}))
 
-    if (route === 'google_ai' && req.method === 'GET')        return res.json(await readCreds(empresaId, 'google_ai'))
-    if (route === 'google_ai' && req.method === 'POST')       return res.json(await saveCreds(empresaId, 'google_ai', req.body || {}))
-    if (route === 'google_ai/test' && req.method === 'POST')  return res.json(await testGeminiKey((req.body && req.body.api_key) || ''))
+    if (action === 'google_ai' && req.method === 'GET')        return res.json(await readCreds(empresaId, 'google_ai'))
+    if (action === 'google_ai' && req.method === 'POST')       return res.json(await saveCreds(empresaId, 'google_ai', req.body || {}))
+    if (action === 'google_ai-test' && req.method === 'POST')  return res.json(await testGeminiKey((req.body && req.body.api_key) || ''))
 
-    return res.status(404).json({ error: `Ruta no encontrada: /api/credentials/${route}` })
+    return res.status(400).json({ error: `Acción no válida: '${action}'. Usa meta | meta-test | whatsapp | google_ai | google_ai-test` })
   } catch (err) {
     console.error('[credentials]', err)
     return res.status(500).json({ error: err.message })

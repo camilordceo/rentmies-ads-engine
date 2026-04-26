@@ -21,8 +21,19 @@ function getServiceClient() {
   return createClient(url, key, { auth: { persistSession: false } })
 }
 
-async function getMetaCredentials(empresa_id) {
-  // 1. Try server-side credentials from Supabase
+async function getMetaCredentials(empresa_id, headers) {
+  // 1. Headers from the dashboard (demo mode without Supabase persistence).
+  if (headers && headers['x-meta-token']) {
+    return {
+      access_token: headers['x-meta-token'],
+      page_id: headers['x-meta-page-id'] || '',
+      ad_account_id: headers['x-meta-ad-account-id'] || '',
+      waba_id: headers['x-waba-id'] || '',
+      phone_number_id: headers['x-meta-phone-number-id'] || ''
+    }
+  }
+
+  // 2. Try server-side credentials from Supabase.
   const sb = getServiceClient()
   if (sb) {
     try {
@@ -36,7 +47,7 @@ async function getMetaCredentials(empresa_id) {
     } catch (_) {}
   }
 
-  // 2. Fallback to env vars (server-level defaults)
+  // 3. Fallback to env vars (server-level defaults).
   if (process.env.META_ACCESS_TOKEN) {
     return {
       access_token: process.env.META_ACCESS_TOKEN,
@@ -99,7 +110,7 @@ async function publishToInstagram(pageId, accessToken, { caption, imageUrl }) {
 module.exports = async (req, res) => {
   res.setHeader('Access-Control-Allow-Origin', '*')
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS')
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization')
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, x-empresa-id, x-meta-token, x-meta-page-id, x-meta-ad-account-id, x-waba-id, x-meta-phone-number-id')
 
   if (req.method === 'OPTIONS') return res.status(200).end()
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' })
@@ -116,8 +127,8 @@ module.exports = async (req, res) => {
   if (!empresa_id) return res.status(400).json({ error: 'empresa_id es requerido' })
 
   try {
-    // Get Meta credentials
-    const creds = await getMetaCredentials(empresa_id)
+    // Get Meta credentials (headers > Supabase > env vars)
+    const creds = await getMetaCredentials(empresa_id, req.headers)
     if (!creds) {
       return res.status(400).json({
         error: 'No hay credenciales de Meta configuradas.',
