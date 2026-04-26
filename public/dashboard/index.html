@@ -57,10 +57,12 @@
 </head>
 <body>
 
+<a href="#main-content" class="ae-skip-link">Saltar al contenido</a>
+
 <div class="ae-app">
 
   <!-- ═══════════ LEFT RAIL ═══════════ -->
-  <aside class="ae-rail">
+  <aside class="ae-rail" role="navigation" aria-label="Navegación principal">
     <div class="ae-rail-logo" title="Camilord — Rentmies AdEngine">C</div>
 
     <button class="ae-rail-link active" data-route="studio" title="Creative Studio" aria-label="Creative Studio">
@@ -114,7 +116,7 @@
       </button>
     </header>
 
-    <div class="ae-content hide-scrollbar">
+    <div id="main-content" class="ae-content hide-scrollbar" role="main">
 
       <!-- ═══════════ CREATIVE STUDIO ═══════════ -->
       <section data-page="studio">
@@ -162,7 +164,7 @@
   </main>
 
   <!-- ═══════════ RIGHT CAMILORD PANEL ═══════════ -->
-  <aside class="ae-camilord">
+  <aside class="ae-camilord" role="complementary" aria-label="Camilord AI Copilot">
     <div class="ae-cam-header">
       <div>
         <div class="ae-cam-title">
