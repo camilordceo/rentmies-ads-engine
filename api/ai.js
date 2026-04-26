@@ -318,6 +318,36 @@ module.exports = async (req, res) => {
       return res.json(result)
     }
 
+    if (action === 'upload-ref') {
+      // User uploads their own reference image (lead magnet flow).
+      const { data, contentType, filename } = req.body || {}
+      if (!data) return res.status(400).json({ error: 'data (base64) es requerido' })
+
+      const sb = getSupabaseService()
+      if (!sb) return res.status(500).json({ error: 'Supabase no configurado para uploads. Define SUPABASE_URL y SUPABASE_SERVICE_KEY.' })
+
+      try {
+        await ensureBucket(sb)
+        const buffer = Buffer.from(data, 'base64')
+        if (buffer.length > 8 * 1024 * 1024) {
+          return res.status(413).json({ error: `Archivo muy grande (${(buffer.length/1024/1024).toFixed(1)}MB). Máximo 8MB.` })
+        }
+        const ct = (contentType || 'image/png').split(';')[0]
+        const ext = (ct.split('/')[1] || 'png').replace(/[^a-z0-9]/gi, '') || 'png'
+        const safeName = (filename || 'upload').replace(/[^a-z0-9._-]/gi, '_').slice(0, 60)
+        const path = `${empresaId}/uploads/${Date.now()}-${safeName}`
+        const { error: upErr } = await sb.storage.from(AI_BUCKET).upload(path, buffer, {
+          contentType: ct,
+          upsert: false
+        })
+        if (upErr) return res.status(500).json({ error: 'Upload a Supabase falló', detail: upErr.message })
+        const { data: pub } = sb.storage.from(AI_BUCKET).getPublicUrl(path)
+        return res.json({ url: pub.publicUrl, path })
+      } catch (err) {
+        return res.status(500).json({ error: err.message })
+      }
+    }
+
     if (action === 'image') {
       const {
         inmueble,
@@ -364,7 +394,7 @@ module.exports = async (req, res) => {
       })
     }
 
-    return res.status(400).json({ error: `Acción no válida: '${action}'. Usa caption | image` })
+    return res.status(400).json({ error: `Acción no válida: '${action}'. Usa caption | image | upload-ref` })
   } catch (err) {
     console.error('[ai]', err.message)
     return res.status(500).json({ error: err.message })

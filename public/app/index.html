@@ -1504,18 +1504,45 @@
               <div id="qpAIControls" style="display:none;margin-top:14px;">
 
                 <!-- Reference image + project context -->
-                <div style="display:flex;gap:12px;align-items:center;margin-bottom:12px;padding:10px 12px;background:var(--gray-card);border:1px solid var(--gray-border);border-radius:8px;">
+                <div style="display:flex;gap:12px;align-items:center;margin-bottom:10px;padding:10px 12px;background:var(--gray-card);border:1px solid var(--gray-border);border-radius:8px;">
                   <div id="qpAIRefWrap" style="flex-shrink:0;">
                     <img id="qpAIRefPreview" alt="Foto de referencia"
                       style="display:none;width:64px;height:64px;border-radius:6px;object-fit:cover;border:1px solid var(--gray-border);" />
-                    <div id="qpAIRefPlaceholder" style="display:none;width:64px;height:64px;border-radius:6px;border:1px dashed var(--gray-border);background:var(--gray-mid);display:flex;align-items:center;justify-content:center;font-size:18px;color:var(--text-muted);">📷</div>
+                    <div id="qpAIRefPlaceholder" style="display:flex;width:64px;height:64px;border-radius:6px;border:1px dashed var(--gray-border);background:var(--gray-mid);align-items:center;justify-content:center;font-size:18px;color:var(--text-muted);">📷</div>
                   </div>
                   <div style="flex:1;min-width:0;font-size:11px;line-height:1.45;">
                     <div style="color:var(--text-muted);text-transform:uppercase;letter-spacing:0.5px;font-size:9px;font-weight:600;margin-bottom:3px;">Proyecto</div>
-                    <div id="qpAIProjectInfo" style="color:var(--white);font-weight:600;font-size:13px;">Selecciona un inmueble arriba</div>
+                    <div id="qpAIProjectInfo" style="color:var(--white);font-weight:600;font-size:13px;">Sin inmueble seleccionado</div>
                     <div id="qpAIRefStatus" style="color:var(--text-muted);margin-top:4px;font-size:10px;"></div>
                   </div>
                 </div>
+
+                <!-- Manual reference: URL or upload (overrides inmueble's photo) -->
+                <details style="margin-bottom:12px;background:var(--gray-card);border:1px solid var(--gray-border);border-radius:8px;">
+                  <summary style="cursor:pointer;padding:9px 12px;font-size:11px;font-weight:600;color:var(--text-secondary);user-select:none;list-style:none;">
+                    📎 O usa tu propia imagen como referencia <span style="color:var(--text-muted);font-weight:400;">(opcional · sobreescribe la del inmueble)</span>
+                  </summary>
+                  <div style="padding:0 12px 12px;display:flex;flex-direction:column;gap:8px;">
+                    <div>
+                      <label style="font-size:10px;color:var(--text-muted);display:block;margin-bottom:4px;">URL pública (https://...)</label>
+                      <input type="url" id="qpAIManualImageUrl" placeholder="https://tu-imagen.com/foto.jpg"
+                        style="width:100%;background:var(--gray-mid);border:1px solid var(--gray-border);color:var(--text);padding:7px 10px;border-radius:6px;font-size:11px;outline:none;" />
+                    </div>
+                    <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+                      <label style="font-size:10px;color:var(--text-muted);">o sube un archivo:</label>
+                      <input type="file" id="qpAIFileUpload" accept="image/png,image/jpeg,image/webp"
+                        style="font-size:10px;color:var(--text-secondary);max-width:200px;" />
+                      <button type="button" id="qpAIClearManual" onclick="clearManualImage()"
+                        style="font-size:10px;background:transparent;border:1px solid var(--gray-border);color:var(--text-muted);padding:3px 8px;border-radius:4px;cursor:pointer;font-family:inherit;">
+                        Limpiar
+                      </button>
+                      <span id="qpAIUploadStatus" style="font-size:10px;color:var(--text-muted);"></span>
+                    </div>
+                    <div style="font-size:10px;color:var(--text-muted);line-height:1.4;">
+                      Útil cuando todavía no has cargado tu inventario o quieres probar con una foto cualquiera. Máx 3 MB. La imagen se sube a Supabase y se vuelve pública.
+                    </div>
+                  </div>
+                </details>
 
                 <!-- Custom instructions for image -->
                 <div style="margin-bottom:12px;">
@@ -2780,7 +2807,7 @@ function initWATab() {
 // ══════════════════════════════════════════════════════
 async function loadQPInventario() {
   const sel = document.getElementById('qpProperty')
-  let items = []
+  let rawItems = []
   let usingStarter = false
 
   // 1. Try real inventory from /api/data?resource=inmuebles
@@ -2790,38 +2817,50 @@ async function loadQPInventario() {
     })
     if (r.ok) {
       const json = await r.json()
-      items = json.inmuebles || json.data || []
+      rawItems = json.inmuebles || json.data || []
     }
   } catch (_) {}
 
-  // 2. Fallback to starter inmuebles bundled in /data/inmuebles-inicio.json
-  if (!items.length) {
+  // 2. Fallback to starter inmuebles
+  if (!rawItems.length) {
     try {
       const r2 = await fetch('/data/inmuebles-inicio.json')
       if (r2.ok) {
-        const starters = await r2.json()
-        items = starters.map(p => ({
-          id: p.id,
-          nombre_barrio: p.proyecto,
-          tipo_inmueble_propiedad: p.tipo,
-          nombre_ciudad: p.ciudad,
-          descripcion: p.descripcion,
-          image_link_1: p.imagen
-        }))
+        rawItems = await r2.json()
         usingStarter = true
       }
     } catch (_) {}
   }
+
+  // Normalize to a single canonical shape — accept either field naming.
+  const items = rawItems.map(p => ({
+    id: p.id || '',
+    proyecto: p.proyecto || p.nombre_barrio || '',
+    tipo: p.tipo || p.tipo_inmueble_propiedad || '',
+    ciudad: p.ciudad || p.nombre_ciudad || '',
+    descripcion: p.descripcion || '',
+    imagen: p.imagen || p.image_link_1 || ''
+  }))
 
   if (!items.length) {
     sel.innerHTML = '<option value="">No hay inmuebles disponibles.</option>'
     return
   }
 
-  const label = usingStarter ? ' (muestra)' : ''
+  const safeAttr = v => (v || '').toString().replace(/"/g, '&quot;').replace(/</g, '&lt;')
+  const suffix = usingStarter ? ' (muestra)' : ''
   sel.innerHTML = items.map(p => {
-    const title = `${p.nombre_barrio || ''} — ${p.tipo_inmueble_propiedad || 'Inmueble'} — ${p.nombre_ciudad || ''}${label}`
-    return `<option value="${p.id}" data-img="${p.image_link_1 || ''}" data-desc="${(p.descripcion || '').replace(/"/g, '&quot;')}">${title}</option>`
+    const titleParts = [p.proyecto, p.tipo, p.ciudad].filter(Boolean)
+    const title = (titleParts.length ? titleParts.join(' — ') : (p.id || 'Inmueble')) + suffix
+    return (
+      `<option value="${safeAttr(p.id)}" ` +
+      `data-img="${safeAttr(p.imagen)}" ` +
+      `data-desc="${safeAttr(p.descripcion)}" ` +
+      `data-proyecto="${safeAttr(p.proyecto)}" ` +
+      `data-tipo="${safeAttr(p.tipo)}" ` +
+      `data-ciudad="${safeAttr(p.ciudad)}"` +
+      `>${safeAttr(title)}</option>`
+    )
   }).join('')
 
   if (usingStarter) toast('Usando inmuebles de muestra para empezar', 'info')
@@ -2874,23 +2913,29 @@ document.addEventListener('DOMContentLoaded', () => {
       if (e.target.checked) updateAIRefPanel()
     })
   }
-  // Refresh AI panel whenever the property dropdown changes
   const propSel = document.getElementById('qpProperty')
   if (propSel) propSel.addEventListener('change', updateAIRefPanel)
+
+  // Manual URL input → live preview
+  const manualUrl = document.getElementById('qpAIManualImageUrl')
+  if (manualUrl) manualUrl.addEventListener('input', updateAIRefPanel)
+
+  // File upload → upload to Supabase, populate URL field
+  const fileInput = document.getElementById('qpAIFileUpload')
+  if (fileInput) fileInput.addEventListener('change', handleFileUpload)
 })
 
 function getSelectedInmueble() {
   const sel = document.getElementById('qpProperty')
   const opt = sel?.selectedOptions[0]
   if (!opt || !opt.value) return null
-  // Parse the option text: "{barrio} — {tipo} — {ciudad}{(muestra)?}"
-  const parts = (opt.textContent || '').split('—').map(s => s.trim())
+  // Read structured data straight from data attributes (no fragile text parsing).
   return {
     id: opt.value,
-    proyecto: parts[0] || '',
-    nombre_barrio: parts[0] || '',
-    tipo_inmueble_propiedad: parts[1] || '',
-    nombre_ciudad: (parts[2] || '').replace(/\s*\(muestra\)\s*$/, '').trim(),
+    proyecto: opt.dataset.proyecto || '',
+    nombre_barrio: opt.dataset.proyecto || '',
+    tipo_inmueble_propiedad: opt.dataset.tipo || '',
+    nombre_ciudad: opt.dataset.ciudad || '',
     descripcion: opt.dataset.desc || '',
     image_link_1: opt.dataset.img || ''
   }
@@ -2898,37 +2943,108 @@ function getSelectedInmueble() {
 
 function updateAIRefPanel() {
   const inmueble = getSelectedInmueble()
+  const manualUrl = (document.getElementById('qpAIManualImageUrl')?.value || '').trim()
   const refImg = document.getElementById('qpAIRefPreview')
   const refPh = document.getElementById('qpAIRefPlaceholder')
   const projInfo = document.getElementById('qpAIProjectInfo')
   const refStatus = document.getElementById('qpAIRefStatus')
-  if (!projInfo) return  // panel not in DOM (page not loaded yet)
+  if (!projInfo) return  // panel not in DOM yet
 
-  if (!inmueble) {
-    projInfo.textContent = 'Selecciona un inmueble arriba'
-    refStatus.textContent = ''
-    if (refImg) { refImg.style.display = 'none'; refImg.src = '' }
-    if (refPh) refPh.style.display = 'flex'
-    return
+  // Project label (graceful when fields are empty)
+  if (inmueble) {
+    const parts = [inmueble.proyecto, inmueble.tipo_inmueble_propiedad, inmueble.nombre_ciudad].filter(Boolean)
+    projInfo.textContent = parts.length ? parts.join(' · ') : (inmueble.id || 'Inmueble seleccionado')
+  } else if (manualUrl) {
+    projInfo.textContent = 'Imagen propia (sin inmueble)'
+  } else {
+    projInfo.textContent = 'Sin inmueble seleccionado'
   }
 
-  const tipo = inmueble.tipo_inmueble_propiedad ? ` · ${inmueble.tipo_inmueble_propiedad}` : ''
-  const ciudad = inmueble.nombre_ciudad ? ` · ${inmueble.nombre_ciudad}` : ''
-  projInfo.textContent = `${inmueble.proyecto || 'Inmueble'}${tipo}${ciudad}`
+  // Reference image: manual URL wins over inmueble's image
+  const referenceUrl = manualUrl || (inmueble && inmueble.image_link_1) || ''
+  const isManual = !!manualUrl
 
-  if (inmueble.image_link_1) {
+  if (referenceUrl) {
     if (refImg) {
-      refImg.src = inmueble.image_link_1
+      refImg.src = referenceUrl
       refImg.style.display = 'block'
+      refImg.onerror = () => {
+        refStatus.textContent = '⚠ La URL no carga. Verifica que sea pública y accesible.'
+        refStatus.style.color = '#fca5a5'
+        refImg.style.display = 'none'
+        if (refPh) refPh.style.display = 'flex'
+      }
     }
     if (refPh) refPh.style.display = 'none'
-    refStatus.textContent = '✓ Foto del inmueble — la IA la usará como base y mantendrá la arquitectura'
+    refStatus.textContent = isManual
+      ? '✓ Tu imagen — la IA la usará como base'
+      : '✓ Foto del inmueble — la IA la usará como base'
     refStatus.style.color = 'var(--green)'
   } else {
     if (refImg) { refImg.style.display = 'none'; refImg.src = '' }
     if (refPh) refPh.style.display = 'flex'
-    refStatus.textContent = 'Sin foto de referencia — la IA generará desde cero'
+    refStatus.textContent = 'Sin referencia — pega una URL o sube un archivo abajo, o la IA generará desde cero'
     refStatus.style.color = 'var(--text-muted)'
+  }
+}
+
+function clearManualImage() {
+  const url = document.getElementById('qpAIManualImageUrl')
+  const file = document.getElementById('qpAIFileUpload')
+  const status = document.getElementById('qpAIUploadStatus')
+  if (url) url.value = ''
+  if (file) file.value = ''
+  if (status) status.textContent = ''
+  updateAIRefPanel()
+}
+
+async function handleFileUpload(e) {
+  const file = e.target.files && e.target.files[0]
+  if (!file) return
+  const status = document.getElementById('qpAIUploadStatus')
+
+  if (!/^image\/(png|jpe?g|webp)$/i.test(file.type)) {
+    status.textContent = '✗ Formato no soportado (usa PNG, JPG o WEBP)'
+    status.style.color = '#fca5a5'
+    e.target.value = ''
+    return
+  }
+  if (file.size > 3 * 1024 * 1024) {
+    status.textContent = `✗ Muy grande (${(file.size / 1024 / 1024).toFixed(1)}MB). Máximo 3MB.`
+    status.style.color = '#fca5a5'
+    e.target.value = ''
+    return
+  }
+
+  status.textContent = '⏳ Subiendo a Supabase…'
+  status.style.color = 'var(--text-secondary)'
+
+  try {
+    const dataUrl = await new Promise((resolve, reject) => {
+      const reader = new FileReader()
+      reader.onload = () => resolve(reader.result)
+      reader.onerror = () => reject(reader.error)
+      reader.readAsDataURL(file)
+    })
+    const base64 = String(dataUrl).split(',')[1]
+
+    const r = await fetch('/api/ai?action=upload-ref', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-empresa-id': state.empresa_id },
+      body: JSON.stringify({ data: base64, contentType: file.type, filename: file.name })
+    })
+    const text = await r.text()
+    let json = {}
+    try { json = JSON.parse(text) } catch (_) { json = { error: 'Respuesta inesperada (' + r.status + ')' } }
+    if (!r.ok) throw new Error(json.error || 'Upload falló')
+
+    document.getElementById('qpAIManualImageUrl').value = json.url
+    status.textContent = '✓ Subida correctamente'
+    status.style.color = 'var(--green)'
+    updateAIRefPanel()
+  } catch (err) {
+    status.textContent = '✗ ' + err.message
+    status.style.color = '#fca5a5'
   }
 }
 
@@ -2972,20 +3088,30 @@ async function generateAICaption() {
 
 async function generateAIImage() {
   const inmueble = getSelectedInmueble()
-  if (!inmueble) { toast('Selecciona un inmueble primero', 'error'); return }
-  const btn = document.getElementById('qpAIImageBtn')
+  const manualUrl = (document.getElementById('qpAIManualImageUrl')?.value || '').trim()
   const customInstructions = (document.getElementById('qpAIInstructions')?.value || '').trim()
   const size = document.getElementById('qpAISize')?.value || '1024x1024'
 
+  // Need at least one input source. Inmueble OR manual URL OR custom instructions.
+  if (!inmueble && !manualUrl && !customInstructions) {
+    toast('Selecciona un inmueble, pega una URL de imagen, o escribe instrucciones', 'error')
+    return
+  }
+
+  const btn = document.getElementById('qpAIImageBtn')
   setAIStatus('⏳ Generando imagen con IA (puede tomar 30–60 segundos)…', 'info')
   btn.disabled = true; btn.style.opacity = '0.6'
+
+  // Manual URL takes priority over inmueble's photo.
+  const referenceUrl = manualUrl || (inmueble && inmueble.image_link_1) || ''
 
   try {
     const r = await fetch('/api/ai?action=image', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'x-empresa-id': state.empresa_id },
       body: JSON.stringify({
-        inmueble,
+        inmueble: inmueble || null,
+        reference_image_url: referenceUrl,
         custom_instructions: customInstructions,
         size,
         platform: document.getElementById('qpPlatform').value
