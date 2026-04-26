@@ -35,12 +35,19 @@
     }
   ]
 
-  function getCampaigns() {
-    try {
-      const local = JSON.parse(localStorage.getItem('rm_campaign_drafts') || '[]')
-      if (local.length === 0) return MOCK_POSTS
-      // Map drafts into the postcard shape
-      return local.slice(0, 8).map((c, i) => {
+  async function getCampaigns() {
+    // Try server first via data-bridge
+    if (window.rmData) {
+      try {
+        const { campaigns } = await window.rmData.listCampaigns()
+        if (campaigns && campaigns.length) return mapCampaigns(campaigns)
+      } catch (_) {}
+    }
+    return MOCK_POSTS
+  }
+
+  function mapCampaigns(list) {
+    return list.slice(0, 8).map((c, i) => {
         const channel = (c.platforms && c.platforms[0]) || 'instagram'
         const channelMeta = CHANNEL_META[channel] || CHANNEL_META.instagram
         const scheduledLabel = c.schedule?.when === 'now' ? 'Inmediato' :
@@ -56,10 +63,7 @@
           tone: TONES[i % TONES.length],
           optimization: optimizationCopy(c)
         }
-      })
-    } catch (_) {
-      return MOCK_POSTS
-    }
+    })
   }
 
   const CHANNEL_META = {
@@ -170,10 +174,12 @@
     return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c])
   }
 
-  function render() {
+  async function render() {
     const slot = document.querySelector('[data-page="dashboard"]')
     if (!slot) return
-    const campaigns = getCampaigns()
+    // Show skeleton while we resolve campaigns
+    if (window.rmStates) window.rmStates.skeleton(slot, 4)
+    const campaigns = await getCampaigns()
     slot.innerHTML = html({ campaigns })
   }
 
