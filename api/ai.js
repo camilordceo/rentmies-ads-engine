@@ -63,24 +63,49 @@ REGLAS DURAS:
 
 Devuelve SOLO el caption final, sin comentarios ni encabezados ni "Aquí está tu caption:".`
 
-function buildCaptionUserMessage(inmueble, platform, vibe) {
+function buildCaptionUserMessage(inmueble, platform, vibe, customInstructions, hasImage) {
   const lines = []
   lines.push(`Plataforma destino: ${platform || 'instagram'}`)
   if (vibe) lines.push(`Enfoque solicitado: ${vibe}`)
-  lines.push('')
-  lines.push('Datos del inmueble:')
-  if (inmueble.proyecto) lines.push(`- Proyecto: ${inmueble.proyecto}`)
+
   const tipo = inmueble.tipo || inmueble.tipo_inmueble_propiedad
-  if (tipo) lines.push(`- Tipo: ${tipo}`)
   const ciudad = inmueble.ciudad || inmueble.nombre_ciudad
-  if (ciudad) lines.push(`- Ciudad: ${ciudad}`)
-  if (inmueble.nombre_barrio && inmueble.nombre_barrio !== inmueble.proyecto) lines.push(`- Barrio: ${inmueble.nombre_barrio}`)
-  if (inmueble.area) lines.push(`- Área: ${inmueble.area} m²`)
-  if (inmueble.habitaciones) lines.push(`- Habitaciones: ${inmueble.habitaciones}`)
-  if (inmueble.banos) lines.push(`- Baños: ${inmueble.banos}`)
-  if (inmueble.precio) lines.push(`- Precio: ${inmueble.precio}`)
-  if (inmueble.transaccion) lines.push(`- Tipo de operación: ${inmueble.transaccion}`)
-  if (inmueble.descripcion) lines.push(`- Descripción interna: ${inmueble.descripcion}`)
+  const hasInmuebleData = !!(inmueble.proyecto || tipo || ciudad || inmueble.descripcion)
+
+  if (hasInmuebleData) {
+    lines.push('')
+    lines.push('Datos del inmueble:')
+    if (inmueble.proyecto) lines.push(`- Proyecto: ${inmueble.proyecto}`)
+    if (tipo) lines.push(`- Tipo: ${tipo}`)
+    if (ciudad) lines.push(`- Ciudad: ${ciudad}`)
+    if (inmueble.nombre_barrio && inmueble.nombre_barrio !== inmueble.proyecto) lines.push(`- Barrio: ${inmueble.nombre_barrio}`)
+    if (inmueble.area) lines.push(`- Área: ${inmueble.area} m²`)
+    if (inmueble.habitaciones) lines.push(`- Habitaciones: ${inmueble.habitaciones}`)
+    if (inmueble.banos) lines.push(`- Baños: ${inmueble.banos}`)
+    if (inmueble.precio) lines.push(`- Precio: ${inmueble.precio}`)
+    if (inmueble.transaccion) lines.push(`- Tipo de operación: ${inmueble.transaccion}`)
+    if (inmueble.descripcion) lines.push(`- Descripción interna: ${inmueble.descripcion}`)
+  }
+
+  if (hasImage) {
+    lines.push('')
+    if (hasInmuebleData) {
+      lines.push('Te paso también la foto del inmueble. Úsala para enriquecer el caption con detalles visuales reales (acabados, vista, espacios) — sin contradecir los datos.')
+    } else {
+      lines.push('NO TENGO datos estructurados del inmueble — solo la foto adjunta. Mira la imagen y escribe un caption basado en lo que efectivamente se ve: tipo de espacio, vibe, posibles atributos visuales (luz natural, terraza, vista, materiales). NO inventes ciudad, precio, ni detalles que no aparezcan en la foto.')
+    }
+  }
+
+  if (customInstructions && customInstructions.trim()) {
+    lines.push('')
+    lines.push(`Instrucciones adicionales del cliente para este caption: ${customInstructions.trim()}`)
+  }
+
+  if (!hasInmuebleData && !hasImage) {
+    lines.push('')
+    lines.push('No tengo datos del inmueble ni foto. Escribe un caption genérico breve invitando a contactar para más información, basándote SOLO en las instrucciones del cliente si las hay.')
+  }
+
   return lines.join('\n')
 }
 
@@ -139,20 +164,38 @@ function buildImagePrompt({ inmueble, customPrompt, customInstructions, hasRefer
   return parts.join(' ')
 }
 
-// ─── Caption via Responses API ────────────────────────────────────────────
-async function generateCaption(inmueble, platform, vibe) {
+// ─── Caption via Responses API (text + optional vision) ─────────────────
+async function generateCaption({ inmueble, platform, vibe, referenceImageUrl, customInstructions }) {
   if (!OPENAI_KEY) throw new Error('OPENAI_API_KEY no configurada en Vercel.')
+
+  const userText = buildCaptionUserMessage(inmueble || {}, platform, vibe, customInstructions, !!referenceImageUrl)
+
+  // If we have an image, send it as input_image so GPT-4o-mini can SEE the property
+  // and write a caption based on what's visible. Works whether or not an inmueble
+  // is also selected — combining both gives the model both data and visual context.
+  let input
+  if (referenceImageUrl) {
+    input = [{
+      role: 'user',
+      content: [
+        { type: 'input_text', text: userText },
+        { type: 'input_image', image_url: referenceImageUrl, detail: 'auto' }
+      ]
+    }]
+  } else {
+    input = userText
+  }
 
   const body = {
     model: OPENAI_CHAT,
     instructions: CAPTION_SYSTEM,
-    input: buildCaptionUserMessage(inmueble, platform, vibe),
-    max_output_tokens: 600
+    input,
+    max_output_tokens: 700
   }
   try {
     const { data } = await axios.post(`${OPENAI_BASE}/responses`, body, {
       headers: { Authorization: `Bearer ${OPENAI_KEY}`, 'Content-Type': 'application/json' },
-      timeout: 25000
+      timeout: 30000
     })
     const caption = (data && data.output_text) || extractTextFromOutput(data && data.output)
     if (!caption || !caption.trim()) throw new Error('OpenAI devolvió respuesta vacía')
@@ -312,9 +355,18 @@ module.exports = async (req, res) => {
 
   try {
     if (action === 'caption') {
-      const { inmueble, platform, vibe } = req.body || {}
-      if (!inmueble) return res.status(400).json({ error: 'inmueble es requerido' })
-      const result = await generateCaption(inmueble, platform, vibe)
+      const { inmueble, platform, vibe, reference_image_url, custom_instructions } = req.body || {}
+      // Need at least one source of context: inmueble OR image OR custom instructions.
+      if (!inmueble && !reference_image_url && !(custom_instructions && custom_instructions.trim())) {
+        return res.status(400).json({ error: 'Necesitas un inmueble, una imagen, o instrucciones del cliente.' })
+      }
+      const result = await generateCaption({
+        inmueble,
+        platform,
+        vibe,
+        referenceImageUrl: reference_image_url,
+        customInstructions: custom_instructions
+      })
       return res.json(result)
     }
 

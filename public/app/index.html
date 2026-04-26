@@ -1613,9 +1613,44 @@
           <div style="font-size:14px;font-weight:600;color:var(--white);margin-bottom:4px;">📅 Campañas Programadas</div>
           <div style="font-size:12px;color:var(--text-muted);margin-bottom:14px;">Crea N posts y prográmalos a fecha + hora exactas. Ideal para probar bulk-posting.</div>
 
-          <div style="background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.25);color:var(--yellow);padding:9px 12px;border-radius:8px;font-size:11px;line-height:1.5;margin-bottom:18px;">
+          <div style="background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.25);color:var(--yellow);padding:9px 12px;border-radius:8px;font-size:11px;line-height:1.5;margin-bottom:14px;">
             <strong>⚠ Mantén esta pestaña abierta</strong> mientras esperas las publicaciones. La programación corre en el navegador (cliente-side <code style="background:rgba(0,0,0,0.2);padding:1px 4px;border-radius:3px;font-size:10px;">setTimeout</code>). Si cierras el navegador, los posts pendientes se marcarán como <em>expirados</em> al volver. Para programación robusta a largo plazo necesitamos cron server-side.
           </div>
+
+          <!-- Meta token quick-update — for when the token expires mid-campaign -->
+          <details style="background:var(--gray-card);border:1px solid var(--gray-border);border-radius:8px;margin-bottom:14px;">
+            <summary id="campMetaSummary" style="cursor:pointer;padding:10px 14px;font-size:12px;font-weight:600;color:var(--text-secondary);user-select:none;list-style:none;display:flex;align-items:center;gap:8px;">
+              <span id="campMetaIcon">🔑</span>
+              <span>Credenciales Meta — <span id="campMetaStatusInline" style="color:var(--text-muted);font-weight:400;">verificando…</span></span>
+              <span style="margin-left:auto;font-size:10px;color:var(--text-muted);font-weight:400;">expandir para actualizar el token</span>
+            </summary>
+            <div style="padding:0 14px 14px;display:flex;flex-direction:column;gap:10px;border-top:1px solid var(--gray-border);">
+              <div style="font-size:11px;color:var(--text-muted);line-height:1.5;margin-top:10px;">
+                Si tu Access Token venció a mitad de campaña, pega uno nuevo aquí sin salir de la tab.
+                Los demás campos (Page ID, etc.) se mantienen como están en ⚙️ Configuración.
+              </div>
+              <div>
+                <label style="font-size:10px;font-weight:500;color:var(--text-muted);display:block;margin-bottom:4px;text-transform:uppercase;letter-spacing:.05em;">Access Token (Meta)</label>
+                <input type="password" id="campMetaTokenInput" placeholder="EAAxxxxxxxxxxxx…"
+                  style="width:100%;background:var(--gray-mid);border:1px solid var(--gray-border);color:var(--text);padding:7px 10px;border-radius:6px;font-size:12px;outline:none;font-family:inherit;" />
+              </div>
+              <div style="display:flex;gap:8px;flex-wrap:wrap;">
+                <button type="button" onclick="updateCampMetaToken()"
+                  style="background:var(--green);color:white;border:none;padding:7px 14px;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;font-family:inherit;">
+                  💾 Guardar token
+                </button>
+                <button type="button" onclick="testCampMetaToken()"
+                  style="background:transparent;border:1px solid var(--gray-border);color:var(--text-secondary);padding:7px 14px;border-radius:6px;font-size:11px;font-weight:500;cursor:pointer;font-family:inherit;">
+                  🔌 Probar
+                </button>
+                <button type="button" onclick="retryAllFailedScheduled()"
+                  style="background:transparent;border:1px solid rgba(64,217,157,.3);color:var(--green);padding:7px 14px;border-radius:6px;font-size:11px;font-weight:500;cursor:pointer;font-family:inherit;">
+                  ↻ Reintentar fallidos
+                </button>
+                <span id="campMetaTokenStatus" style="font-size:11px;color:var(--text-muted);align-self:center;"></span>
+              </div>
+            </div>
+          </details>
 
           <!-- Campaign meta -->
           <div style="background:var(--gray-card);border:1px solid var(--gray-border);border-radius:10px;padding:14px 16px;margin-bottom:14px;display:flex;flex-direction:column;gap:10px;">
@@ -3320,12 +3355,98 @@ async function initCampaignsMulti() {
 
   populateCampInmuebleSelect()
   renderCampSlots()
+  refreshCampMetaStatus()
   rearmAllSchedulers()
   renderCampScheduledList()
 
   // Live countdown ticker
   if (_campTickerId) clearInterval(_campTickerId)
   _campTickerId = setInterval(renderCampScheduledList, 1000)
+}
+
+function refreshCampMetaStatus() {
+  const inline = document.getElementById('campMetaStatusInline')
+  const icon = document.getElementById('campMetaIcon')
+  const summary = document.getElementById('campMetaSummary')
+  if (!inline) return
+  let meta = {}
+  try { meta = JSON.parse(localStorage.getItem('meta_creds') || '{}') } catch (_) {}
+  if (!meta.access_token) {
+    inline.textContent = 'sin token guardado'
+    inline.style.color = '#fca5a5'
+    if (icon) icon.textContent = '⚠'
+  } else {
+    const masked = meta.access_token.slice(0, 6) + '…' + meta.access_token.slice(-4)
+    inline.textContent = `token guardado (${masked})`
+    inline.style.color = 'var(--green)'
+    if (icon) icon.textContent = '🔑'
+  }
+}
+
+function updateCampMetaToken() {
+  const input = document.getElementById('campMetaTokenInput')
+  const status = document.getElementById('campMetaTokenStatus')
+  const newToken = input.value.trim()
+  if (!newToken) {
+    status.textContent = 'Pega un token primero'
+    status.style.color = '#fca5a5'
+    return
+  }
+  let meta = {}
+  try { meta = JSON.parse(localStorage.getItem('meta_creds') || '{}') } catch (_) {}
+  meta.access_token = newToken
+  localStorage.setItem('meta_creds', JSON.stringify(meta))
+  // Keep WhatsApp helpers in sync if WABA is set
+  localStorage.setItem('wa_access_token', newToken)
+  input.value = ''
+  status.textContent = '✓ Token guardado en navegador'
+  status.style.color = 'var(--green)'
+  refreshCampMetaStatus()
+  // Also refresh the Settings tab form if it's mounted
+  if (typeof loadMetaCredentials === 'function') { try { loadMetaCredentials() } catch (_) {} }
+  toast('Token actualizado — reintenta los posts fallidos si los hay', 'success')
+}
+
+async function testCampMetaToken() {
+  const input = document.getElementById('campMetaTokenInput')
+  const status = document.getElementById('campMetaTokenStatus')
+  let token = input.value.trim()
+  if (!token) {
+    // Use saved token if input is empty
+    try { token = (JSON.parse(localStorage.getItem('meta_creds') || '{}')).access_token || '' } catch (_) {}
+  }
+  if (!token) { status.textContent = 'Pega un token o guarda uno primero'; status.style.color = '#fca5a5'; return }
+  status.textContent = '⏳ Probando contra Graph /me…'
+  status.style.color = 'var(--text-secondary)'
+  try {
+    const r = await fetch('/api/credentials?action=meta-test', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-empresa-id': state.empresa_id },
+      body: JSON.stringify({ access_token: token })
+    })
+    const json = await r.json()
+    if (json.success) {
+      status.textContent = '✓ ' + (json.message || 'Conectado')
+      status.style.color = 'var(--green)'
+    } else {
+      status.textContent = '✗ ' + (json.error || 'Token inválido')
+      status.style.color = '#fca5a5'
+    }
+  } catch (err) {
+    status.textContent = '✗ ' + err.message
+    status.style.color = '#fca5a5'
+  }
+}
+
+function retryAllFailedScheduled() {
+  const all = loadScheduled()
+  const targets = all.filter(p => p.status === 'failed' || p.status === 'expired')
+  if (!targets.length) { toast('No hay posts fallidos ni expirados', 'info'); return }
+  for (const p of targets) {
+    updateSched(p.id, { status: 'pending', error: null })
+    publishScheduledPost(p.id)
+  }
+  toast(`Reintentando ${targets.length} post${targets.length > 1 ? 's' : ''}`, 'success')
 }
 
 function populateCampInmuebleSelect() {
@@ -3496,19 +3617,31 @@ async function slotGenerateImage(i) {
 }
 
 async function slotGenerateCaption(i) {
-  const inmueble = getCampInmuebleObject()
-  if (!inmueble) {
-    setSlotStatus(i, 'Selecciona un inmueble base arriba', 'error'); return
-  }
+  const inmueble = getCampInmuebleObject()  // may be null
+  const imgUrl = getSlotField(i, 'imgUrl').value.trim()
+  const customInstructions = getSlotField(i, 'imgInstructions').value.trim()
   const platform = document.getElementById('campPlatform').value
-  setSlotStatus(i, '⏳ Generando caption IA…', 'info')
+
+  if (!inmueble && !imgUrl && !customInstructions) {
+    setSlotStatus(i, 'Selecciona un inmueble, sube una imagen, o escribe instrucciones', 'error')
+    return
+  }
+
+  setSlotStatus(i, '⏳ Generando caption IA' + (imgUrl ? ' (analizando imagen)' : '') + '…', 'info')
   try {
     const r = await fetch('/api/ai?action=caption', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'x-empresa-id': state.empresa_id },
-      body: JSON.stringify({ inmueble, platform })
+      body: JSON.stringify({
+        inmueble,
+        platform,
+        reference_image_url: imgUrl || undefined,
+        custom_instructions: customInstructions || undefined
+      })
     })
-    const json = await r.json()
+    const text = await r.text()
+    let json = {}
+    try { json = JSON.parse(text) } catch (_) { json = { error: 'Respuesta inesperada (' + r.status + ')' } }
     if (!r.ok) throw new Error(json.error || 'Error')
     getSlotField(i, 'caption').value = json.caption
     setSlotStatus(i, '✓ Caption generado', 'success')
