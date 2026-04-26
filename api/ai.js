@@ -205,17 +205,41 @@ async function generateImage({ prompt, referenceImageUrl, size }) {
   throw new Error('OpenAI devolvió formato no reconocido')
 }
 
+const AI_BUCKET = 'ai-images'
+
+async function ensureBucket(sb) {
+  // Idempotent: check first, create only if missing. Tolerant to "already exists"
+  // races when two requests provision concurrently.
+  try {
+    const { data: buckets, error } = await sb.storage.listBuckets()
+    if (!error && Array.isArray(buckets) && buckets.find(b => b.name === AI_BUCKET)) return
+  } catch (_) { /* fall through to create */ }
+
+  const { error: createErr } = await sb.storage.createBucket(AI_BUCKET, {
+    public: true,
+    fileSizeLimit: 10 * 1024 * 1024
+    // intentionally not setting allowedMimeTypes — keeps the bucket flexible
+    // for future formats (we already control inputs server-side).
+  })
+  if (createErr && !/already exists|duplicate/i.test(createErr.message || '')) {
+    throw new Error(`No se pudo crear bucket "${AI_BUCKET}": ${createErr.message}`)
+  }
+}
+
 async function persistImageToSupabase(image, empresaId, inmuebleId) {
   const sb = getSupabaseService()
   if (!sb) {
     return {
       url: null,
       persisted: false,
-      warning: 'Supabase no configurado. Define SUPABASE_URL y SUPABASE_SERVICE_KEY en Vercel y crea el bucket "ai-images" con lectura pública.'
+      warning: 'Supabase no configurado. Define SUPABASE_URL y SUPABASE_SERVICE_KEY en Vercel.'
     }
   }
 
   try {
+    // Auto-provision the bucket on first use. No-op if it already exists.
+    await ensureBucket(sb)
+
     let buffer, contentType
     if (image.kind === 'url') {
       const res = await axios.get(image.value, { responseType: 'arraybuffer', timeout: 30000 })
@@ -230,13 +254,13 @@ async function persistImageToSupabase(image, empresaId, inmuebleId) {
     const safeId = (inmuebleId || 'ai').replace(/[^a-z0-9]/gi, '_').slice(0, 40)
     const path = `${empresaId || 'demo'}/${Date.now()}-${safeId}.${ext}`
 
-    const { error: upErr } = await sb.storage.from('ai-images').upload(path, buffer, {
+    const { error: upErr } = await sb.storage.from(AI_BUCKET).upload(path, buffer, {
       contentType,
       upsert: false
     })
     if (upErr) throw new Error(upErr.message)
 
-    const { data: pub } = sb.storage.from('ai-images').getPublicUrl(path)
+    const { data: pub } = sb.storage.from(AI_BUCKET).getPublicUrl(path)
     return { url: pub.publicUrl, persisted: true, path }
   } catch (err) {
     return { url: null, persisted: false, warning: `Supabase Storage: ${err.message}` }
