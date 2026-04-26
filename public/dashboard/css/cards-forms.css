@@ -1,0 +1,336 @@
+/* ─────────────────────────────────────────────────────────────
+   RENTMIES ADS ENGINE — CARDS, FORMS, STATS, AI BADGES (FASE 1)
+   SKILL §5 (cards), §10 (stats), §11 (forms), §13 (AI badge),
+   §14 (channel pills), §15 (status indicators).
+   ───────────────────────────────────────────────────────────── */
+
+/* ──────────────────────────────────────────
+   Cards
+   ────────────────────────────────────────── */
+
+.ae-formcard {
+  background: var(--rm-surface);
+  border: 1px solid var(--rm-border);
+  border-radius: var(--ae-card-radius);
+  padding: 22px 24px;
+  box-shadow: var(--rm-shadow-xs);
+}
+
+.ae-formcard.compact { padding: 16px 18px; }
+
+.ae-formcard-h {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--rm-ink);
+  margin: 0 0 18px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--rm-border);
+  gap: 12px;
+}
+
+.ae-formcard-h .ae-formcard-h-accessory {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--rm-mono);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--rm-green-deep);
+}
+
+/* Recommendation block — deep green editorial card (SKILL §5.3) */
+
+.ae-reco {
+  background: var(--rm-green-deep);
+  color: #fff;
+  border-radius: var(--ae-card-radius);
+  padding: 22px 24px;
+  position: relative;
+  overflow: hidden;
+  min-height: 200px;
+}
+.ae-reco::after {
+  content: "⚡";
+  position: absolute;
+  bottom: -18px;
+  right: -8px;
+  font-size: 180px;
+  color: var(--ae-bolt);
+  opacity: 0.12;
+  transform: rotate(-12deg);
+  pointer-events: none;
+  line-height: 1;
+}
+.ae-reco-eyebrow {
+  font-family: var(--rm-mono);
+  font-size: 10px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--ae-bolt);
+  font-weight: 700;
+  margin-bottom: 10px;
+}
+.ae-reco-body {
+  font-size: 17px;
+  font-weight: 500;
+  line-height: 1.4;
+  margin: 0 0 18px;
+  position: relative;
+  z-index: 1;
+}
+.ae-reco-cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: transparent;
+  color: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  padding: 7px 12px;
+  border-radius: 4px;
+  font-family: var(--rm-mono);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  cursor: pointer;
+  position: relative;
+  z-index: 1;
+  transition: background 0.15s, border-color 0.15s;
+}
+.ae-reco-cta:hover { background: rgba(255, 255, 255, 0.1); border-color: rgba(255, 255, 255, 0.5); }
+
+/* ──────────────────────────────────────────
+   Forms
+   ────────────────────────────────────────── */
+
+.ae-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.ae-field-label {
+  font-family: var(--rm-font);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--rm-ink-2);
+  display: block;
+}
+
+.ae-field-hint {
+  font-size: 11px;
+  color: var(--rm-muted);
+  margin-top: 4px;
+  line-height: 1.45;
+}
+
+.ae-input,
+.ae-textarea,
+.ae-select {
+  width: 100%;
+  padding: 10px 12px;
+  background: var(--ae-input-bg);
+  border: 1px solid var(--rm-border);
+  border-radius: 4px;
+  font-family: var(--rm-font);
+  font-size: 13px;
+  color: var(--rm-ink);
+  outline: none;
+  transition: border-color 0.15s, background 0.15s, box-shadow 0.15s;
+}
+
+.ae-input::placeholder,
+.ae-textarea::placeholder { color: var(--rm-muted); }
+
+.ae-input:hover,
+.ae-textarea:hover,
+.ae-select:hover { border-color: var(--rm-border-strong); }
+
+.ae-input:focus,
+.ae-textarea:focus,
+.ae-select:focus {
+  border-color: var(--rm-teal);
+  background: var(--rm-surface);
+  box-shadow: 0 0 0 3px rgba(64, 217, 157, 0.12);
+}
+
+.ae-textarea {
+  min-height: 78px;
+  resize: vertical;
+  line-height: 1.5;
+}
+
+.ae-select {
+  cursor: pointer;
+  background-image: linear-gradient(45deg, transparent 50%, var(--rm-muted) 50%),
+                    linear-gradient(135deg, var(--rm-muted) 50%, transparent 50%);
+  background-position: calc(100% - 14px) center, calc(100% - 9px) center;
+  background-size: 5px 5px, 5px 5px;
+  background-repeat: no-repeat;
+  appearance: none;
+  -webkit-appearance: none;
+  padding-right: 28px;
+}
+
+.ae-input[disabled],
+.ae-textarea[disabled],
+.ae-select[disabled] {
+  opacity: 0.6;
+  cursor: not-allowed;
+  background: var(--rm-surface-3);
+}
+
+/* ──────────────────────────────────────────
+   Stat tiles (KPIs)
+   ────────────────────────────────────────── */
+
+.ae-stat {
+  background: var(--rm-surface);
+  border: 1px solid var(--rm-border);
+  border-radius: var(--ae-card-radius);
+  padding: 16px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  box-shadow: var(--rm-shadow-xs);
+}
+
+.ae-stat-label {
+  font-family: var(--rm-mono);
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--rm-muted);
+}
+
+.ae-stat-value {
+  font-family: var(--rm-font);
+  font-size: 26px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1;
+  color: var(--rm-ink);
+}
+
+.ae-stat-delta {
+  font-family: var(--rm-mono);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+}
+.ae-stat-delta.up   { color: var(--rm-green-deep); }
+.ae-stat-delta.down { color: var(--rm-red); }
+
+.ae-stat.energy .ae-stat-value { color: var(--rm-green-deep); }
+
+.ae-stats-row {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+}
+@media (max-width: 880px) {
+  .ae-stats-row { grid-template-columns: repeat(2, 1fr); }
+}
+
+/* ──────────────────────────────────────────
+   AI badge — pulsing teal dot pill
+   ────────────────────────────────────────── */
+
+.ae-ai-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 8px;
+  border-radius: 999px;
+  background: rgba(64, 217, 157, 0.12);
+  color: var(--rm-green-deep);
+  font-family: var(--rm-mono);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.ae-ai-badge::before {
+  content: "";
+  width: 5px; height: 5px;
+  border-radius: 50%;
+  background: var(--rm-teal);
+  box-shadow: 0 0 6px var(--rm-teal);
+  animation: ae-pulse 1.6s ease-in-out infinite;
+  flex-shrink: 0;
+}
+
+/* ──────────────────────────────────────────
+   Channel pills (Instagram / TikTok / Meta / WhatsApp)
+   ────────────────────────────────────────── */
+
+.ae-ch {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-family: var(--rm-font);
+  font-size: 10px;
+  font-weight: 600;
+  padding: 3px 8px;
+  border-radius: 999px;
+  background: var(--rm-surface-3);
+  color: var(--rm-ink-2);
+}
+
+.ae-ch svg { width: 10px; height: 10px; stroke: currentColor; stroke-width: 1.8; fill: none; }
+
+/* ──────────────────────────────────────────
+   Status pills (SCHEDULED / PENDING / PAUSED / LIVE)
+   ────────────────────────────────────────── */
+
+.ae-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 8px;
+  border-radius: 999px;
+  font-family: var(--rm-mono);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.ae-status.scheduled { background: rgba(64, 217, 157, 0.12); color: var(--rm-green-deep); }
+.ae-status.pending   { background: rgba(210, 152, 54, 0.14); color: var(--rm-amber); }
+.ae-status.paused    { background: rgba(193, 79, 58, 0.12); color: var(--rm-red); }
+.ae-status.live      { background: rgba(64, 217, 157, 0.18); color: var(--rm-green-deep); }
+.ae-status.live::before {
+  content: "";
+  width: 5px; height: 5px;
+  border-radius: 50%;
+  background: var(--rm-teal);
+  box-shadow: 0 0 6px var(--rm-teal);
+  animation: ae-pulse 1.6s ease-in-out infinite;
+}
+
+/* ──────────────────────────────────────────
+   Two-column form grids
+   ────────────────────────────────────────── */
+
+.ae-grid-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+@media (max-width: 720px) { .ae-grid-2 { grid-template-columns: 1fr; } }
+
+.ae-grid-3 {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+}
+@media (max-width: 880px) { .ae-grid-3 { grid-template-columns: 1fr 1fr; } }
+@media (max-width: 540px) { .ae-grid-3 { grid-template-columns: 1fr; } }
