@@ -1,34 +1,40 @@
 /**
- * RENTMIES — AI assist (Azure OpenAI)
+ * RENTMIES — AI assist (OpenAI direct)
  *
  *   POST /api/ai?action=caption
  *     Body: { inmueble, platform?, vibe? }
  *     Returns: { caption: string }
  *
  *   POST /api/ai?action=image
- *     Body: { inmueble?, prompt?, size? }    size = '1024x1024' | '1024x1536' | '1536x1024'
- *     Returns: { url, persisted, prompt, warning? }
+ *     Body: { inmueble?, prompt?, reference_image_url?, size? }
+ *     Returns: { url, persisted, prompt, reference_used, warning? }
  *
- * Env vars:
- *   AZURE_OPENAI_ENDPOINT          (e.g. https://azureai-instance1.openai.azure.com/)
- *   AZURE_OPENAI_API_KEY
- *   AZURE_OPENAI_API_VERSION       (default: 2025-04-01-preview)
- *   AZURE_OPENAI_IMAGE_DEPLOYMENT  (default: gpt-image-2)
- *   AZURE_OPENAI_CHAT_DEPLOYMENT   (default: gpt-4o-mini)
+ * Env vars (required):
+ *   OPENAI_API_KEY
  *
- * Optional Supabase Storage upload:
- *   SUPABASE_URL + SUPABASE_SERVICE_KEY → bucket 'ai-images' (public read)
- *   Without them, we return Azure's temp URL (TTL ~1h, suficiente para que IG la baje al publicar).
+ * Env vars (optional):
+ *   OPENAI_CHAT_MODEL    (default: gpt-4o-mini)
+ *   OPENAI_IMAGE_MODEL   (default: gpt-image-1)
+ *
+ * Supabase Storage (required for image persistence):
+ *   SUPABASE_URL + SUPABASE_SERVICE_KEY
+ *   Bucket 'ai-images' must exist with public read enabled.
+ *
+ * Why /v1/images/edits and not Responses API for images:
+ *   gpt-image-1 always returns base64. Going through /v1/responses with the
+ *   image_generation tool adds chat-model token costs on top of the image
+ *   cost (you pay twice). The dedicated /v1/images/edits endpoint is a
+ *   straight image-to-image call when a reference URL is provided.
  */
 
 const axios = require('axios')
+const FormData = require('form-data')
 const { createClient } = require('@supabase/supabase-js')
 
-const AZ_ENDPOINT = (process.env.AZURE_OPENAI_ENDPOINT || '').replace(/\/$/, '')
-const AZ_KEY = process.env.AZURE_OPENAI_API_KEY || ''
-const AZ_VERSION = process.env.AZURE_OPENAI_API_VERSION || '2025-04-01-preview'
-const AZ_IMG_DEPLOY = process.env.AZURE_OPENAI_IMAGE_DEPLOYMENT || 'gpt-image-2'
-const AZ_CHAT_DEPLOY = process.env.AZURE_OPENAI_CHAT_DEPLOYMENT || 'gpt-4o-mini'
+const OPENAI_KEY = process.env.OPENAI_API_KEY || ''
+const OPENAI_CHAT = process.env.OPENAI_CHAT_MODEL || 'gpt-4o-mini'
+const OPENAI_IMG = process.env.OPENAI_IMAGE_MODEL || 'gpt-image-1'
+const OPENAI_BASE = 'https://api.openai.com/v1'
 
 function getSupabaseService() {
   const url = process.env.SUPABASE_URL
@@ -78,41 +84,46 @@ function buildCaptionUserMessage(inmueble, platform, vibe) {
   return lines.join('\n')
 }
 
-function buildImagePrompt(inmueble, custom) {
+function buildImagePrompt(inmueble, custom, hasReference) {
   if (custom && custom.trim()) return custom.trim()
   const tipo = (inmueble.tipo || inmueble.tipo_inmueble_propiedad || 'apartamento').toLowerCase()
   const ciudad = inmueble.ciudad || inmueble.nombre_ciudad || 'Colombia'
   const proyecto = inmueble.proyecto ? ` (proyecto ${inmueble.proyecto})` : ''
-  const desc = inmueble.descripcion ? ` Estilo arquitectónico: ${inmueble.descripcion}.` : ''
+  const desc = inmueble.descripcion ? ` Estilo: ${inmueble.descripcion}.` : ''
+
+  if (hasReference) {
+    return (
+      `Reinterpret the reference photo as a polished editorial real estate marketing image of a ${tipo} in ${ciudad}, Colombia${proyecto}.${desc} ` +
+      `Keep the building's architecture, layout and proportions faithful to the reference. ` +
+      `Upgrade lighting to golden hour with warm natural tones, deepen colors, add subtle atmosphere (light haze, soft sky), polish surfaces. ` +
+      `Magazine-quality real estate photography aesthetic. No people. Square 1:1 aspect ratio. ` +
+      `Strict: no text, no logos, no watermarks, no signage overlays.`
+    )
+  }
   return (
-    `Editorial real estate photograph of a modern ${tipo} in ${ciudad}, Colombia${proyecto}.` +
-    `${desc} Premium magazine quality, golden hour natural lighting, clean architectural composition, ` +
-    `no people visible, aspirational minimalist mood. Square 1:1 aspect ratio, high resolution. ` +
-    `Strictly: no text, no logos, no watermarks, no signage, no UI overlays.`
+    `Editorial real estate marketing photograph of a modern ${tipo} in ${ciudad}, Colombia${proyecto}.${desc} ` +
+    `Premium magazine quality, golden hour natural lighting, clean architectural composition, no people, aspirational minimalist mood. ` +
+    `Square 1:1 aspect ratio, high resolution. Strict: no text, no logos, no watermarks, no signage.`
   )
 }
 
+// ─── Caption via Responses API ────────────────────────────────────────────
 async function generateCaption(inmueble, platform, vibe) {
-  if (!AZ_ENDPOINT || !AZ_KEY) {
-    throw new Error('Azure OpenAI no configurado. Define AZURE_OPENAI_ENDPOINT y AZURE_OPENAI_API_KEY en Vercel.')
-  }
-  // Deployment-based path: more permissive with dated api-versions than the /openai/v1/* surface.
-  const url = `${AZ_ENDPOINT}/openai/deployments/${AZ_CHAT_DEPLOY}/chat/completions?api-version=${AZ_VERSION}`
+  if (!OPENAI_KEY) throw new Error('OPENAI_API_KEY no configurada en Vercel.')
+
   const body = {
-    messages: [
-      { role: 'system', content: CAPTION_SYSTEM },
-      { role: 'user', content: buildCaptionUserMessage(inmueble, platform, vibe) }
-    ],
-    temperature: 0.75,
-    max_tokens: 600
+    model: OPENAI_CHAT,
+    instructions: CAPTION_SYSTEM,
+    input: buildCaptionUserMessage(inmueble, platform, vibe),
+    max_output_tokens: 600
   }
   try {
-    const { data } = await axios.post(url, body, {
-      headers: { 'api-key': AZ_KEY, 'Content-Type': 'application/json' },
+    const { data } = await axios.post(`${OPENAI_BASE}/responses`, body, {
+      headers: { Authorization: `Bearer ${OPENAI_KEY}`, 'Content-Type': 'application/json' },
       timeout: 25000
     })
-    const caption = data && data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content
-    if (!caption || !caption.trim()) throw new Error('Azure devolvió respuesta vacía')
+    const caption = (data && data.output_text) || extractTextFromOutput(data && data.output)
+    if (!caption || !caption.trim()) throw new Error('OpenAI devolvió respuesta vacía')
     return { caption: caption.trim() }
   } catch (err) {
     const msg = (err.response && err.response.data && err.response.data.error && err.response.data.error.message) || err.message
@@ -120,42 +131,88 @@ async function generateCaption(inmueble, platform, vibe) {
   }
 }
 
-async function generateImage(prompt, size) {
-  if (!AZ_ENDPOINT || !AZ_KEY) {
-    throw new Error('Azure OpenAI no configurado.')
+function extractTextFromOutput(output) {
+  if (!Array.isArray(output)) return ''
+  for (const item of output) {
+    if (item && item.type === 'message' && Array.isArray(item.content)) {
+      for (const c of item.content) {
+        if (c && c.type === 'output_text' && c.text) return c.text
+      }
+    }
   }
-  const url = `${AZ_ENDPOINT}/openai/deployments/${AZ_IMG_DEPLOY}/images/generations?api-version=${AZ_VERSION}`
-  // gpt-image-2 quality values are: low | medium | high | auto (NOT 'standard' — that's DALL-E 3).
-  const body = {
-    prompt,
-    n: 1,
-    size: size || '1024x1024',
-    quality: 'medium'
-  }
-  try {
-    const { data } = await axios.post(url, body, {
-      headers: { 'api-key': AZ_KEY, 'Content-Type': 'application/json' },
-      timeout: 55000
+  return ''
+}
+
+// ─── Image via /v1/images/edits or /v1/images/generations ────────────────
+async function generateImage({ prompt, referenceImageUrl, size }) {
+  if (!OPENAI_KEY) throw new Error('OPENAI_API_KEY no configurada en Vercel.')
+
+  const finalSize = size || '1024x1024'
+  let response
+
+  if (referenceImageUrl) {
+    // Image-to-image edit. Download the reference, then upload as multipart.
+    let refBuffer, refContentType, refExt
+    try {
+      const imgRes = await axios.get(referenceImageUrl, {
+        responseType: 'arraybuffer',
+        timeout: 30000,
+        maxContentLength: 25 * 1024 * 1024
+      })
+      refBuffer = Buffer.from(imgRes.data)
+      refContentType = imgRes.headers['content-type'] || 'image/png'
+      refExt = (refContentType.split('/')[1] || 'png').split(';')[0].replace(/[^a-z0-9]/gi, '') || 'png'
+    } catch (err) {
+      throw new Error(`No se pudo descargar la imagen de referencia (${err.message}). URL: ${referenceImageUrl.slice(0, 80)}…`)
+    }
+
+    const form = new FormData()
+    form.append('image', refBuffer, { filename: `ref.${refExt}`, contentType: refContentType })
+    form.append('model', OPENAI_IMG)
+    form.append('prompt', prompt)
+    form.append('size', finalSize)
+    form.append('quality', 'medium')
+    form.append('n', '1')
+
+    response = await axios.post(`${OPENAI_BASE}/images/edits`, form, {
+      headers: {
+        Authorization: `Bearer ${OPENAI_KEY}`,
+        ...form.getHeaders()
+      },
+      timeout: 90000,
+      maxContentLength: 50 * 1024 * 1024,
+      maxBodyLength: 50 * 1024 * 1024
     })
-    const item = data && data.data && data.data[0]
-    if (!item) throw new Error('Azure no devolvió data')
-    if (item.url) return { kind: 'url', value: item.url }
-    if (item.b64_json) return { kind: 'b64', value: item.b64_json }
-    throw new Error('Azure devolvió un formato no reconocido')
-  } catch (err) {
-    const msg = (err.response && err.response.data && err.response.data.error && err.response.data.error.message) || err.message
-    throw new Error(`Imagen falló: ${msg}`)
+  } else {
+    // Text-to-image (no reference)
+    response = await axios.post(`${OPENAI_BASE}/images/generations`, {
+      model: OPENAI_IMG,
+      prompt,
+      size: finalSize,
+      quality: 'medium',
+      n: 1
+    }, {
+      headers: { Authorization: `Bearer ${OPENAI_KEY}`, 'Content-Type': 'application/json' },
+      timeout: 90000,
+      maxContentLength: 50 * 1024 * 1024
+    })
   }
+
+  const item = response.data && response.data.data && response.data.data[0]
+  if (!item) throw new Error('OpenAI no devolvió data')
+  if (item.b64_json) return { kind: 'b64', value: item.b64_json }
+  if (item.url) return { kind: 'url', value: item.url }
+  throw new Error('OpenAI devolvió formato no reconocido')
 }
 
 async function persistImageToSupabase(image, empresaId, inmuebleId) {
   const sb = getSupabaseService()
   if (!sb) {
-    if (image.kind === 'b64') {
-      // Sin Supabase no podemos servir el b64 a Meta directamente — devolver data URL no funciona para IG.
-      return { url: null, persisted: false, warning: 'La imagen vino como base64 y no hay Supabase configurado para alojarla públicamente.' }
+    return {
+      url: null,
+      persisted: false,
+      warning: 'Supabase no configurado. Define SUPABASE_URL y SUPABASE_SERVICE_KEY en Vercel y crea el bucket "ai-images" con lectura pública.'
     }
-    return { url: image.value, persisted: false }
   }
 
   try {
@@ -169,7 +226,7 @@ async function persistImageToSupabase(image, empresaId, inmuebleId) {
       contentType = 'image/png'
     }
 
-    const ext = (contentType.split('/')[1] || 'png').replace(/[^a-z0-9]/gi, '') || 'png'
+    const ext = (contentType.split('/')[1] || 'png').split(';')[0].replace(/[^a-z0-9]/gi, '') || 'png'
     const safeId = (inmuebleId || 'ai').replace(/[^a-z0-9]/gi, '_').slice(0, 40)
     const path = `${empresaId || 'demo'}/${Date.now()}-${safeId}.${ext}`
 
@@ -182,9 +239,7 @@ async function persistImageToSupabase(image, empresaId, inmuebleId) {
     const { data: pub } = sb.storage.from('ai-images').getPublicUrl(path)
     return { url: pub.publicUrl, persisted: true, path }
   } catch (err) {
-    console.warn('[ai] Supabase persist falló:', err.message)
-    if (image.kind === 'url') return { url: image.value, persisted: false, warning: `Supabase: ${err.message}. Usando URL temporal de Azure.` }
-    return { url: null, persisted: false, warning: `Supabase: ${err.message}` }
+    return { url: null, persisted: false, warning: `Supabase Storage: ${err.message}` }
   }
 }
 
@@ -208,17 +263,31 @@ module.exports = async (req, res) => {
     }
 
     if (action === 'image') {
-      const { inmueble, prompt: userPrompt, size } = req.body || {}
-      const finalPrompt = buildImagePrompt(inmueble || {}, userPrompt)
-      const image = await generateImage(finalPrompt, size)
+      const { inmueble, prompt: userPrompt, reference_image_url, size } = req.body || {}
+      const refUrl = reference_image_url || (inmueble && inmueble.image_link_1) || ''
+      const finalPrompt = buildImagePrompt(inmueble || {}, userPrompt, !!refUrl)
+
+      let image
+      try {
+        image = await generateImage({ prompt: finalPrompt, referenceImageUrl: refUrl, size })
+      } catch (err) {
+        const msg = (err.response && err.response.data && err.response.data.error && err.response.data.error.message) || err.message
+        return res.status(500).json({ error: 'Imagen falló', detail: msg })
+      }
+
       const persisted = await persistImageToSupabase(image, empresaId, inmueble && inmueble.id)
       if (!persisted.url) {
-        return res.status(500).json({ error: 'No hay URL pública', detail: persisted.warning })
+        return res.status(500).json({
+          error: 'Imagen generada pero sin URL pública',
+          detail: persisted.warning
+        })
       }
+
       return res.json({
         url: persisted.url,
         persisted: persisted.persisted,
         prompt: finalPrompt,
+        reference_used: !!refUrl,
         warning: persisted.warning
       })
     }

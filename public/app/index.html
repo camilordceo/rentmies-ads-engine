@@ -2918,9 +2918,10 @@ async function generateAIImage() {
     document.getElementById('qpPreviewImg').src = data.url
     document.getElementById('qpImagePreview').style.display = 'block'
 
-    const persistMsg = data.persisted ? 'guardada permanentemente en Supabase' : 'URL temporal de Azure (~1h)'
+    const refMsg = data.reference_used ? ' usando la foto del inmueble como referencia' : ' (generada de cero)'
+    const persistMsg = data.persisted ? ' · guardada en Supabase' : ' · (no persistida)'
     const warn = data.warning ? ` · ⚠ ${data.warning}` : ''
-    setAIStatus(`✓ Imagen lista (${persistMsg})${warn}`, 'success')
+    setAIStatus(`✓ Imagen lista${refMsg}${persistMsg}${warn}`, 'success')
     toast('Imagen generada', 'success')
   } catch (err) {
     setAIStatus('✗ ' + err.message, 'error')
