@@ -175,7 +175,7 @@
   }
 
   async function render() {
-    const slot = document.querySelector('[data-page="dashboard"]')
+    const slot = document.querySelector('section[data-page="dashboard"]')
     if (!slot) return
     // Show skeleton while we resolve campaigns
     if (window.rmStates) window.rmStates.skeleton(slot, 4)

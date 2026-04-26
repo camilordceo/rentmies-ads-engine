@@ -284,7 +284,7 @@
   // ── Mount ─────────────────────────────────────────────────
 
   function mount() {
-    const slot = document.querySelector('[data-page="settings"]')
+    const slot = document.querySelector('section[data-page="settings"]')
     if (!slot) return
     slot.innerHTML = html()
     wire()

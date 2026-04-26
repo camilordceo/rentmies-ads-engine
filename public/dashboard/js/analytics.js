@@ -72,7 +72,7 @@
   // ── Render ────────────────────────────────────────────────
 
   function render() {
-    const slot = document.querySelector('[data-page="analytics"]')
+    const slot = document.querySelector('section[data-page="analytics"]')
     if (!slot) return
     const kpis = KPIS[activePeriod]
     slot.innerHTML = `

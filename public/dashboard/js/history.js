@@ -41,7 +41,7 @@
   // ── Render ─────────────────────────────────────────────────
 
   function render() {
-    const slot = document.querySelector('[data-page="history"]')
+    const slot = document.querySelector('section[data-page="history"]')
     if (!slot) return
     const filtered = logs.filter(l => activeAction === 'all' || l.action === activeAction)
     slot.innerHTML = `

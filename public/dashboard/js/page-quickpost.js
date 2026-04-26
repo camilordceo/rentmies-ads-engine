@@ -175,7 +175,7 @@
   // ── Wiring ────────────────────────────────────────────────
 
   async function mount() {
-    const slot = document.querySelector('[data-page="quickpost"]')
+    const slot = document.querySelector('section[data-page="quickpost"]')
     if (!slot) return
     slot.innerHTML = html()
 

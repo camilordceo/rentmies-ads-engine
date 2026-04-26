@@ -180,7 +180,7 @@
   // ── Wiring ────────────────────────────────────────────────
 
   async function mount() {
-    const slot = document.querySelector('[data-page="schedule"]')
+    const slot = document.querySelector('section[data-page="schedule"]')
     if (!slot) return
     slot.innerHTML = html()
 

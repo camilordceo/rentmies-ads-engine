@@ -143,7 +143,7 @@
   }
 
   function render() {
-    const slot = document.querySelector('[data-page="whatsapp"]')
+    const slot = document.querySelector('section[data-page="whatsapp"]')
     if (!slot) return
     slot.innerHTML = html()
     wire()

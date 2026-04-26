@@ -140,14 +140,14 @@
   }
 
   function render() {
-    const slot = document.querySelector('[data-page="inmuebles"]')
+    const slot = document.querySelector('section[data-page="inmuebles"]')
     if (!slot) return
     slot.innerHTML = html()
     wire()
   }
 
   async function mount() {
-    const slot = document.querySelector('[data-page="inmuebles"]')
+    const slot = document.querySelector('section[data-page="inmuebles"]')
     if (!slot) return
     slot.innerHTML = '<div class="ae-page-shell"><div style="padding:48px; text-align:center; color:var(--rm-muted);">Cargando inventario…</div></div>'
     if (window.rmInmuebles) {
