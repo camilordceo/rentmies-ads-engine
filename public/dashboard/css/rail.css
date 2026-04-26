@@ -1,0 +1,119 @@
+/* ─────────────────────────────────────────────────────────────
+   RENTMIES ADS ENGINE — LEFT RAIL (FASE 1)
+   64px dark green-black sidebar. Icons only. Active = teal accent.
+   ───────────────────────────────────────────────────────────── */
+
+.ae-rail {
+  background: var(--rm-ink);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 14px 0;
+  gap: 4px;
+  border-right: 1px solid rgba(255, 255, 255, 0.06);
+  position: relative;
+}
+
+/* ── Logo cap (Camilord brand mark) ── */
+
+.ae-rail-logo {
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  background: var(--rm-teal);
+  color: var(--rm-green-deep);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--rm-serif);
+  font-style: italic;
+  font-weight: 800;
+  font-size: 18px;
+  margin-bottom: 14px;
+  user-select: none;
+}
+
+/* ── Nav items (44×44 touch target) ── */
+
+.ae-rail-link {
+  width: 44px;
+  height: 44px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: rgba(255, 255, 255, 0.5);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  position: relative;
+  transition: color 0.15s, background 0.15s;
+  outline: none;
+}
+
+.ae-rail-link svg {
+  width: 18px;
+  height: 18px;
+  stroke-width: 1.6;
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.ae-rail-link:hover {
+  background: rgba(255, 255, 255, 0.06);
+  color: #fff;
+}
+
+.ae-rail-link:focus-visible {
+  outline: 2px solid var(--rm-teal);
+  outline-offset: 2px;
+}
+
+.ae-rail-link.active {
+  background: rgba(64, 217, 157, 0.1);
+  color: var(--rm-teal);
+}
+
+/* Active accent — 3px teal bar at the rail's left edge */
+.ae-rail-link.active::before {
+  content: "";
+  position: absolute;
+  left: -10px;
+  top: 10px;
+  bottom: 10px;
+  width: 3px;
+  background: var(--rm-teal);
+  border-radius: 0 3px 3px 0;
+}
+
+/* ── Spacers and footer (settings + avatar) ── */
+
+.ae-rail-spacer { flex: 1; }
+
+.ae-rail-divider {
+  width: 28px;
+  height: 1px;
+  background: rgba(255, 255, 255, 0.08);
+  margin: 8px 0;
+}
+
+.ae-rail-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--rm-teal), var(--rm-green));
+  color: var(--rm-green-deep);
+  font-family: var(--rm-font);
+  font-weight: 700;
+  font-size: 11px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  user-select: none;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  transition: transform 0.15s;
+}
+.ae-rail-avatar:hover { transform: scale(1.05); }
