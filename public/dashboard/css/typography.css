@@ -1,0 +1,158 @@
+/* ─────────────────────────────────────────────────────────────
+   RENTMIES ADS ENGINE — TYPOGRAPHY (FASE 1)
+   Three-tier system from SKILL §2.1 — §2.4
+   Inter (UI) · Instrument Serif italic (editorial) · JetBrains Mono (data)
+   ───────────────────────────────────────────────────────────── */
+
+body {
+  font-family: var(--rm-font);
+  font-size: 14px;
+  line-height: 1.55;
+  color: var(--rm-ink);
+}
+
+/* ── Editorial Display (the signature pattern) ──
+   "Fuel your Ads: <em>Villa Victoria</em>"
+   Italic Instrument Serif with optional green-deep prefix.   */
+
+.ae-display {
+  font-family: var(--rm-serif);
+  font-style: italic;
+  font-weight: 400;
+  font-size: 44px;
+  line-height: 1.05;
+  letter-spacing: -0.025em;
+  color: var(--rm-ink);
+  margin: 0;
+}
+
+.ae-display-prefix {
+  color: var(--rm-green-deep);
+}
+
+@media (max-width: 720px) {
+  .ae-display { font-size: 34px; }
+}
+
+/* ── Subhead — the brief explainer below the display ── */
+
+.ae-subhead {
+  font-family: var(--rm-font);
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 1.55;
+  color: var(--rm-ink-2);
+  max-width: 540px;
+  margin: 12px 0 0;
+}
+
+/* ── Eyebrow — mono UPPERCASE label above the display ── */
+
+.ae-eyebrow {
+  font-family: var(--rm-mono);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--rm-ink-2);
+  margin: 0 0 14px;
+  display: block;
+}
+
+.ae-eyebrow.muted { color: var(--rm-muted); }
+
+.ae-eyebrow.teal { color: var(--rm-teal); }
+
+/* ── Headlines (non-editorial, sans-serif) ── */
+
+.ae-headline {
+  font-family: var(--rm-font);
+  font-size: 32px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  line-height: 1.15;
+  color: var(--rm-ink);
+  margin: 0;
+}
+
+.ae-section-title {
+  font-family: var(--rm-font);
+  font-size: 24px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--rm-ink);
+  margin: 0;
+}
+
+.ae-card-title {
+  font-family: var(--rm-font);
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--rm-ink);
+  margin: 0;
+}
+
+/* ── Body and supporting ── */
+
+.ae-body {
+  font-family: var(--rm-font);
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 1.55;
+  color: var(--rm-ink);
+}
+
+.ae-body-muted {
+  color: var(--rm-ink-2);
+}
+
+/* ── Mono micro — IDs, timestamps, data signatures ── */
+
+.rm-mono {
+  font-family: var(--rm-mono);
+  font-feature-settings: 'tnum' 1, 'liga' 0;
+}
+
+.ae-mono-micro {
+  font-family: var(--rm-mono);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--rm-muted);
+}
+
+/* ── Serif utility (rarely used outside .ae-display) ── */
+
+.rm-serif {
+  font-family: var(--rm-serif);
+  font-style: italic;
+  font-weight: 400;
+}
+
+/* ── Stat values (used by .ae-stat) ── */
+
+.ae-stat-value {
+  font-family: var(--rm-font);
+  font-size: 26px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+  color: var(--rm-ink);
+}
+
+.ae-stat-value-xl {
+  font-family: var(--rm-font);
+  font-size: 30px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  line-height: 1.05;
+  color: var(--rm-green-deep);
+}
+
+/* ── Selection — match the editorial vibe ── */
+
+::selection {
+  background: rgba(64, 217, 157, 0.25);
+  color: var(--rm-ink);
+}
