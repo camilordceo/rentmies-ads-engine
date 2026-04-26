@@ -13,7 +13,9 @@ module.exports = async (req, res) => {
     supabase: !!(process.env.SUPABASE_URL && (process.env.SUPABASE_SERVICE_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY)),
     supabase_anon: !!(process.env.SUPABASE_URL && process.env.SUPABASE_ANON_KEY),
     google_ai: !!(process.env.GEMINI_API_KEY || process.env.GOOGLE_AI_API_KEY),
-    meta: !!(process.env.META_APP_ID || process.env.META_ACCESS_TOKEN)
+    meta: !!(process.env.META_APP_ID || process.env.META_ACCESS_TOKEN),
+    openai: !!process.env.OPENAI_API_KEY,
+    azure_openai: !!(process.env.AZURE_OPENAI_API_KEY && process.env.AZURE_OPENAI_ENDPOINT)
   }
 
   let database = 'not_configured'
