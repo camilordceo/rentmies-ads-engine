@@ -1,0 +1,167 @@
+/* ─────────────────────────────────────────────────────────────
+   Phone preview — SKILL §7
+   iOS-style mockup that updates live as the user types.
+   ───────────────────────────────────────────────────────────── */
+
+.ae-live-strip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+.ae-live-strip .ae-live-dot {
+  width: 7px; height: 7px;
+  border-radius: 50%;
+  background: var(--rm-teal);
+  box-shadow: 0 0 8px var(--rm-teal);
+  animation: ae-pulse 1.6s ease-in-out infinite;
+}
+.ae-live-strip .rm-mono {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--rm-green-deep);
+}
+
+.ae-phone {
+  background: #fff;
+  border: 1px solid var(--rm-border);
+  border-radius: 8px;
+  padding: 14px;
+  box-shadow: var(--rm-shadow-sm);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.ae-phone-meta {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.ae-phone-avatar {
+  width: 32px; height: 32px;
+  border-radius: 6px;
+  background: var(--rm-green);
+  color: #fff;
+  font-weight: 700;
+  font-size: 13px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.ae-phone-meta-text { flex: 1; min-width: 0; }
+.ae-phone-name {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--rm-ink);
+  line-height: 1.2;
+}
+.ae-phone-label {
+  font-size: 10.5px;
+  color: var(--rm-muted);
+  margin-top: 1px;
+}
+.ae-phone-dots {
+  font-size: 18px;
+  color: var(--rm-muted);
+  letter-spacing: 0.1em;
+  user-select: none;
+}
+
+/* Image area — shifts gradient with selected angle */
+
+.ae-phone-img {
+  position: relative;
+  aspect-ratio: 4 / 3;
+  border-radius: 4px;
+  overflow: hidden;
+  background-position: center;
+  background-size: cover;
+  transition: background 0.4s ease;
+}
+
+.ae-phone-img.angle-ESTATUS   { background-image: linear-gradient(135deg, #2d3a4a, var(--rm-ink)); }
+.ae-phone-img.angle-CONFORT   { background-image: linear-gradient(135deg, #b58a86, #4a3b2d); }
+.ae-phone-img.angle-INVERSION { background-image: linear-gradient(135deg, var(--rm-green-deep), var(--rm-ink)); }
+.ae-phone-img.angle-REFUGIO   { background-image: linear-gradient(135deg, #3a5860, var(--rm-ink)); }
+
+.ae-phone-img-real {
+  position: absolute; inset: 0;
+  background-size: cover; background-position: center;
+}
+
+.ae-phone-overlay {
+  position: absolute;
+  left: 0; right: 0; bottom: 0;
+  padding: 14px 14px 12px;
+  background: linear-gradient(180deg, transparent 0%, rgba(15, 20, 16, 0.55) 50%, rgba(15, 20, 16, 0.85) 100%);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  color: #fff;
+}
+
+.ae-phone-tag {
+  align-self: flex-start;
+  background: rgba(255, 255, 255, 0.18);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  font-family: var(--rm-mono);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  padding: 3px 8px;
+  border-radius: 999px;
+  color: #fff;
+  text-transform: uppercase;
+}
+
+.ae-phone-headline {
+  font-family: var(--rm-serif);
+  font-style: italic;
+  font-weight: 400;
+  font-size: 16px;
+  line-height: 1.2;
+  letter-spacing: -0.01em;
+  color: #fff;
+  margin: 0;
+  /* Limit to 3 lines so very long headlines don't blow out the phone */
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.ae-phone-cap {
+  font-size: 11px;
+  color: var(--rm-muted);
+  line-height: 1.45;
+  /* Clamp to 4 lines */
+  display: -webkit-box;
+  -webkit-line-clamp: 4;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  min-height: 44px;
+}
+
+.ae-phone-cta {
+  background: var(--rm-green-deep);
+  color: #fff;
+  border: none;
+  padding: 10px 14px;
+  border-radius: 4px;
+  font-family: var(--rm-mono);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: background 0.15s, transform 0.15s;
+  align-self: stretch;
+}
+.ae-phone-cta:hover  { background: var(--rm-green); }
+.ae-phone-cta:active { transform: scale(0.98); }
