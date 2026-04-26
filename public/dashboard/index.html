@@ -111,39 +111,33 @@
     <div class="ae-rail-avatar" title="Camilo Rodríguez · camilo@rentmies.com">CR</div>
   </aside>
 
+  <!-- ═══════════ TOP NAV (own grid area, NOT inside canvas) ═══════════ -->
+  <header class="ae-topnav">
+    <div class="ae-topnav-logo">AdEngine AI</div>
+
+    <nav class="ae-topnav-nav">
+      <button class="ae-topnav-link active" data-page="quickpost">Quick Post</button>
+      <button class="ae-topnav-link" data-page="schedule">Programar</button>
+      <button class="ae-topnav-link" data-page="inmuebles">Inmuebles</button>
+      <button class="ae-topnav-link" data-page="whatsapp">WhatsApp</button>
+    </nav>
+
+    <div class="ae-topnav-spacer"></div>
+
+    <div class="ae-search">
+      <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      <input type="text" placeholder="Buscar campañas...">
+    </div>
+
+    <a class="ae-launch-btn" href="#quickpost" title="Quick Post — publicar en Instagram / Facebook">
+      <svg viewBox="0 0 24 24" width="11" height="11" fill="currentColor"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+      <span>Publicar ahora</span>
+    </a>
+  </header>
+
   <!-- ═══════════ MAIN CANVAS ═══════════ -->
   <main class="ae-canvas">
-    <header class="ae-topnav">
-      <div class="ae-topnav-logo">AdEngine AI</div>
-
-      <nav class="ae-topnav-nav">
-        <button class="ae-topnav-link active" data-page="quickpost">Quick Post</button>
-        <button class="ae-topnav-link" data-page="schedule">Programar</button>
-        <button class="ae-topnav-link" data-page="inmuebles">Inmuebles</button>
-        <button class="ae-topnav-link" data-page="whatsapp">WhatsApp</button>
-      </nav>
-
-      <div class="ae-topnav-spacer"></div>
-
-      <div class="ae-search">
-        <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-        <input type="text" placeholder="Buscar campañas...">
-      </div>
-
-      <a class="ae-launch-btn" href="#quickpost" title="Quick Post — publicar en Instagram / Facebook">
-        <svg viewBox="0 0 24 24" width="11" height="11" fill="currentColor"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
-        <span>Publicar ahora</span>
-      </a>
-    </header>
-
-    <div id="main-content" class="ae-content hide-scrollbar" role="main">
-
-      <!-- Migration banner — kept for reference path back to /app -->
-      <div class="ae-preview-banner" id="ae-migration-banner">
-        <span class="ae-preview-banner-pill">FASE 4</span>
-        <span class="ae-preview-banner-text">Quick Post, Programar, Inmuebles, WhatsApp y Settings ya viven aquí en el nuevo diseño. Si algo falla, <a href="/app">/app</a> sigue de respaldo.</span>
-        <button class="ae-preview-banner-cta" onclick="document.getElementById('ae-migration-banner').style.display='none'" type="button">Cerrar</button>
-      </div>
+    <div id="main-content" class="ae-content" role="main">
 
       <!-- ═══════════ CREATIVE STUDIO ═══════════ -->
       <section data-page="studio">
