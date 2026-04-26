@@ -66,3 +66,59 @@
   gap: 0;   /* eyebrow + display + subhead manage their own margins */
   margin-bottom: 8px;
 }
+
+/* ── Preview banner — top of every page in /dashboard ── */
+
+.ae-preview-banner {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+  background: linear-gradient(135deg, var(--rm-green-deep), var(--rm-ink));
+  color: #fff;
+  padding: 12px 24px;
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+  font-size: 13px;
+  line-height: 1.45;
+  position: sticky;
+  top: 0;
+  z-index: 40;
+}
+.ae-preview-banner-pill {
+  display: inline-flex;
+  align-items: center;
+  background: var(--rm-teal);
+  color: var(--rm-green-deep);
+  font-family: var(--rm-mono);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  padding: 4px 9px;
+  border-radius: 999px;
+  flex-shrink: 0;
+}
+.ae-preview-banner-text { flex: 1; min-width: 240px; color: rgba(255,255,255,0.85); }
+.ae-preview-banner-text a {
+  color: var(--rm-mint);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.ae-preview-banner-cta {
+  font-family: var(--rm-mono);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--rm-mint);
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.18);
+  border-radius: 4px;
+  padding: 7px 12px;
+  text-decoration: none;
+  flex-shrink: 0;
+}
+.ae-preview-banner-cta:hover { background: rgba(255,255,255,0.12); border-color: rgba(255,255,255,0.3); }
+@media (max-width: 720px) {
+  .ae-preview-banner { padding: 10px 14px; gap: 10px; font-size: 12px; }
+  .ae-preview-banner-cta { width: 100%; text-align: center; }
+}

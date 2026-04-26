@@ -22,34 +22,8 @@
 }
 .ae-topnav-burger svg { width: 18px; height: 14px; stroke: var(--rm-ink); stroke-width: 2; fill: none; }
 
-/* ── FAB (Camilord open) ── */
-
-.ae-fab {
-  display: none;   /* desktop default off */
-  position: fixed;
-  bottom: 18px; right: 18px;
-  width: 56px; height: 56px;
-  border-radius: 50%;
-  background: linear-gradient(135deg, var(--rm-teal), var(--rm-green-deep));
-  border: none;
-  color: var(--rm-green-deep);
-  cursor: pointer;
-  z-index: 60;
-  box-shadow: 0 8px 24px rgba(0, 77, 53, 0.35);
-  align-items: center;
-  justify-content: center;
-}
-.ae-fab svg { width: 22px; height: 22px; fill: currentColor; }
-.ae-fab::after {
-  content: "";
-  position: absolute;
-  inset: -4px;
-  border-radius: 50%;
-  background: var(--rm-teal);
-  opacity: 0.35;
-  z-index: -1;
-  animation: ae-pulse 2s ease-in-out infinite;
-}
+/* FAB removed — was rendering as an orphan giant circle when CSS broke.
+   Camilord is reachable via ⌘/ shortcut + the close button on the panel. */
 
 /* ── Mobile breakpoint ── */
 
@@ -68,8 +42,6 @@
     border-left: none;
   }
   .ae-camilord.open-mobile { display: flex; }
-
-  .ae-fab { display: inline-flex; }
 
   /* Topnav: hide nav links, expose hamburger. Logo + launch keep */
   .ae-topnav { gap: 12px; padding: 0 14px; }

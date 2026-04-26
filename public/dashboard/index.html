@@ -5,6 +5,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>AdEngine AI — Rentmies</title>
 
+  <!-- Anchor relative URLs to /dashboard/ regardless of how Vercel serves the path
+       (with or without trailing slash). Without this, css/* and js/* 404 from /dashboard. -->
+  <base href="/dashboard/">
+
   <!-- Fonts: Inter (UI) + Instrument Serif italic (editorial) + JetBrains Mono (data) -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -110,13 +114,20 @@
         <input type="text" placeholder="Buscar campañas...">
       </div>
 
-      <button class="ae-launch-btn" onclick="showPage('studio')" title="Lanzar nueva campaña">
+      <a class="ae-launch-btn" href="/app" title="Ir a Quick Post — publicar en IG / FB ahora">
         <svg viewBox="0 0 24 24" width="11" height="11" fill="currentColor"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
-        <span>Lanzar Campaña</span>
-      </button>
+        <span>Publicar ahora →</span>
+      </a>
     </header>
 
     <div id="main-content" class="ae-content hide-scrollbar" role="main">
+
+      <!-- Preview banner — clear about what this surface is -->
+      <div class="ae-preview-banner">
+        <span class="ae-preview-banner-pill">DESIGN PREVIEW</span>
+        <span class="ae-preview-banner-text">Este es el rediseño en progreso. Las funciones de publicación reales (Instagram, Facebook, programación, AI captions, AI imágenes) viven en <a href="/app">/app</a> y siguen funcionando ahí.</span>
+        <a class="ae-preview-banner-cta" href="/app">Ir a la app working →</a>
+      </div>
 
       <!-- ═══════════ CREATIVE STUDIO ═══════════ -->
       <section data-page="studio">
