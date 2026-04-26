@@ -80,31 +80,118 @@ async function publishToFacebookPage(pageId, accessToken, { caption, imageUrl })
   }
 }
 
-async function publishToInstagram(pageId, accessToken, { caption, imageUrl }) {
+function formatMetaError(err) {
+  const e = err.response && err.response.data && err.response.data.error
+  if (!e) return err.message
+  const msg = e.error_user_msg || e.message || 'error desconocido'
+  const codeBits = [e.code, e.error_subcode].filter(Boolean).join('/')
+  return codeBits ? `[${codeBits}] ${msg}` : msg
+}
+
+async function fetchInstagramAccountId(pageId, accessToken) {
+  let data
+  try {
+    const r = await axios.get(`${META_GRAPH}/${pageId}`, {
+      params: {
+        fields: 'instagram_business_account,name',
+        access_token: accessToken
+      },
+      timeout: 10000
+    })
+    data = r.data
+  } catch (err) {
+    throw new Error(`No se pudo leer la página de Facebook: ${formatMetaError(err)}`)
+  }
+  if (!data.instagram_business_account || !data.instagram_business_account.id) {
+    throw new Error(
+      `La página "${data.name || pageId}" no tiene una cuenta de Instagram Business vinculada. ` +
+      `Vincúlala en Meta Business Suite → Configuración → Cuentas vinculadas.`
+    )
+  }
+  return data.instagram_business_account.id
+}
+
+async function publishToInstagram(igUserId, accessToken, { caption, imageUrl }) {
   if (!imageUrl || !imageUrl.startsWith('http')) {
-    throw new Error('Instagram requires a public image URL')
+    throw new Error('Instagram requiere una URL de imagen pública (https://...)')
   }
 
-  // Step 1: Create media container
-  const { data: container } = await axios.post(`${META_GRAPH}/${pageId}/media`, {
-    image_url: imageUrl,
-    caption,
-    access_token: accessToken
-  })
-
-  if (!container.id) throw new Error('Failed to create Instagram media container')
-
-  // Step 2: Publish container
-  const { data: published } = await axios.post(`${META_GRAPH}/${pageId}/media_publish`, {
-    creation_id: container.id,
-    access_token: accessToken
-  })
-
-  return {
-    post_id: published.id,
-    platform: 'instagram',
-    url: `https://www.instagram.com/p/${published.id}`
+  // Step 1: Create media container (use query params, not JSON body — Meta expects form-style)
+  let containerId
+  try {
+    const { data } = await axios.post(`${META_GRAPH}/${igUserId}/media`, null, {
+      params: {
+        image_url: imageUrl,
+        caption: caption || '',
+        access_token: accessToken
+      },
+      timeout: 15000
+    })
+    containerId = data.id
+  } catch (err) {
+    throw new Error(`No se pudo crear el contenedor de Instagram: ${formatMetaError(err)}`)
   }
+  if (!containerId) throw new Error('Meta no devolvió container_id')
+
+  // Step 2: Poll status until FINISHED. Instagram needs a few seconds to fetch + validate the image.
+  // Budget: 2s initial + 8 * 2.5s = 22s of polling, leaving ~7s for create/publish/permalink within the 30s function limit.
+  const maxAttempts = 8
+  const delayMs = 2500
+  let lastStatus = null
+  await new Promise(r => setTimeout(r, 2000))   // initial breathing room
+  for (let i = 0; i < maxAttempts; i++) {
+    try {
+      const { data } = await axios.get(`${META_GRAPH}/${containerId}`, {
+        params: { fields: 'status_code,status', access_token: accessToken },
+        timeout: 5000
+      })
+      lastStatus = data.status_code
+      if (lastStatus === 'FINISHED') break
+      if (lastStatus === 'ERROR') {
+        throw new Error(
+          `Instagram rechazó la imagen (status ERROR). ` +
+          `Verifica: formato JPEG, ancho 320–1440px, ratio entre 4:5 y 1.91:1, peso < 8MB, URL pública.`
+        )
+      }
+      if (lastStatus === 'EXPIRED') throw new Error('El contenedor expiró antes de poderse publicar')
+    } catch (err) {
+      if (err.response) {
+        // Network/Graph error during poll — give up after first one
+        throw new Error(`Polling falló: ${formatMetaError(err)}`)
+      }
+      // Internal throw from above — propagate
+      if (err.message.startsWith('Instagram rechazó') || err.message.startsWith('El contenedor')) throw err
+    }
+    await new Promise(r => setTimeout(r, delayMs))
+  }
+  if (lastStatus !== 'FINISHED') {
+    throw new Error(`Timeout esperando procesamiento. Último estado: "${lastStatus || 'sin respuesta'}"`)
+  }
+
+  // Step 3: Publish
+  let mediaId
+  try {
+    const { data } = await axios.post(`${META_GRAPH}/${igUserId}/media_publish`, null, {
+      params: { creation_id: containerId, access_token: accessToken },
+      timeout: 15000
+    })
+    mediaId = data.id
+  } catch (err) {
+    throw new Error(`Publicación falló: ${formatMetaError(err)}`)
+  }
+  if (!mediaId) throw new Error('Meta no devolvió media_id tras publicar')
+
+  // Step 4: Resolve a public permalink so the success message has a real URL.
+  let url = `https://www.instagram.com/`
+  try {
+    const { data } = await axios.get(`${META_GRAPH}/${mediaId}`, {
+      params: { fields: 'permalink', access_token: accessToken },
+      timeout: 5000
+    })
+    if (data.permalink) url = data.permalink
+  } catch (_) {}
+
+  return { post_id: mediaId, platform: 'instagram', url }
 }
 
 module.exports = async (req, res) => {
@@ -145,25 +232,26 @@ module.exports = async (req, res) => {
       })
     }
 
-    // Get Instagram business account ID if posting to Instagram
-    let igAccountId = null
-    if (platform === 'instagram' && creds.page_id) {
-      try {
-        const { data: pageData } = await axios.get(`${META_GRAPH}/${creds.page_id}`, {
-          params: {
-            fields: 'instagram_business_account',
-            access_token: creds.access_token
-          }
-        })
-        igAccountId = pageData.instagram_business_account?.id
-      } catch (e) {
-        console.warn('[social-post] Could not fetch IG account:', e.message)
-      }
-    }
-
     let result
     if (platform === 'instagram') {
-      if (!igAccountId) throw new Error('No se encontró cuenta de Instagram Business vinculada a esta página.')
+      if (!creds.page_id) {
+        return res.status(400).json({
+          error: 'Falta Page ID de Facebook',
+          detail: 'Para publicar en Instagram necesitas el Page ID de la página de Facebook que tiene la cuenta de IG Business vinculada. Guárdalo en ⚙️ Configuración → Meta/Facebook.'
+        })
+      }
+      if (!image_url || !image_url.startsWith('http')) {
+        return res.status(400).json({
+          error: 'Imagen requerida',
+          detail: 'Instagram requiere una URL de imagen pública. Selecciona un inmueble que tenga foto o pega una URL en el campo de imagen.'
+        })
+      }
+      let igAccountId
+      try {
+        igAccountId = await fetchInstagramAccountId(creds.page_id, creds.access_token)
+      } catch (err) {
+        return res.status(400).json({ error: 'No se pudo obtener la cuenta de Instagram', detail: err.message })
+      }
       result = await publishToInstagram(igAccountId, creds.access_token, { caption, imageUrl: image_url })
     } else {
       if (!creds.page_id) throw new Error('Falta el Page ID de Facebook en las credenciales.')
@@ -199,8 +287,8 @@ module.exports = async (req, res) => {
       message: `Publicado en ${platform === 'instagram' ? 'Instagram' : 'Facebook'}`
     })
   } catch (err) {
-    console.error('[social-post]', err.message, err.response?.data)
-    const detail = err.response?.data?.error?.message || err.message
+    console.error('[social-post]', err.message, err.response && err.response.data)
+    const detail = err.response ? formatMetaError(err) : err.message
 
     return res.status(500).json({
       error: 'No se pudo publicar el post',
