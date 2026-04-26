@@ -242,3 +242,73 @@
 .ae-photo.dragging { opacity: 0.4; }
 .ae-photo.drop-target { box-shadow: 0 0 0 2px var(--rm-teal); }
 
+/* ── Psychological angles 2x2 grid ── */
+
+.ae-angle-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+@media (max-width: 540px) { .ae-angle-grid { grid-template-columns: 1fr; } }
+
+.ae-angle {
+  padding: 12px 14px;
+  background: var(--rm-surface);
+  border: 1px solid var(--rm-border);
+  border-radius: 4px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s, transform 0.15s;
+}
+.ae-angle:hover {
+  border-color: var(--rm-border-strong);
+  background: var(--rm-surface-2);
+}
+.ae-angle.active {
+  border-color: rgba(64, 217, 157, 0.6);
+  background: rgba(64, 217, 157, 0.06);
+}
+.ae-angle.locked {
+  background: var(--rm-surface-3);
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.ae-angle-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.ae-angle-name {
+  font-family: var(--rm-mono);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--rm-green-deep);
+}
+.ae-angle.locked .ae-angle-name { color: var(--rm-muted); }
+
+.ae-angle-status {
+  font-family: var(--rm-mono);
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--rm-muted);
+}
+.ae-angle.active .ae-angle-status { color: var(--rm-green-deep); }
+
+.ae-angle-desc {
+  font-family: var(--rm-font);
+  font-size: 11.5px;
+  line-height: 1.45;
+  color: var(--rm-ink-2);
+  margin: 0;
+}
+.ae-angle.locked .ae-angle-desc { color: var(--rm-muted); }
+
