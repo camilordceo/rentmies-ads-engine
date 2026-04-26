@@ -61,23 +61,63 @@ async function getMetaCredentials(empresa_id, headers) {
   return null
 }
 
-async function publishToFacebookPage(pageId, accessToken, { caption, imageUrl }) {
-  if (imageUrl && imageUrl.startsWith('http')) {
-    // Post photo
-    const { data } = await axios.post(`${META_GRAPH}/${pageId}/photos`, {
-      url: imageUrl,
-      caption,
-      access_token: accessToken
+async function getPageAccessToken(pageId, userToken) {
+  // Page-level posts (/{page_id}/photos, /{page_id}/feed) require a Page Access Token,
+  // NOT a User Access Token — using the latter triggers Meta's misleading
+  // "publish_actions deprecated" error. Derive the Page Token from the User Token.
+  try {
+    const { data } = await axios.get(`${META_GRAPH}/${pageId}`, {
+      params: { fields: 'access_token,name', access_token: userToken },
+      timeout: 10000
     })
-    return { post_id: data.id || data.post_id, platform: 'facebook_page', url: `https://www.facebook.com/${data.id || data.post_id}` }
-  } else {
-    // Text-only post
-    const { data } = await axios.post(`${META_GRAPH}/${pageId}/feed`, {
-      message: caption,
-      access_token: accessToken
-    })
-    return { post_id: data.id, platform: 'facebook_page', url: `https://www.facebook.com/${data.id}` }
+    if (data.access_token) return { token: data.access_token, pageName: data.name }
+  } catch (err) {
+    // If reading the page fails, surface a clear hint instead of letting it bubble up.
+    const msg = formatMetaError(err)
+    throw new Error(
+      `No se pudo obtener el Page Access Token: ${msg}. ` +
+      `Asegúrate de que tu token tenga los scopes 'pages_show_list', 'pages_manage_posts' y 'pages_read_engagement', ` +
+      `y que seas admin de la página ${pageId}.`
+    )
   }
+  // No access_token in response → token is probably already page-scoped (System User token), use as-is.
+  return { token: userToken, pageName: null }
+}
+
+async function publishToFacebookPage(pageId, userToken, { caption, imageUrl }) {
+  const { token: pageToken } = await getPageAccessToken(pageId, userToken)
+
+  let postId
+  try {
+    if (imageUrl && imageUrl.startsWith('http')) {
+      const { data } = await axios.post(`${META_GRAPH}/${pageId}/photos`, null, {
+        params: { url: imageUrl, caption: caption || '', access_token: pageToken },
+        timeout: 30000
+      })
+      postId = data.post_id || data.id
+    } else {
+      const { data } = await axios.post(`${META_GRAPH}/${pageId}/feed`, null, {
+        params: { message: caption, access_token: pageToken },
+        timeout: 15000
+      })
+      postId = data.id
+    }
+  } catch (err) {
+    throw new Error(`Publicación falló: ${formatMetaError(err)}`)
+  }
+  if (!postId) throw new Error('Meta no devolvió post_id')
+
+  // Resolve the actual permalink_url so the success message links to the real post.
+  let url = `https://www.facebook.com/${postId}`
+  try {
+    const { data } = await axios.get(`${META_GRAPH}/${postId}`, {
+      params: { fields: 'permalink_url', access_token: pageToken },
+      timeout: 5000
+    })
+    if (data.permalink_url) url = data.permalink_url
+  } catch (_) {}
+
+  return { post_id: postId, platform: 'facebook_page', url }
 }
 
 function formatMetaError(err) {
