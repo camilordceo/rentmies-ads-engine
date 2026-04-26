@@ -96,9 +96,9 @@ async function generateCaption(inmueble, platform, vibe) {
   if (!AZ_ENDPOINT || !AZ_KEY) {
     throw new Error('Azure OpenAI no configurado. Define AZURE_OPENAI_ENDPOINT y AZURE_OPENAI_API_KEY en Vercel.')
   }
-  const url = `${AZ_ENDPOINT}/openai/v1/chat/completions?api-version=${AZ_VERSION}`
+  // Deployment-based path: more permissive with dated api-versions than the /openai/v1/* surface.
+  const url = `${AZ_ENDPOINT}/openai/deployments/${AZ_CHAT_DEPLOY}/chat/completions?api-version=${AZ_VERSION}`
   const body = {
-    model: AZ_CHAT_DEPLOY,
     messages: [
       { role: 'system', content: CAPTION_SYSTEM },
       { role: 'user', content: buildCaptionUserMessage(inmueble, platform, vibe) }
@@ -125,11 +125,12 @@ async function generateImage(prompt, size) {
     throw new Error('Azure OpenAI no configurado.')
   }
   const url = `${AZ_ENDPOINT}/openai/deployments/${AZ_IMG_DEPLOY}/images/generations?api-version=${AZ_VERSION}`
+  // gpt-image-2 quality values are: low | medium | high | auto (NOT 'standard' — that's DALL-E 3).
   const body = {
     prompt,
     n: 1,
     size: size || '1024x1024',
-    quality: 'standard'
+    quality: 'medium'
   }
   try {
     const { data } = await axios.post(url, body, {
