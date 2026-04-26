@@ -1,0 +1,259 @@
+/* ─────────────────────────────────────────────────────────────
+   Working pages — Quick Post, Schedule, Inmuebles, WhatsApp,
+   Settings. Shared layout primitives and content cards.
+   These pages are FUNCTIONAL (not design previews) — they hit the
+   /api/* endpoints from /app and persist via the same localStorage.
+   ───────────────────────────────────────────────────────────── */
+
+.ae-page-shell {
+  max-width: 1080px;
+  margin: 0 auto;
+  padding: 28px 36px 80px;
+  display: flex;
+  flex-direction: column;
+  gap: var(--stack-lg);
+}
+@media (max-width: 760px) { .ae-page-shell { padding: 18px; } }
+
+.ae-page-head .ae-display { font-size: 36px; }
+
+/* ── Two-column workspace (form on left, preview on right) ── */
+
+.ae-workspace {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(280px, 1fr);
+  gap: var(--stack-lg);
+  align-items: start;
+}
+@media (max-width: 920px) { .ae-workspace { grid-template-columns: 1fr; } }
+
+.ae-workspace-col {
+  display: flex;
+  flex-direction: column;
+  gap: var(--stack-lg);
+  min-width: 0;
+}
+.ae-workspace-aside { position: sticky; top: 24px; }
+@media (max-width: 920px) { .ae-workspace-aside { position: static; } }
+
+/* ── Action footer (publish row) ── */
+
+.ae-action-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-top: 4px;
+}
+.ae-action-row .ae-status-line {
+  font-size: 11px;
+  color: var(--rm-muted);
+  flex: 1;
+  min-width: 200px;
+}
+.ae-action-row .ae-status-line.success { color: var(--rm-green-deep); }
+.ae-action-row .ae-status-line.error   { color: var(--rm-red); }
+
+/* ── Property card (Inmuebles + Quick Post selector) ── */
+
+.ae-prop-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 14px;
+}
+
+.ae-prop-card {
+  background: var(--rm-surface);
+  border: 1px solid var(--rm-border);
+  border-radius: 6px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  cursor: pointer;
+  transition: border-color 0.15s, box-shadow 0.15s, transform 0.15s;
+  box-shadow: var(--rm-shadow-xs);
+  text-align: left;
+  padding: 0;
+  font-family: var(--rm-font);
+  color: var(--rm-ink);
+}
+.ae-prop-card:hover {
+  border-color: var(--rm-border-strong);
+  box-shadow: var(--rm-shadow-sm);
+  transform: translateY(-1px);
+}
+.ae-prop-card.selected {
+  border-color: var(--rm-green-deep);
+  box-shadow: 0 0 0 2px rgba(0, 77, 53, 0.15), var(--rm-shadow-xs);
+}
+
+.ae-prop-image {
+  aspect-ratio: 4 / 3;
+  background-size: cover;
+  background-position: center;
+  background-color: var(--rm-surface-3);
+  position: relative;
+}
+.ae-prop-image-fallback {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 32px;
+  color: rgba(15, 20, 16, 0.25);
+  width: 100%;
+  height: 100%;
+}
+.ae-prop-image-tag {
+  position: absolute;
+  top: 8px; left: 8px;
+  font-family: var(--rm-mono);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  background: rgba(255, 255, 255, 0.92);
+  color: var(--rm-ink);
+  padding: 3px 8px;
+  border-radius: 3px;
+  backdrop-filter: blur(4px);
+}
+
+.ae-prop-body {
+  padding: 12px 14px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.ae-prop-title {
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--rm-ink);
+}
+.ae-prop-meta {
+  font-family: var(--rm-mono);
+  font-size: 10px;
+  color: var(--rm-muted);
+  letter-spacing: 0.04em;
+}
+.ae-prop-desc {
+  font-size: 11.5px;
+  color: var(--rm-ink-2);
+  line-height: 1.4;
+  margin-top: 4px;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* ── Compact selector (Quick Post inmueble picker) ── */
+
+.ae-prop-strip {
+  display: flex;
+  gap: 10px;
+  overflow-x: auto;
+  padding: 4px 2px 14px;
+  scrollbar-width: thin;
+}
+.ae-prop-strip::-webkit-scrollbar { height: 6px; }
+.ae-prop-strip::-webkit-scrollbar-thumb { background: var(--rm-border-strong); border-radius: 999px; }
+
+.ae-prop-strip .ae-prop-card {
+  flex: 0 0 200px;
+}
+
+/* ── Small image preview thumbnail ── */
+
+.ae-img-preview {
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  border-radius: 6px;
+  overflow: hidden;
+  background: var(--rm-surface-3);
+  background-size: cover;
+  background-position: center;
+  border: 1px solid var(--rm-border);
+}
+
+/* ── Subtle inline help blocks ── */
+
+.ae-help {
+  background: var(--rm-surface-2);
+  border-left: 3px solid var(--rm-border-strong);
+  padding: 10px 14px;
+  border-radius: 4px;
+  font-size: 12px;
+  color: var(--rm-ink-2);
+  line-height: 1.5;
+}
+.ae-help.warn { border-left-color: var(--rm-amber); background: rgba(210, 152, 54, 0.06); }
+.ae-help.info { border-left-color: var(--rm-blue); }
+
+/* ── Optional/advanced toggle (e.g. budget for paid promotion) ── */
+
+.ae-optional {
+  background: var(--rm-surface-2);
+  border: 1px solid var(--rm-border);
+  border-radius: 6px;
+  padding: 0;
+}
+.ae-optional summary {
+  padding: 12px 16px;
+  cursor: pointer;
+  font-family: var(--rm-mono);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--rm-ink-2);
+  list-style: none;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  user-select: none;
+}
+.ae-optional summary::-webkit-details-marker { display: none; }
+.ae-optional summary::before {
+  content: "▸";
+  display: inline-block;
+  transition: transform 0.15s;
+  color: var(--rm-muted);
+}
+.ae-optional[open] summary::before { transform: rotate(90deg); }
+.ae-optional-body {
+  padding: 0 16px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  border-top: 1px solid var(--rm-border);
+  padding-top: 14px;
+}
+
+/* ── Status pill badges (used by templates list, etc.) ── */
+
+.ae-table {
+  background: var(--rm-surface);
+  border: 1px solid var(--rm-border);
+  border-radius: 6px;
+  overflow: hidden;
+}
+.ae-table-row {
+  display: grid;
+  gap: 14px;
+  padding: 12px 18px;
+  border-bottom: 1px solid var(--rm-border);
+  align-items: center;
+  font-size: 12.5px;
+}
+.ae-table-row:last-child { border-bottom: none; }
+.ae-table-row.head {
+  font-family: var(--rm-mono);
+  font-size: 9px;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--rm-muted);
+  font-weight: 700;
+  background: var(--rm-surface-2);
+}
+.ae-table-row:hover:not(.head) { background: var(--rm-surface-2); }

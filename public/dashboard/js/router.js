@@ -7,8 +7,8 @@
 (function () {
   'use strict'
 
-  const VALID_PAGES = ['studio', 'dashboard', 'history', 'analytics']
-  const DEFAULT_PAGE = 'studio'
+  const VALID_PAGES = ['studio', 'quickpost', 'schedule', 'inmuebles', 'whatsapp', 'dashboard', 'history', 'analytics', 'settings']
+  const DEFAULT_PAGE = 'quickpost'
 
   function currentPage() {
     const hash = (location.hash || '').replace(/^#/, '')
@@ -28,16 +28,15 @@
       link.classList.toggle('active', link.dataset.page === name)
     })
 
-    // Rail active state (the rail uses its own routing via data-route)
-    const railMap = {
-      studio:    'studio',
-      dashboard: 'parrilla',
-      history:   'analytics',     // History sits under analytics rail icon for FASE 3
-      analytics: 'analytics'
-    }
-    document.querySelectorAll('.ae-rail-link').forEach(link => {
-      link.classList.toggle('active', link.dataset.route === railMap[name])
+    // Rail active state — match data-page on rail buttons directly
+    document.querySelectorAll('.ae-rail-link[data-page]').forEach(link => {
+      link.classList.toggle('active', link.dataset.page === name)
     })
+
+    // Scroll the canvas to top on every page change so the user
+    // doesn't land mid-scroll on a different page's old position.
+    const canvas = document.querySelector('.ae-content')
+    if (canvas) canvas.scrollTop = 0
 
     // Notify subscribers
     document.dispatchEvent(new CustomEvent('rm-page-change', { detail: { page: name } }))
@@ -69,11 +68,9 @@
       }
     })
 
-    // Wire rail icons to pages
-    const railToPage = { studio: 'studio', parrilla: 'dashboard', analytics: 'analytics' }
-    document.querySelectorAll('.ae-rail-link[data-route]').forEach(btn => {
-      const target = railToPage[btn.dataset.route]
-      if (target) btn.addEventListener('click', () => goTo(target))
+    // Rail buttons now use data-page directly — no mapping table needed
+    document.querySelectorAll('.ae-rail-link[data-page]').forEach(btn => {
+      btn.addEventListener('click', () => goTo(btn.dataset.page))
     })
 
     // Initial render

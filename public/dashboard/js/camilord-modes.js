@@ -158,7 +158,57 @@
     if (page === 'dashboard') panel.innerHTML = DASHBOARD_TEMPLATE
     else if (page === 'history')   panel.innerHTML = HISTORY_TEMPLATE
     else if (page === 'analytics') panel.innerHTML = ANALYTICS_TEMPLATE
+    else if (page === 'quickpost') panel.innerHTML = QUICKPOST_TEMPLATE
+    else if (page === 'schedule')  panel.innerHTML = SCHEDULE_TEMPLATE
+    else if (page === 'inmuebles') panel.innerHTML = INMUEBLES_TEMPLATE
+    else if (page === 'whatsapp')  panel.innerHTML = WHATSAPP_TEMPLATE
+    else if (page === 'settings')  panel.innerHTML = SETTINGS_TEMPLATE
   }
+
+  const QUICKPOST_TEMPLATE = `
+    <div class="ae-cam-hero"><svg viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg></div>
+    <h2 class="ae-cam-bigtitle">Quick Post</h2>
+    <div class="ae-cam-bigsub">Publicar orgánico</div>
+    <div class="ae-cam-quote"><p><em>Toma una foto cualquiera, dame un caption, y publico.</em> Sin pauta requerida — la pauta paga llega cuando estés listo.</p></div>
+    <div class="ae-cam-section">Tips</div>
+    <div class="ae-cam-suggestions">
+      <div class="ae-cam-suggestion"><span>IG necesita imagen 1:1 ó 4:5</span></div>
+      <div class="ae-cam-suggestion action"><span>Configura tus credenciales primero</span></div>
+    </div>
+    <div class="ae-cam-spacer"></div>
+  `
+
+  const SCHEDULE_TEMPLATE = `
+    <div class="ae-cam-hero"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/></svg></div>
+    <h2 class="ae-cam-bigtitle">Programador</h2>
+    <div class="ae-cam-bigsub">Cliente-side · setTimeout</div>
+    <div class="ae-cam-quote"><p>Mantén la pestaña abierta. Cuando llegue la hora, disparo el POST a Graph automáticamente. Para programación robusta a largo plazo, viene el cron server-side.</p></div>
+    <div class="ae-cam-spacer"></div>
+  `
+
+  const INMUEBLES_TEMPLATE = `
+    <div class="ae-cam-hero"><svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></div>
+    <h2 class="ae-cam-bigtitle">Tu Inventario</h2>
+    <div class="ae-cam-bigsub">Catálogo activo</div>
+    <div class="ae-cam-quote"><p>Click en cualquier inmueble para publicarlo. Si todavía no has importado tu catálogo, te muestro 5 propiedades de muestra para que pruebes el flow.</p></div>
+    <div class="ae-cam-spacer"></div>
+  `
+
+  const WHATSAPP_TEMPLATE = `
+    <div class="ae-cam-hero"><svg viewBox="0 0 24 24"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg></div>
+    <h2 class="ae-cam-bigtitle">WhatsApp Business</h2>
+    <div class="ae-cam-bigsub">Templates aprobados</div>
+    <div class="ae-cam-quote"><p>Trae tus templates desde Meta Graph en vivo. Necesitas WABA ID en Settings.</p></div>
+    <div class="ae-cam-spacer"></div>
+  `
+
+  const SETTINGS_TEMPLATE = `
+    <div class="ae-cam-hero"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06"/></svg></div>
+    <h2 class="ae-cam-bigtitle">Credenciales</h2>
+    <div class="ae-cam-bigsub">Tus llaves, tu control</div>
+    <div class="ae-cam-quote"><p>Las credenciales se guardan en este navegador (localStorage). Si las quieres en servidor, configura SUPABASE_URL + SERVICE_KEY en Vercel.</p></div>
+    <div class="ae-cam-spacer"></div>
+  `
 
   document.addEventListener('rm-page-change', e => setMode(e.detail.page))
   document.addEventListener('DOMContentLoaded', () => setMode(window.rmRouter?.currentPage() || 'studio'))
