@@ -1,0 +1,106 @@
+/* ─────────────────────────────────────────────────────────────
+   Analytics — performance dashboard with Chart.js
+   ───────────────────────────────────────────────────────────── */
+
+.ae-analytics {
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 28px 36px 64px;
+  display: flex;
+  flex-direction: column;
+  gap: var(--stack-lg);
+}
+@media (max-width: 760px) { .ae-analytics { padding: 18px; } }
+
+.ae-analytics-kpi {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 14px;
+}
+@media (max-width: 1100px) { .ae-analytics-kpi { grid-template-columns: repeat(3, 1fr); } }
+@media (max-width: 720px)  { .ae-analytics-kpi { grid-template-columns: repeat(2, 1fr); } }
+
+.ae-charts-row {
+  display: grid;
+  grid-template-columns: 1.4fr 1fr;
+  gap: 18px;
+}
+@media (max-width: 920px) { .ae-charts-row { grid-template-columns: 1fr; } }
+
+.ae-chart-card {
+  background: var(--rm-surface);
+  border: 1px solid var(--rm-border);
+  border-radius: 6px;
+  padding: 18px 20px;
+  box-shadow: var(--rm-shadow-xs);
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.ae-chart-card-h {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+}
+.ae-chart-card-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--rm-ink);
+}
+.ae-chart-card-sub {
+  font-family: var(--rm-mono);
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  color: var(--rm-muted);
+  text-transform: uppercase;
+}
+.ae-chart-canvas-wrap {
+  position: relative;
+  height: 240px;
+}
+
+/* ── Decision impact table (small variant of .ae-log) ── */
+
+.ae-impact {
+  background: var(--rm-surface);
+  border: 1px solid var(--rm-border);
+  border-radius: 6px;
+  overflow: hidden;
+}
+.ae-impact-row {
+  display: grid;
+  grid-template-columns: 1fr 110px 110px 100px;
+  gap: 14px;
+  padding: 12px 18px;
+  border-bottom: 1px solid var(--rm-border);
+  font-size: 12.5px;
+  align-items: center;
+}
+.ae-impact-row:last-child { border-bottom: none; }
+.ae-impact-row.head {
+  font-family: var(--rm-mono);
+  font-size: 9px;
+  letter-spacing: 0.15em;
+  color: var(--rm-muted);
+  font-weight: 700;
+  text-transform: uppercase;
+  background: var(--rm-surface-2);
+}
+.ae-impact-decision em {
+  font-family: var(--rm-serif);
+  font-style: italic;
+  color: var(--rm-green-deep);
+}
+.ae-impact-lift {
+  font-family: var(--rm-mono);
+  font-size: 13px;
+  font-weight: 700;
+}
+.ae-impact-lift.up   { color: var(--rm-green-deep); }
+.ae-impact-lift.down { color: var(--rm-red); }
+
+@media (max-width: 760px) {
+  .ae-impact-row { grid-template-columns: 1fr 80px 80px; gap: 8px; padding: 10px 14px; }
+  .ae-impact-row > :nth-child(4) { display: none; }
+}
