@@ -1,0 +1,68 @@
+/* ─────────────────────────────────────────────────────────────
+   RENTMIES ADS ENGINE — 3-COLUMN APP SHELL (FASE 1)
+   SKILL §3.1 — fixed 64px rail | 1fr canvas | 320px Camilord
+   ───────────────────────────────────────────────────────────── */
+
+.ae-app {
+  display: grid;
+  grid-template-columns: var(--rail-w) 1fr var(--camilord-w);
+  grid-template-rows: 1fr;
+  grid-template-areas: "rail canvas camilord";
+  width: 100vw;
+  height: 100vh;
+  background: var(--rm-bg);
+  overflow: hidden;
+}
+
+.ae-rail     { grid-area: rail; }
+.ae-canvas   { grid-area: canvas; display: flex; flex-direction: column; min-width: 0; }
+.ae-camilord { grid-area: camilord; }
+
+/* The canvas hosts the topnav (sticky) + scrollable content */
+
+.ae-topnav {
+  height: var(--topnav-h);
+  flex-shrink: 0;
+  background: var(--rm-surface);
+  border-bottom: 1px solid var(--rm-border);
+}
+
+.ae-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: var(--margin-main);
+}
+.ae-content::-webkit-scrollbar { width: 8px; }
+.ae-content::-webkit-scrollbar-track { background: transparent; }
+.ae-content::-webkit-scrollbar-thumb {
+  background: var(--rm-border-strong);
+  border-radius: 999px;
+}
+
+/* ── Mobile fallback — hide Camilord, keep rail compact ── */
+
+@media (max-width: 768px) {
+  .ae-app {
+    grid-template-columns: var(--rail-w) 1fr;
+    grid-template-areas: "rail canvas";
+  }
+  .ae-camilord { display: none; }
+  .ae-content { padding: 20px 18px; }
+}
+
+/* ── Page section utility — every page top-level wrapper ── */
+
+.ae-page {
+  max-width: 1180px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: var(--stack-lg);
+}
+
+.ae-page-head {
+  display: flex;
+  flex-direction: column;
+  gap: 0;   /* eyebrow + display + subhead manage their own margins */
+  margin-bottom: 8px;
+}
