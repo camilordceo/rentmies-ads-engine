@@ -23,28 +23,14 @@
   <link rel="stylesheet" href="css/phone.css">
   <link rel="stylesheet" href="css/launch.css">
   <link rel="stylesheet" href="css/toast.css">
-
-  <script>
-    // Topnav active state — full routing lives in FASE 3
-    function showPage(name) {
-      document.querySelectorAll('.ae-topnav-link').forEach(el => {
-        el.classList.toggle('active', el.dataset.page === name)
-      })
-    }
-    document.addEventListener('DOMContentLoaded', () => {
-      document.querySelectorAll('.ae-rail-link').forEach(el => {
-        el.addEventListener('click', () => {
-          document.querySelectorAll('.ae-rail-link').forEach(b => b.classList.remove('active'))
-          el.classList.add('active')
-        })
-      })
-    })
-  </script>
+  <link rel="stylesheet" href="css/dashboard.css">
 
   <!-- Studio modules — order matters: store first, then dependents. -->
   <script src="js/toast.js" defer></script>
   <script src="js/store.js" defer></script>
   <script src="js/persist.js" defer></script>
+  <script src="js/router.js" defer></script>
+  <script src="js/dashboard.js" defer></script>
   <script src="js/energy.js" defer></script>
   <script src="js/reco.js" defer></script>
   <script src="js/property-form.js" defer></script>
@@ -116,6 +102,7 @@
     <div class="ae-content hide-scrollbar">
 
       <!-- ═══════════ CREATIVE STUDIO ═══════════ -->
+      <section data-page="studio">
       <section class="ae-studio ae-rise" data-page-content="studio">
 
         <!-- Editorial header -->
@@ -144,6 +131,17 @@
         </div>
 
       </section>
+      </section>
+      <!-- /studio -->
+
+      <!-- ═══════════ DASHBOARD / PARRILLA ═══════════ -->
+      <section data-page="dashboard"><!-- dashboard.js renders here --></section>
+
+      <!-- ═══════════ HISTORY ═══════════ -->
+      <section data-page="history"><!-- history.js renders here (step 23) --></section>
+
+      <!-- ═══════════ ANALYTICS ═══════════ -->
+      <section data-page="analytics"><!-- analytics.js renders here (step 25) --></section>
 
     </div>
   </main>
