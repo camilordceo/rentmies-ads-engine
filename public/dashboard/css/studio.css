@@ -1,0 +1,71 @@
+/* ─────────────────────────────────────────────────────────────
+   CREATIVE STUDIO — page layout, energy meter, photo grid,
+   psychological angles. SKILL §6, §15, §19.2
+   ───────────────────────────────────────────────────────────── */
+
+.ae-studio {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 28px 36px 64px;
+  display: flex;
+  flex-direction: column;
+  gap: var(--stack-lg);
+}
+@media (max-width: 760px) { .ae-studio { padding: 18px; } }
+
+/* ── Header rises in first ── */
+
+.ae-studio-head { display: flex; flex-direction: column; gap: 0; }
+.ae-studio-head .ae-eyebrow { margin-bottom: 12px; }
+.ae-studio-head .ae-display { margin: 0; }
+.ae-studio-head .ae-subhead { margin-top: 14px; max-width: 580px; }
+
+/* ── 1.5fr 1fr split rows used twice ── */
+
+.ae-studio-row {
+  display: grid;
+  grid-template-columns: 1.5fr 1fr;
+  gap: var(--stack-lg);
+}
+@media (max-width: 960px) {
+  .ae-studio-row { grid-template-columns: 1fr; }
+}
+
+/* Right column on the second row sticks to the topnav while user scrolls */
+.ae-studio-row .ae-studio-preview {
+  position: sticky;
+  top: 24px;
+  align-self: start;
+}
+@media (max-width: 960px) {
+  .ae-studio-row .ae-studio-preview { position: static; }
+}
+
+/* ── Form column stack ── */
+
+.ae-studio-forms {
+  display: flex;
+  flex-direction: column;
+  gap: var(--stack-lg);
+}
+
+/* ── Check icon inside formcard headers ── */
+
+.ae-check-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: rgba(64, 217, 157, 0.15);
+  color: var(--rm-green-deep);
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1;
+  flex-shrink: 0;
+}
+.ae-check-icon.is-empty {
+  background: var(--rm-surface-3);
+  color: var(--rm-muted);
+}
