@@ -2539,19 +2539,27 @@ async function fetchWATemplates() {
   document.getElementById('waChartsWrap').style.display = 'none'
   document.getElementById('waSummaryCards').style.display = 'none'
 
+  // Pull credentials from localStorage (saved via Settings → Meta or WA tab).
+  const localToken = localStorage.getItem('wa_access_token')
+  const localWaba = localStorage.getItem('wa_waba_id')
+
   try {
-    // Use server-side endpoint (reads credentials from Supabase / env)
-    const r = await fetch('/api/whatsapp/templates', {
-      headers: { 'x-empresa-id': state.empresa_id }
-    })
-    const json = await r.json()
+    const headers = { 'x-empresa-id': state.empresa_id }
+    if (localToken) headers['x-meta-token'] = localToken
+    if (localWaba) headers['x-waba-id'] = localWaba
+
+    const r = await fetch('/api/whatsapp/templates', { headers })
+    const text = await r.text()
+    let json = {}
+    try { json = JSON.parse(text) } catch (_) {
+      // Server returned HTML (e.g. 404 page) — surface a clean error.
+      throw new Error(`Respuesta inesperada del servidor (${r.status})`)
+    }
 
     if (!r.ok) {
-      // Try direct browser call with local credentials as fallback
-      const localToken = localStorage.getItem('wa_access_token')
-      const localWaba = localStorage.getItem('wa_waba_id')
+      // Server-side failure — try direct Graph API call with local credentials as fallback.
       if (localToken && localWaba) {
-        const url = `https://graph.facebook.com/v21.0/${localWaba}/message_templates?access_token=${localToken}&fields=name,status,category,language,quality_score,components&limit=100`
+        const url = `https://graph.facebook.com/v21.0/${encodeURIComponent(localWaba)}/message_templates?access_token=${encodeURIComponent(localToken)}&fields=name,status,category,language,quality_score,components&limit=100`
         const res2 = await fetch(url)
         const json2 = await res2.json()
         if (json2.error) throw new Error(`[${json2.error.code}] ${json2.error.message}`)
@@ -2561,7 +2569,7 @@ async function fetchWATemplates() {
       }
       // No credentials anywhere — show mock
       document.getElementById('waStatusMsg').style.display = 'block'
-      document.getElementById('waStatusMsg').textContent = 'Configura tus credenciales de Meta en ⚙️ Configuración → Meta/Facebook'
+      document.getElementById('waStatusMsg').textContent = json.error || 'Configura tus credenciales de Meta en ⚙️ Configuración → Meta/Facebook'
       waTemplatesData = WA_MOCK_TEMPLATES
       renderWATemplates(waTemplatesData, true)
       return
@@ -2823,13 +2831,38 @@ async function submitQuickPost() {
 // META CREDENTIALS (Settings tab)
 // ══════════════════════════════════════════════════════
 async function loadMetaCredentials() {
+  // Hydrate form from localStorage so values persist between sessions in demo mode.
+  try {
+    const cached = JSON.parse(localStorage.getItem('meta_creds') || '{}')
+    const map = {
+      access_token: 'metaAccessToken',
+      app_id: 'metaAppId',
+      app_secret: 'metaAppSecret',
+      ad_account_id: 'metaAdAccountId',
+      page_id: 'metaPageId',
+      waba_id: 'metaWabaId',
+      phone_number_id: 'metaPhoneNumberId'
+    }
+    for (const [k, id] of Object.entries(map)) {
+      const el = document.getElementById(id)
+      if (el && cached[k]) el.value = cached[k]
+    }
+    if (cached.access_token) {
+      document.getElementById('metaStatusBadge').textContent = '✓ Guardado localmente'
+      document.getElementById('metaStatusBadge').style.background = 'rgba(29,158,117,.15)'
+      document.getElementById('metaStatusBadge').style.color = 'var(--green)'
+    }
+  } catch (_) {}
+
+  // Then check server-side (Supabase) — overrides badge if persisted there.
   try {
     const r = await fetch('/api/credentials/meta', {
       headers: { 'x-empresa-id': state.empresa_id }
     })
+    if (!r.ok) return
     const data = await r.json()
     if (data.configured) {
-      document.getElementById('metaStatusBadge').textContent = '✓ Configurado'
+      document.getElementById('metaStatusBadge').textContent = '✓ Configurado (servidor)'
       document.getElementById('metaStatusBadge').style.background = 'rgba(29,158,117,.15)'
       document.getElementById('metaStatusBadge').style.color = 'var(--green)'
       if (data.last_tested_at) {
@@ -2853,21 +2886,30 @@ async function saveMetaCredentials() {
 
   if (!creds.access_token) { toast('Access Token es requerido', 'error'); return }
 
+  // Always cache locally — required for the WhatsApp templates fetch in demo mode.
+  localStorage.setItem('meta_creds', JSON.stringify(creds))
+  if (creds.access_token) localStorage.setItem('wa_access_token', creds.access_token)
+  if (creds.waba_id) localStorage.setItem('wa_waba_id', creds.waba_id)
+
   try {
     const r = await fetch('/api/credentials/meta', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'x-empresa-id': state.empresa_id },
       body: JSON.stringify(creds)
     })
+    const text = await r.text()
+    let d = {}
+    try { d = JSON.parse(text) } catch (_) { d = { error: text.slice(0, 120) } }
     if (r.ok) {
-      toast('Credenciales de Meta guardadas', 'success')
+      toast(d.persisted ? 'Credenciales guardadas en servidor' : 'Credenciales guardadas en navegador', 'success')
       loadMetaCredentials()
     } else {
-      const d = await r.json()
       toast(d.error || 'Error guardando credenciales', 'error')
     }
-  } catch (_) {
-    toast('Error de conexión', 'error')
+  } catch (err) {
+    // Local save already happened — credentials are usable for this session.
+    toast('Guardado localmente (servidor no disponible)', 'success')
+    loadMetaCredentials()
   }
 }
 
