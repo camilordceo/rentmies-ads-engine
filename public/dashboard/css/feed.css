@@ -1,0 +1,81 @@
+/* ─────────────────────────────────────────────────────────────
+   Live Feed terminal — SKILL §9
+   Black background, mono mint text, lines append with ae-feed-in.
+   ───────────────────────────────────────────────────────────── */
+
+.ae-feed-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.ae-feed-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+.ae-feed-head-title {
+  font-family: var(--rm-mono);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--rm-ink-2);
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+.ae-feed-head-title .ae-live-dot {
+  width: 7px; height: 7px;
+  border-radius: 50%;
+  background: var(--rm-teal);
+  box-shadow: 0 0 8px var(--rm-teal);
+  animation: ae-pulse 1.6s ease-in-out infinite;
+}
+
+.ae-feed {
+  background: #050605;
+  color: #c8e7d4;
+  font-family: var(--rm-mono);
+  font-size: 12px;
+  line-height: 1.55;
+  padding: 18px 22px;
+  border-radius: 6px;
+  border: 1px solid #0f1a14;
+  min-height: 240px;
+  max-height: 380px;
+  overflow-y: auto;
+  position: relative;
+}
+.ae-feed::-webkit-scrollbar { width: 6px; }
+.ae-feed::-webkit-scrollbar-track { background: transparent; }
+.ae-feed::-webkit-scrollbar-thumb { background: rgba(200,231,212,0.15); border-radius: 999px; }
+
+.ae-feed-line {
+  display: grid;
+  grid-template-columns: 56px 60px 1fr;
+  gap: 10px;
+  padding: 3px 0;
+  align-items: baseline;
+}
+
+.ae-feed-time { color: rgba(200, 231, 212, 0.4); font-feature-settings: 'tnum' 1; }
+
+.ae-feed-tag {
+  display: inline-block;
+  padding: 1px 6px;
+  border-radius: 3px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-align: center;
+  width: fit-content;
+}
+.ae-feed-tag-gen   { background: rgba(79, 255, 180, 0.15); color: var(--rm-mint); }
+.ae-feed-tag-pub   { background: rgba(255, 255, 255, 0.1); color: #fff; }
+.ae-feed-tag-opt   { background: rgba(210, 152, 54, 0.2); color: #f3c777; }
+.ae-feed-tag-pause { background: rgba(193, 79, 58, 0.2); color: #f08e7c; }
+
+.ae-feed-text { color: #c8e7d4; min-width: 0; }
+.ae-feed-text em { color: var(--rm-mint); font-style: normal; font-weight: 600; }

@@ -71,6 +71,8 @@
           ${filtered.map(rowHtml).join('')}
           ${filtered.length === 0 ? `<div class="ae-log-row" style="grid-template-columns:1fr; padding:24px; justify-content:center; color:var(--rm-muted); cursor:default;">Sin resultados para este filtro</div>` : ''}
         </div>
+
+        <div id="history-feed-slot"></div>
       </div>
     `
 
@@ -78,6 +80,9 @@
     slot.querySelectorAll('[data-period]').forEach(el => el.addEventListener('click', () => { activePeriod = el.dataset.period; render() }))
     slot.querySelectorAll('[data-action]').forEach(el => el.addEventListener('click', () => { activeAction = el.dataset.action; render() }))
     slot.querySelectorAll('[data-row-idx]').forEach(el => el.addEventListener('click', () => openDrawer(parseInt(el.dataset.rowIdx, 10), filtered)))
+
+    // Re-mount the live feed after every history render (filter changes wipe the slot)
+    setTimeout(() => window.rmFeedRemount?.(), 0)
   }
 
   function rowHtml(log, idx) {
