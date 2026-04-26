@@ -18,17 +18,19 @@
   function applyPage(name) {
     if (!VALID_PAGES.includes(name)) name = DEFAULT_PAGE
 
-    // Show only the matching page section
-    document.querySelectorAll('[data-page]').forEach(section => {
+    // Show only the matching page SECTION (not buttons!).
+    // The selector targets <section data-page="..."> nodes inside .ae-content
+    // — never topnav links or rail buttons that also carry data-page.
+    document.querySelectorAll('.ae-content > section[data-page]').forEach(section => {
       section.style.display = section.dataset.page === name ? '' : 'none'
     })
 
-    // Topnav active state
-    document.querySelectorAll('.ae-topnav-link').forEach(link => {
+    // Topnav active state — buttons keep their display, only .active toggles
+    document.querySelectorAll('.ae-topnav-link[data-page]').forEach(link => {
       link.classList.toggle('active', link.dataset.page === name)
     })
 
-    // Rail active state — match data-page on rail buttons directly
+    // Rail active state — same pattern, only .active toggles
     document.querySelectorAll('.ae-rail-link[data-page]').forEach(link => {
       link.classList.toggle('active', link.dataset.page === name)
     })
@@ -55,20 +57,16 @@
   window.showPage = goTo
   window.rmRouter = { goTo, currentPage }
 
-  // Wire the topnav data-page buttons
   document.addEventListener('DOMContentLoaded', () => {
-    document.querySelectorAll('[data-page]').forEach(el => {
-      // Only buttons (not page sections) get click handlers
-      if (el.tagName === 'BUTTON' || el.tagName === 'A') {
-        el.addEventListener('click', e => {
-          if (el.dataset.page === '') return
-          e.preventDefault()
-          goTo(el.dataset.page)
-        })
-      }
+    // Topnav links — explicit selector so we don't grab page sections
+    document.querySelectorAll('.ae-topnav-link[data-page]').forEach(btn => {
+      btn.addEventListener('click', e => {
+        e.preventDefault()
+        goTo(btn.dataset.page)
+      })
     })
 
-    // Rail buttons now use data-page directly — no mapping table needed
+    // Rail buttons
     document.querySelectorAll('.ae-rail-link[data-page]').forEach(btn => {
       btn.addEventListener('click', () => goTo(btn.dataset.page))
     })
