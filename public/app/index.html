@@ -1321,6 +1321,7 @@
         <button class="tab-btn" onclick="switchTab('log', this)">🤖 Log IA</button>
         <button class="tab-btn" onclick="switchTab('whatsapp', this)">💬 WhatsApp Templates</button>
         <button class="tab-btn" onclick="switchTab('quickpost', this)">📤 Quick Post</button>
+        <button class="tab-btn" onclick="switchTab('campanas-multi', this)">📅 Campañas</button>
         <button class="tab-btn" onclick="switchTab('settings', this)">⚙️ Configuración</button>
       </div>
 
@@ -1603,6 +1604,95 @@
               <span id="qpBtnText">📤 Publicar ahora</span>
             </button>
           </div>
+        </div>
+      </div>
+
+      <!-- Tab: Campañas Multi-Post Scheduling -->
+      <div id="tab-campanas-multi" class="tab-content" style="padding:20px;overflow-y:auto;max-height:calc(100% - 10px);">
+        <div style="max-width:780px;">
+          <div style="font-size:14px;font-weight:600;color:var(--white);margin-bottom:4px;">📅 Campañas Programadas</div>
+          <div style="font-size:12px;color:var(--text-muted);margin-bottom:14px;">Crea N posts y prográmalos a fecha + hora exactas. Ideal para probar bulk-posting.</div>
+
+          <div style="background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.25);color:var(--yellow);padding:9px 12px;border-radius:8px;font-size:11px;line-height:1.5;margin-bottom:18px;">
+            <strong>⚠ Mantén esta pestaña abierta</strong> mientras esperas las publicaciones. La programación corre en el navegador (cliente-side <code style="background:rgba(0,0,0,0.2);padding:1px 4px;border-radius:3px;font-size:10px;">setTimeout</code>). Si cierras el navegador, los posts pendientes se marcarán como <em>expirados</em> al volver. Para programación robusta a largo plazo necesitamos cron server-side.
+          </div>
+
+          <!-- Campaign meta -->
+          <div style="background:var(--gray-card);border:1px solid var(--gray-border);border-radius:10px;padding:14px 16px;margin-bottom:14px;display:flex;flex-direction:column;gap:10px;">
+            <div style="display:grid;grid-template-columns:1.4fr 1fr 1fr;gap:10px;">
+              <div>
+                <label style="font-size:11px;font-weight:500;color:var(--text-secondary);display:block;margin-bottom:4px;">Nombre de campaña</label>
+                <input id="campName" type="text" placeholder="Ej: Lanzamiento Primavera abril"
+                  style="width:100%;background:var(--gray-mid);border:1px solid var(--gray-border);color:var(--text);padding:7px 10px;border-radius:6px;font-size:12px;outline:none;font-family:inherit;" />
+              </div>
+              <div>
+                <label style="font-size:11px;font-weight:500;color:var(--text-secondary);display:block;margin-bottom:4px;">Cantidad de posts</label>
+                <select id="campNumPosts" onchange="renderCampSlots()"
+                  style="width:100%;background:var(--gray-mid);border:1px solid var(--gray-border);color:var(--text);padding:7px 10px;border-radius:6px;font-size:12px;outline:none;cursor:pointer;font-family:inherit;">
+                  <option value="1">1 post</option>
+                  <option value="2">2 posts</option>
+                  <option value="3" selected>3 posts</option>
+                  <option value="5">5 posts</option>
+                  <option value="10">10 posts</option>
+                </select>
+              </div>
+              <div>
+                <label style="font-size:11px;font-weight:500;color:var(--text-secondary);display:block;margin-bottom:4px;">Plataforma</label>
+                <select id="campPlatform"
+                  style="width:100%;background:var(--gray-mid);border:1px solid var(--gray-border);color:var(--text);padding:7px 10px;border-radius:6px;font-size:12px;outline:none;cursor:pointer;font-family:inherit;">
+                  <option value="instagram">Instagram</option>
+                  <option value="facebook_page">Facebook Page</option>
+                </select>
+              </div>
+            </div>
+
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+              <div>
+                <label style="font-size:11px;font-weight:500;color:var(--text-secondary);display:block;margin-bottom:4px;">Inmueble base (para captions con IA)</label>
+                <select id="campInmueble"
+                  style="width:100%;background:var(--gray-mid);border:1px solid var(--gray-border);color:var(--text);padding:7px 10px;border-radius:6px;font-size:12px;outline:none;cursor:pointer;font-family:inherit;">
+                  <option value="">— Sin inmueble (escribe captions a mano) —</option>
+                </select>
+              </div>
+              <div>
+                <label style="font-size:11px;font-weight:500;color:var(--text-secondary);display:block;margin-bottom:4px;">Auto-programar horarios</label>
+                <div style="display:flex;gap:6px;">
+                  <select id="campSpacing"
+                    style="flex:1;background:var(--gray-mid);border:1px solid var(--gray-border);color:var(--text);padding:7px 8px;border-radius:6px;font-size:11px;outline:none;cursor:pointer;font-family:inherit;">
+                    <option value="1">cada 1 min</option>
+                    <option value="5" selected>cada 5 min</option>
+                    <option value="15">cada 15 min</option>
+                    <option value="30">cada 30 min</option>
+                    <option value="60">cada 1 h</option>
+                    <option value="1440">cada día</option>
+                  </select>
+                  <button type="button" onclick="autoFillSchedule()"
+                    style="background:var(--gray-mid);border:1px solid var(--gray-border);color:var(--text);padding:7px 12px;border-radius:6px;font-size:11px;cursor:pointer;font-family:inherit;font-weight:500;white-space:nowrap;">
+                    Aplicar
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Slots container -->
+          <div id="campSlots" style="display:flex;flex-direction:column;gap:12px;margin-bottom:14px;"></div>
+
+          <!-- Submit -->
+          <div style="display:flex;gap:10px;align-items:center;">
+            <button type="button" onclick="scheduleCampaign()"
+              style="background:var(--green);color:white;border:none;padding:10px 22px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;">
+              📅 Programar Campaña
+            </button>
+            <span id="campSubmitStatus" style="font-size:11px;color:var(--text-muted);"></span>
+          </div>
+
+          <!-- Scheduled posts list -->
+          <div style="margin-top:32px;border-top:1px solid var(--gray-border);padding-top:18px;">
+            <div style="font-size:13px;font-weight:600;color:var(--white);margin-bottom:10px;">Posts Programados</div>
+            <div id="campScheduledList" style="display:flex;flex-direction:column;gap:8px;"></div>
+          </div>
+
         </div>
       </div>
 
@@ -2501,6 +2591,7 @@ function switchTab(tab, btn) {
   if (tab === 'log' && state.logsData.length === 0) loadLogs()
   if (tab === 'whatsapp') initWATab()
   if (tab === 'quickpost') loadQPInventario()
+  if (tab === 'campanas-multi') initCampaignsMulti()
   if (tab === 'settings') { loadMetaCredentials() }
 }
 
@@ -3214,6 +3305,481 @@ async function submitQuickPost() {
 }
 
 // ══════════════════════════════════════════════════════
+// CAMPAÑAS MULTI-POST (Scheduling)
+// ══════════════════════════════════════════════════════
+const SCHED_KEY = 'rm_scheduled_posts'
+let _campTickerId = null
+const _campTimers = new Map()  // postId → timeoutId
+
+async function initCampaignsMulti() {
+  // Ensure inventory is loaded so the inmueble dropdown can be populated.
+  const propSel = document.getElementById('qpProperty')
+  const needsLoad = !propSel || propSel.options.length === 0 ||
+    (propSel.options.length === 1 && /Cargando|Selecciona/.test(propSel.options[0].textContent))
+  if (needsLoad) { try { await loadQPInventario() } catch (_) {} }
+
+  populateCampInmuebleSelect()
+  renderCampSlots()
+  rearmAllSchedulers()
+  renderCampScheduledList()
+
+  // Live countdown ticker
+  if (_campTickerId) clearInterval(_campTickerId)
+  _campTickerId = setInterval(renderCampScheduledList, 1000)
+}
+
+function populateCampInmuebleSelect() {
+  const sel = document.getElementById('campInmueble')
+  const propSel = document.getElementById('qpProperty')
+  if (!sel || !propSel) return
+  while (sel.options.length > 1) sel.remove(1)
+  for (const opt of propSel.options) {
+    if (!opt.value) continue
+    sel.appendChild(opt.cloneNode(true))
+  }
+}
+
+function renderCampSlots() {
+  const container = document.getElementById('campSlots')
+  if (!container) return
+  const n = parseInt(document.getElementById('campNumPosts').value, 10) || 3
+  container.innerHTML = Array.from({ length: n }, (_, i) => slotHTML(i)).join('')
+}
+
+function slotHTML(i) {
+  return `
+    <div class="camp-slot" data-idx="${i}" style="background:var(--gray-card);border:1px solid var(--gray-border);border-radius:10px;padding:12px 14px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;gap:8px;">
+        <div style="font-size:11px;font-weight:700;color:var(--green);text-transform:uppercase;letter-spacing:0.6px;">Post #${i+1}</div>
+        <input type="datetime-local" name="when"
+          style="background:var(--gray-mid);border:1px solid var(--gray-border);color:var(--text);padding:5px 8px;border-radius:6px;font-size:11px;outline:none;font-family:inherit;color-scheme:dark;" />
+      </div>
+      <div style="display:grid;grid-template-columns:84px 1fr;gap:10px;">
+        <div class="slot-img-wrap" style="width:84px;height:84px;border-radius:8px;border:1px dashed var(--gray-border);background:var(--gray-mid);display:flex;align-items:center;justify-content:center;font-size:24px;color:var(--text-muted);overflow:hidden;">
+          <span class="placeholder">📷</span>
+          <img class="preview" alt="" style="display:none;width:100%;height:100%;object-fit:cover;" />
+        </div>
+        <div style="display:flex;flex-direction:column;gap:6px;min-width:0;">
+          <input type="url" name="imgUrl" placeholder="URL pública de imagen" oninput="onSlotImageChange(${i})"
+            style="width:100%;background:var(--gray-mid);border:1px solid var(--gray-border);color:var(--text);padding:6px 9px;border-radius:6px;font-size:11px;outline:none;font-family:inherit;" />
+          <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;">
+            <input type="file" name="imgFile" accept="image/png,image/jpeg,image/webp" onchange="onSlotFileUpload(${i}, this)" style="font-size:10px;color:var(--text-muted);max-width:175px;" />
+            <button type="button" onclick="slotGenerateImage(${i})"
+              style="background:rgba(64,217,157,.1);border:1px solid rgba(64,217,157,.3);color:var(--green);padding:4px 9px;border-radius:5px;font-size:10px;font-weight:600;cursor:pointer;font-family:inherit;">
+              ✨ Imagen IA
+            </button>
+            <span class="slot-status" style="font-size:10px;color:var(--text-muted);flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;"></span>
+          </div>
+          <input type="text" name="imgInstructions" placeholder="Instrucciones IA (ej: precio en banda inferior)"
+            style="width:100%;background:var(--gray-mid);border:1px solid var(--gray-border);color:var(--text);padding:5px 9px;border-radius:6px;font-size:10px;outline:none;font-family:inherit;" />
+        </div>
+      </div>
+      <div style="margin-top:8px;">
+        <textarea name="caption" rows="2" placeholder="Caption del post"
+          style="width:100%;background:var(--gray-mid);border:1px solid var(--gray-border);color:var(--text);padding:6px 9px;border-radius:6px;font-size:11px;outline:none;resize:vertical;font-family:inherit;line-height:1.4;"></textarea>
+        <button type="button" onclick="slotGenerateCaption(${i})"
+          style="margin-top:4px;background:rgba(64,217,157,.1);border:1px solid rgba(64,217,157,.3);color:var(--green);padding:3px 9px;border-radius:5px;font-size:10px;font-weight:600;cursor:pointer;font-family:inherit;">
+          ✨ Caption IA
+        </button>
+      </div>
+    </div>`
+}
+
+function getSlot(i) { return document.querySelector(`.camp-slot[data-idx="${i}"]`) }
+function getSlotField(i, name) { const s = getSlot(i); return s && s.querySelector(`[name="${name}"]`) }
+function setSlotStatus(i, msg, kind) {
+  const slot = getSlot(i)
+  if (!slot) return
+  const el = slot.querySelector('.slot-status')
+  if (!el) return
+  el.textContent = msg || ''
+  el.style.color = kind === 'error' ? '#fca5a5' : kind === 'success' ? 'var(--green)' : 'var(--text-muted)'
+}
+function setSlotPreview(i, url) {
+  const slot = getSlot(i)
+  if (!slot) return
+  const img = slot.querySelector('.preview')
+  const ph = slot.querySelector('.placeholder')
+  if (url) {
+    img.src = url
+    img.style.display = 'block'
+    if (ph) ph.style.display = 'none'
+  } else {
+    img.src = ''
+    img.style.display = 'none'
+    if (ph) ph.style.display = 'block'
+  }
+}
+
+function onSlotImageChange(i) {
+  const url = getSlotField(i, 'imgUrl').value.trim()
+  setSlotPreview(i, url)
+}
+
+async function onSlotFileUpload(i, input) {
+  const file = input.files && input.files[0]
+  if (!file) return
+  if (!/^image\/(png|jpe?g|webp)$/i.test(file.type)) {
+    setSlotStatus(i, '✗ Solo PNG/JPG/WEBP', 'error'); input.value = ''; return
+  }
+  if (file.size > 3 * 1024 * 1024) {
+    setSlotStatus(i, `✗ Muy grande (${(file.size/1024/1024).toFixed(1)}MB · máx 3MB)`, 'error'); input.value = ''; return
+  }
+  setSlotStatus(i, '⏳ Subiendo a Supabase…', 'info')
+  try {
+    const dataUrl = await new Promise((resolve, reject) => {
+      const reader = new FileReader()
+      reader.onload = () => resolve(reader.result)
+      reader.onerror = () => reject(reader.error)
+      reader.readAsDataURL(file)
+    })
+    const base64 = String(dataUrl).split(',')[1]
+    const r = await fetch('/api/ai?action=upload-ref', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-empresa-id': state.empresa_id },
+      body: JSON.stringify({ data: base64, contentType: file.type, filename: file.name })
+    })
+    const json = await r.json()
+    if (!r.ok) throw new Error(json.error || 'Upload falló')
+    getSlotField(i, 'imgUrl').value = json.url
+    setSlotPreview(i, json.url)
+    setSlotStatus(i, '✓ Imagen subida', 'success')
+  } catch (err) {
+    setSlotStatus(i, '✗ ' + err.message, 'error')
+  }
+}
+
+function getCampInmuebleObject() {
+  const sel = document.getElementById('campInmueble')
+  if (!sel || !sel.value) return null
+  const opt = sel.selectedOptions[0]
+  return {
+    id: opt.value,
+    proyecto: opt.dataset.proyecto || '',
+    tipo_inmueble_propiedad: opt.dataset.tipo || '',
+    nombre_ciudad: opt.dataset.ciudad || '',
+    descripcion: opt.dataset.desc || '',
+    image_link_1: opt.dataset.img || ''
+  }
+}
+
+async function slotGenerateImage(i) {
+  const inmueble = getCampInmuebleObject()
+  const refUrl = getSlotField(i, 'imgUrl').value.trim() || (inmueble && inmueble.image_link_1) || ''
+  const customInstructions = getSlotField(i, 'imgInstructions').value.trim()
+  if (!refUrl && !customInstructions && !inmueble) {
+    setSlotStatus(i, 'Faltan datos: URL, inmueble o instrucciones', 'error'); return
+  }
+  setSlotStatus(i, '⏳ Generando imagen IA (30–60s)…', 'info')
+  try {
+    const r = await fetch('/api/ai?action=image', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-empresa-id': state.empresa_id },
+      body: JSON.stringify({
+        inmueble,
+        reference_image_url: refUrl,
+        custom_instructions: customInstructions,
+        size: '1024x1024',
+        platform: document.getElementById('campPlatform').value
+      })
+    })
+    const text = await r.text()
+    let json = {}
+    try { json = JSON.parse(text) } catch (_) { json = { error: 'Respuesta inesperada' } }
+    if (!r.ok) throw new Error((json.error || 'Error') + (json.detail ? ' — ' + json.detail : ''))
+    getSlotField(i, 'imgUrl').value = json.url
+    setSlotPreview(i, json.url)
+    setSlotStatus(i, '✓ Imagen lista', 'success')
+  } catch (err) {
+    setSlotStatus(i, '✗ ' + err.message, 'error')
+  }
+}
+
+async function slotGenerateCaption(i) {
+  const inmueble = getCampInmuebleObject()
+  if (!inmueble) {
+    setSlotStatus(i, 'Selecciona un inmueble base arriba', 'error'); return
+  }
+  const platform = document.getElementById('campPlatform').value
+  setSlotStatus(i, '⏳ Generando caption IA…', 'info')
+  try {
+    const r = await fetch('/api/ai?action=caption', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-empresa-id': state.empresa_id },
+      body: JSON.stringify({ inmueble, platform })
+    })
+    const json = await r.json()
+    if (!r.ok) throw new Error(json.error || 'Error')
+    getSlotField(i, 'caption').value = json.caption
+    setSlotStatus(i, '✓ Caption generado', 'success')
+  } catch (err) {
+    setSlotStatus(i, '✗ ' + err.message, 'error')
+  }
+}
+
+function autoFillSchedule() {
+  const spacing = parseInt(document.getElementById('campSpacing').value, 10) || 5
+  const n = parseInt(document.getElementById('campNumPosts').value, 10) || 3
+  const start = new Date(Date.now() + 60 * 1000)  // start in 1 min
+  for (let i = 0; i < n; i++) {
+    const t = new Date(start.getTime() + i * spacing * 60 * 1000)
+    const f = getSlotField(i, 'when')
+    if (f) f.value = formatDateTimeLocal(t)
+  }
+  toast(`Horarios auto-rellenados (cada ${spacing} min)`, 'success')
+}
+
+function formatDateTimeLocal(d) {
+  const pad = n => String(n).padStart(2, '0')
+  return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`
+}
+
+function scheduleCampaign() {
+  const name = document.getElementById('campName').value.trim() || 'Campaña sin nombre'
+  const platform = document.getElementById('campPlatform').value
+  const n = parseInt(document.getElementById('campNumPosts').value, 10) || 3
+  const status = document.getElementById('campSubmitStatus')
+  const setErr = msg => { status.textContent = msg; status.style.color = '#fca5a5' }
+
+  // Validate
+  const slots = []
+  for (let i = 0; i < n; i++) {
+    const imgUrl = getSlotField(i, 'imgUrl').value.trim()
+    const caption = getSlotField(i, 'caption').value.trim()
+    const whenStr = getSlotField(i, 'when').value
+    if (!imgUrl)   return setErr(`Post #${i+1}: falta imagen`)
+    if (!caption)  return setErr(`Post #${i+1}: falta caption`)
+    if (!whenStr)  return setErr(`Post #${i+1}: falta fecha/hora`)
+    const when = new Date(whenStr)
+    if (isNaN(when.getTime())) return setErr(`Post #${i+1}: fecha inválida`)
+    if (when.getTime() < Date.now() - 60000) return setErr(`Post #${i+1}: la fecha está en el pasado`)
+    slots.push({ imgUrl, caption, scheduledAt: when.toISOString() })
+  }
+
+  // Sanity: Meta creds present?
+  const meta = (() => { try { return JSON.parse(localStorage.getItem('meta_creds') || '{}') } catch (_) { return {} } })()
+  if (!meta.access_token) return setErr('Faltan credenciales de Meta. Configúralas en ⚙️ Configuración primero.')
+
+  // Persist
+  const all = loadScheduled()
+  const campaignId = `c_${Date.now()}`
+  for (const s of slots) {
+    all.push({
+      id: `p_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
+      campaignId,
+      campaignName: name,
+      platform,
+      imageUrl: s.imgUrl,
+      caption: s.caption,
+      scheduledAt: s.scheduledAt,
+      status: 'pending',
+      createdAt: new Date().toISOString()
+    })
+  }
+  saveScheduled(all)
+
+  status.textContent = `✓ ${slots.length} posts programados en "${name}"`
+  status.style.color = 'var(--green)'
+
+  rearmAllSchedulers()
+  renderCampScheduledList()
+  toast(`${slots.length} posts programados`, 'success')
+
+  // Reset form name (keep the rest in case user wants to schedule another)
+  document.getElementById('campName').value = ''
+}
+
+function loadScheduled() {
+  try { return JSON.parse(localStorage.getItem(SCHED_KEY) || '[]') } catch (_) { return [] }
+}
+function saveScheduled(arr) { localStorage.setItem(SCHED_KEY, JSON.stringify(arr)) }
+function updateSched(id, patch) {
+  const arr = loadScheduled()
+  const idx = arr.findIndex(p => p.id === id)
+  if (idx >= 0) { arr[idx] = { ...arr[idx], ...patch }; saveScheduled(arr) }
+}
+
+function rearmAllSchedulers() {
+  for (const t of _campTimers.values()) clearTimeout(t)
+  _campTimers.clear()
+  const all = loadScheduled()
+  let modified = false
+  for (const p of all) {
+    if (p.status !== 'pending') continue
+    const due = new Date(p.scheduledAt).getTime() - Date.now()
+    if (due <= 0) {
+      updateSched(p.id, { status: 'expired' })
+      modified = true
+      continue
+    }
+    if (due > 7 * 24 * 60 * 60 * 1000) continue  // > 7 days, setTimeout unsafe
+    const tid = setTimeout(() => publishScheduledPost(p.id), due)
+    _campTimers.set(p.id, tid)
+  }
+  if (modified) renderCampScheduledList()
+}
+
+async function publishScheduledPost(id) {
+  const post = loadScheduled().find(p => p.id === id)
+  if (!post || post.status !== 'pending') return
+  updateSched(id, { status: 'publishing' })
+  renderCampScheduledList()
+
+  try {
+    const meta = JSON.parse(localStorage.getItem('meta_creds') || '{}')
+    if (!meta.access_token) throw new Error('Sin Access Token de Meta')
+    const headers = {
+      'Content-Type': 'application/json',
+      'x-empresa-id': state.empresa_id,
+      'x-meta-token': meta.access_token
+    }
+    if (meta.page_id) headers['x-meta-page-id'] = meta.page_id
+    if (meta.ad_account_id) headers['x-meta-ad-account-id'] = meta.ad_account_id
+    if (meta.waba_id) headers['x-waba-id'] = meta.waba_id
+    if (meta.phone_number_id) headers['x-meta-phone-number-id'] = meta.phone_number_id
+
+    const r = await fetch('/api/social-post', {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({
+        platform: post.platform,
+        caption: post.caption,
+        image_url: post.imageUrl,
+        empresa_id: state.empresa_id
+      })
+    })
+    const text = await r.text()
+    let data = {}
+    try { data = JSON.parse(text) } catch (_) { data = { error: 'Respuesta inesperada' } }
+    if (!r.ok) throw new Error((data.error || 'Error') + (data.detail ? ' — ' + data.detail : ''))
+    updateSched(id, { status: 'published', postUrl: data.url, publishedAt: new Date().toISOString(), error: null })
+    toast(`✓ Publicado: ${post.campaignName}`, 'success')
+  } catch (err) {
+    updateSched(id, { status: 'failed', error: err.message })
+    toast(`✗ Falló: ${post.campaignName}`, 'error')
+  } finally {
+    renderCampScheduledList()
+  }
+}
+
+function escapeHTML(s) {
+  return String(s == null ? '' : s).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]))
+}
+
+function renderStatusBadge(status) {
+  const map = {
+    pending:    ['rgba(245,158,11,.18)', 'var(--yellow)', 'pendiente'],
+    publishing: ['rgba(59,130,246,.2)',  '#93c5fd',       'publicando'],
+    published:  ['rgba(29,158,117,.18)', 'var(--green)',  '✓ publicado'],
+    failed:     ['rgba(239,68,68,.18)',  '#fca5a5',       '✗ falló'],
+    expired:    ['rgba(107,107,107,.2)', 'var(--text-muted)', 'expirado'],
+    cancelled:  ['rgba(107,107,107,.2)', 'var(--text-muted)', 'cancelado']
+  }
+  const [bg, fg, label] = map[status] || ['rgba(107,107,107,.18)','var(--text-muted)', status]
+  return `<span style="background:${bg};color:${fg};padding:2px 8px;border-radius:10px;font-size:10px;font-weight:600;white-space:nowrap;">${label}</span>`
+}
+
+function renderCampScheduledList() {
+  const container = document.getElementById('campScheduledList')
+  if (!container) return
+  const all = loadScheduled()
+  if (!all.length) {
+    container.innerHTML = '<div style="font-size:11px;color:var(--text-muted);padding:14px;background:var(--gray-card);border:1px dashed var(--gray-border);border-radius:8px;text-align:center;">No hay posts programados todavía</div>'
+    return
+  }
+
+  // Sort campaigns by most recently created post within
+  const byCamp = {}
+  for (const p of all) {
+    if (!byCamp[p.campaignId]) byCamp[p.campaignId] = { name: p.campaignName, posts: [], maxCreated: 0 }
+    byCamp[p.campaignId].posts.push(p)
+    const t = Date.parse(p.createdAt) || 0
+    if (t > byCamp[p.campaignId].maxCreated) byCamp[p.campaignId].maxCreated = t
+  }
+
+  const campaigns = Object.entries(byCamp).sort((a, b) => b[1].maxCreated - a[1].maxCreated)
+
+  container.innerHTML = campaigns.map(([cid, c]) => {
+    // Sort posts within campaign by scheduled time
+    const sorted = c.posts.slice().sort((a, b) => Date.parse(a.scheduledAt) - Date.parse(b.scheduledAt))
+    const postsHTML = sorted.map(p => {
+      const dt = new Date(p.scheduledAt)
+      const due = dt.getTime() - Date.now()
+      let countdown = ''
+      if (p.status === 'pending') {
+        if (due > 0) {
+          const totalSec = Math.floor(due / 1000)
+          const d = Math.floor(totalSec / 86400)
+          const h = Math.floor((totalSec % 86400) / 3600)
+          const m = Math.floor((totalSec % 3600) / 60)
+          const s = totalSec % 60
+          countdown = ` · faltan ${d ? d + 'd ' : ''}${h ? h + 'h ' : ''}${m ? m + 'm ' : ''}${s}s`
+        } else {
+          countdown = ' · publicando…'
+        }
+      }
+      const dtStr = dt.toLocaleString('es-CO', { dateStyle: 'short', timeStyle: 'short' })
+      const linkHtml = p.postUrl ? `<a href="${escapeHTML(p.postUrl)}" target="_blank" rel="noopener" style="color:var(--green);font-size:10px;margin-left:6px;">ver post →</a>` : ''
+      const errHtml = p.error ? `<div style="font-size:10px;color:#fca5a5;margin-top:3px;line-height:1.4;">${escapeHTML(p.error)}</div>` : ''
+      const cancelBtn = p.status === 'pending' ? `<button onclick="cancelScheduled('${escapeHTML(p.id)}')" style="background:transparent;border:1px solid var(--gray-border);color:var(--text-muted);padding:2px 7px;border-radius:4px;font-size:10px;cursor:pointer;font-family:inherit;">cancelar</button>` : ''
+      const retryBtn = (p.status === 'failed' || p.status === 'expired') ? `<button onclick="retryScheduled('${escapeHTML(p.id)}')" style="background:rgba(64,217,157,.12);border:1px solid rgba(64,217,157,.3);color:var(--green);padding:2px 7px;border-radius:4px;font-size:10px;cursor:pointer;font-family:inherit;">publicar ya</button>` : ''
+      return `
+        <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:10px;padding:9px 11px;background:var(--gray-mid);border-radius:7px;border:1px solid var(--gray-border);">
+          <div style="display:flex;gap:9px;align-items:flex-start;flex:1;min-width:0;">
+            <img src="${escapeHTML(p.imageUrl)}" alt="" style="width:42px;height:42px;border-radius:5px;object-fit:cover;flex-shrink:0;background:var(--gray-card);" onerror="this.style.opacity='0.3'" />
+            <div style="flex:1;min-width:0;">
+              <div style="font-size:11px;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escapeHTML(p.caption.slice(0, 90))}${p.caption.length > 90 ? '…' : ''}</div>
+              <div style="font-size:10px;color:var(--text-muted);margin-top:3px;">${p.platform === 'instagram' ? '📷 IG' : '📘 FB'} · ${dtStr}${countdown}${linkHtml}</div>
+              ${errHtml}
+            </div>
+          </div>
+          <div style="display:flex;gap:6px;align-items:center;flex-shrink:0;flex-wrap:wrap;justify-content:flex-end;">
+            ${renderStatusBadge(p.status)}
+            ${cancelBtn}
+            ${retryBtn}
+          </div>
+        </div>`
+    }).join('')
+
+    const counts = sorted.reduce((acc, p) => { acc[p.status] = (acc[p.status]||0) + 1; return acc }, {})
+    const summary = ['pending','publishing','published','failed','expired'].filter(s => counts[s])
+      .map(s => `${counts[s]} ${({pending:'pendientes',publishing:'publicando',published:'publicados',failed:'fallidos',expired:'expirados'})[s]}`)
+      .join(' · ')
+
+    return `
+      <div style="background:var(--gray-card);border:1px solid var(--gray-border);border-radius:10px;padding:12px;">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;gap:8px;">
+          <div style="font-size:12px;font-weight:600;color:var(--white);">${escapeHTML(c.name)} <span style="color:var(--text-muted);font-weight:400;font-size:10px;">· ${summary}</span></div>
+          <button onclick="deleteCampaign('${escapeHTML(cid)}')" style="background:transparent;border:1px solid var(--gray-border);color:var(--text-muted);padding:3px 9px;border-radius:5px;font-size:10px;cursor:pointer;font-family:inherit;">borrar</button>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:6px;">${postsHTML}</div>
+      </div>`
+  }).join('')
+}
+
+function cancelScheduled(id) {
+  const t = _campTimers.get(id)
+  if (t) { clearTimeout(t); _campTimers.delete(id) }
+  updateSched(id, { status: 'cancelled' })
+  renderCampScheduledList()
+}
+
+function retryScheduled(id) {
+  updateSched(id, { status: 'pending', error: null })
+  publishScheduledPost(id)
+}
+
+function deleteCampaign(cid) {
+  if (!confirm('¿Borrar toda la campaña? Los pendientes se cancelan.')) return
+  const arr = loadScheduled().filter(p => p.campaignId !== cid)
+  for (const t of _campTimers.values()) clearTimeout(t)
+  _campTimers.clear()
+  saveScheduled(arr)
+  rearmAllSchedulers()
+  renderCampScheduledList()
+}
+
+// ══════════════════════════════════════════════════════
 // META CREDENTIALS (Settings tab)
 // ══════════════════════════════════════════════════════
 async function loadMetaCredentials() {
@@ -3389,6 +3955,9 @@ async function init() {
 
   // 5. Auto-refresh cada 30s
   setInterval(refreshMetrics, 30000)
+
+  // 6. Re-arm scheduled posts so they fire even if user doesn't open the tab.
+  try { rearmAllSchedulers() } catch (_) {}
 }
 
 // Cerrar modal con Escape
