@@ -92,6 +92,15 @@
   font-size: 13.5px;
   line-height: 1.45;
   color: #fff;
+  transition: opacity 0.2s ease;
+}
+
+/* Inside the italic quote, <em> reads as accent — mint, slightly heavier
+   so the contrast is legible against the surrounding italic body. */
+.ae-cam-quote p em {
+  font-style: italic;
+  font-weight: 500;
+  color: var(--ae-bolt);
 }
 
 /* ── Section headers (mono micro on dark) ── */
