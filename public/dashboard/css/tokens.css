@@ -1,0 +1,116 @@
+/* ─────────────────────────────────────────────────────────────
+   RENTMIES ADS ENGINE — DESIGN TOKENS (FASE 1)
+   Source of truth: .claude/skills/ads-engine-brand/SKILL.md
+   Premium Editorial B2B · Colombian high-fidelity
+   NEVER use #000 (except .ae-camilord) or #fff as page bg.
+   ───────────────────────────────────────────────────────────── */
+
+:root {
+  /* ── 1.1 Surfaces — warm earth palette ── */
+  --rm-bg:              #f6f3ee;   /* page canvas */
+  --rm-surface:         #ffffff;   /* cards lifted above canvas */
+  --rm-surface-2:       #faf8f4;   /* subtle surface — input bg */
+  --rm-surface-3:       #f1ede6;   /* chip backgrounds */
+  --rm-ink:             #0f1410;   /* primary text — never #000 */
+  --rm-ink-2:           #3a3f3b;   /* secondary text */
+  --rm-muted:           #7a7e79;   /* tertiary, timestamps, labels */
+  --rm-border:          #e8e3dc;   /* default border */
+  --rm-border-strong:   #d4cec3;   /* emphasized border */
+
+  /* ── 1.2 Brand colors ── */
+  --rm-teal:            #40d99d;   /* active states, AI presence */
+  --rm-mint:            #4fffb4;   /* hover glow on dark */
+  --rm-green:           #006c4a;   /* authority — eyebrows on white */
+  --rm-green-deep:      #004d35;   /* primary CTA bg, deep accents */
+
+  /* ── 1.3 Ad Engine specific ── */
+  --ae-energy-1:        #c8e7d4;   /* energy meter — basic */
+  --ae-energy-2:        #6fbf8e;   /* optimized */
+  --ae-energy-3:        #2d9968;   /* high conversion */
+  --ae-energy-4:        #006c4a;   /* max power */
+  --ae-bolt:            #93eabf;   /* mint accent on deep green */
+  --ae-input-bg:        #faf8f4;   /* form input background */
+  --ae-card-radius:     6px;       /* all Ad Engine card corners */
+
+  /* ── 1.4 Semantic ── */
+  --rm-red:             #c14f3a;
+  --rm-amber:           #d29836;
+  --rm-violet:          #7c6aa8;
+  --rm-blue:            #4f7ac1;
+
+  /* ── 2.1 Typography ── */
+  --rm-font:    'Inter', system-ui, -apple-system, sans-serif;
+  --rm-serif:   'Instrument Serif', Georgia, serif;
+  --rm-mono:    'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, monospace;
+
+  /* ── 3.2 Spacing system (8px base) ── */
+  --gutter:       24px;
+  --margin-main:  32px;
+  --stack-xs:     4px;
+  --stack-sm:     8px;
+  --stack-md:     16px;
+  --stack-lg:     24px;
+  --stack-xl:     48px;
+
+  /* ── Shadows — XS only (1px Y, 4% opacity) ── */
+  --rm-shadow-xs: 0 1px 2px rgba(15, 20, 16, 0.04);
+  --rm-shadow-sm: 0 2px 6px rgba(15, 20, 16, 0.05), 0 1px 2px rgba(15, 20, 16, 0.04);
+  --rm-shadow-md: 0 8px 24px rgba(15, 20, 16, 0.08);
+
+  /* ── Layout ── */
+  --rail-w:       64px;
+  --camilord-w:   320px;
+  --topnav-h:     56px;
+}
+
+/* ─────────────────────────────────────────────────────────────
+   Animation keyframes — restrained, transform/opacity only,
+   always under 500ms. Wrap usage in prefers-reduced-motion.
+   ───────────────────────────────────────────────────────────── */
+
+@keyframes ae-pulse {
+  0%, 100% { opacity: 1;   transform: scale(1); }
+  50%      { opacity: 0.4; transform: scale(1.3); }
+}
+
+@keyframes ae-rise {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes ae-feed-in {
+  from { opacity: 0; transform: translateY(4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .ae-rise        { animation: ae-rise 0.2s ease forwards; }
+  .ae-rise-d-1    { animation-delay: 60ms; }
+  .ae-rise-d-2    { animation-delay: 120ms; }
+  .ae-rise-d-3    { animation-delay: 180ms; }
+  .ae-rise-d-4    { animation-delay: 240ms; }
+  .ae-feed-in     { animation: ae-feed-in 0.15s ease forwards; }
+}
+
+/* ─────────────────────────────────────────────────────────────
+   Resets — minimal, scoped to Ad Engine
+   ───────────────────────────────────────────────────────────── */
+
+*, *::before, *::after { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  padding: 0;
+  background: var(--rm-bg);
+  color: var(--rm-ink);
+  font-family: var(--rm-font);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+a { color: inherit; text-decoration: none; }
+
+/* Hide scrollbar utility — keep scroll, hide chrome */
+.hide-scrollbar { scrollbar-width: none; -ms-overflow-style: none; }
+.hide-scrollbar::-webkit-scrollbar { display: none; }
