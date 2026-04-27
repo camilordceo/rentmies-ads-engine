@@ -239,14 +239,14 @@ async function publishToInstagram(igUserId, accessToken, { caption, imageUrl }) 
 // IG Reels — recommended path for short-form video on Instagram. Feed VIDEO
 // has been deprecated by Meta in favor of REELS for new accounts.
 
-async function publishVideoToInstagram(igUserId, accessToken, { caption, videoUrl, mediaType }) {
+async function publishVideoToInstagram(igUserId, accessToken, { caption, videoUrl }) {
   if (!videoUrl || !videoUrl.startsWith('http')) {
     throw new Error('Instagram requiere una URL de video pública (https://...)')
   }
 
-  // Default to REELS — that's what Meta promotes now and what works for new accounts.
-  // Allow caller to force VIDEO if they want feed video specifically.
-  const mt = (mediaType || 'REELS').toUpperCase() === 'VIDEO' ? 'VIDEO' : 'REELS'
+  // IG only accepts REELS for video uploads now — media_type=VIDEO was deprecated by Meta.
+  // share_to_feed=true makes the Reel also appear in the main feed.
+  const mt = 'REELS'
 
   // Step 1: Create media container
   let containerId
@@ -504,7 +504,7 @@ module.exports = async (req, res) => {
       }
       if (isVideo) {
         result = await publishVideoToInstagram(igAccountId, creds.access_token, {
-          caption, videoUrl: video_url, mediaType: media_type
+          caption, videoUrl: video_url
         })
       } else {
         result = await publishToInstagram(igAccountId, creds.access_token, { caption, imageUrl: image_url })
