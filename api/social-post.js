@@ -235,6 +235,177 @@ async function publishToInstagram(igUserId, accessToken, { caption, imageUrl }) 
   return { post_id: mediaId, platform: 'instagram', url }
 }
 
+// ─── Video publishing ──────────────────────────────────────────────────
+// IG Reels — recommended path for short-form video on Instagram. Feed VIDEO
+// has been deprecated by Meta in favor of REELS for new accounts.
+
+async function publishVideoToInstagram(igUserId, accessToken, { caption, videoUrl, mediaType }) {
+  if (!videoUrl || !videoUrl.startsWith('http')) {
+    throw new Error('Instagram requiere una URL de video pública (https://...)')
+  }
+
+  // Default to REELS — that's what Meta promotes now and what works for new accounts.
+  // Allow caller to force VIDEO if they want feed video specifically.
+  const mt = (mediaType || 'REELS').toUpperCase() === 'VIDEO' ? 'VIDEO' : 'REELS'
+
+  // Step 1: Create media container
+  let containerId
+  try {
+    const { data } = await axios.post(`${META_GRAPH}/${igUserId}/media`, null, {
+      params: {
+        media_type: mt,
+        video_url: videoUrl,
+        caption: caption || '',
+        share_to_feed: 'true',
+        access_token: accessToken
+      },
+      timeout: 20000
+    })
+    containerId = data.id
+  } catch (err) {
+    throw new Error(`No se pudo crear el contenedor de video: ${formatMetaError(err)}`)
+  }
+  if (!containerId) throw new Error('Meta no devolvió container_id')
+
+  // Step 2: Poll status. Videos take 30s-3min on Meta's side.
+  // Budget: ~50s of polling within Vercel's 60s function limit.
+  // Initial wait 5s + 18 attempts * 2.5s = 50s
+  const maxAttempts = 18
+  const delayMs = 2500
+  let lastStatus = null
+  await new Promise(r => setTimeout(r, 5000))
+  for (let i = 0; i < maxAttempts; i++) {
+    try {
+      const { data } = await axios.get(`${META_GRAPH}/${containerId}`, {
+        params: { fields: 'status_code,status', access_token: accessToken },
+        timeout: 5000
+      })
+      lastStatus = data.status_code
+      if (lastStatus === 'FINISHED') break
+      if (lastStatus === 'ERROR') {
+        throw new Error(
+          `Instagram rechazó el video (status ERROR). ` +
+          `Verifica: MP4/MOV, codec H.264, audio AAC, ratio 9:16 (Reels) o 4:5/1:1/16:9 (Feed), ` +
+          `duración 3-90s (Reels), peso < 250MB (Reels) o 100MB (Feed).`
+        )
+      }
+      if (lastStatus === 'EXPIRED') throw new Error('El contenedor expiró antes de poderse publicar')
+    } catch (err) {
+      if (err.message && (err.message.startsWith('Instagram rechazó') || err.message.startsWith('El contenedor'))) throw err
+      if (err.response) throw new Error(`Polling falló: ${formatMetaError(err)}`)
+    }
+    await new Promise(r => setTimeout(r, delayMs))
+  }
+  if (lastStatus !== 'FINISHED') {
+    // Don't fail: return container_id so client can retry with video-status action.
+    return {
+      status: 'processing',
+      container_id: containerId,
+      platform: 'instagram',
+      media_type: mt,
+      message: `Video aún procesando en Meta (último estado: ${lastStatus || 'sin respuesta'}). Reintenta en 30-60s con video-status.`
+    }
+  }
+
+  // Step 3: Publish
+  let mediaId
+  try {
+    const { data } = await axios.post(`${META_GRAPH}/${igUserId}/media_publish`, null, {
+      params: { creation_id: containerId, access_token: accessToken },
+      timeout: 20000
+    })
+    mediaId = data.id
+  } catch (err) {
+    throw new Error(`Publicación falló: ${formatMetaError(err)}`)
+  }
+  if (!mediaId) throw new Error('Meta no devolvió media_id tras publicar')
+
+  let url = `https://www.instagram.com/`
+  try {
+    const { data } = await axios.get(`${META_GRAPH}/${mediaId}`, {
+      params: { fields: 'permalink', access_token: accessToken },
+      timeout: 5000
+    })
+    if (data.permalink) url = data.permalink
+  } catch (_) {}
+
+  return { post_id: mediaId, platform: 'instagram', media_type: mt, url }
+}
+
+async function publishVideoToFacebookPage(pageId, userToken, { caption, videoUrl }) {
+  const { token: pageToken } = await getPageAccessToken(pageId, userToken)
+
+  // FB Page videos: POST /{page_id}/videos with file_url. Returns immediately
+  // with the video id; FB processes the video async and the post appears in
+  // the timeline once ready (usually within a minute).
+  let videoId
+  try {
+    const { data } = await axios.post(`${META_GRAPH}/${pageId}/videos`, null, {
+      params: {
+        file_url: videoUrl,
+        description: caption || '',
+        access_token: pageToken
+      },
+      timeout: 30000
+    })
+    videoId = data.id
+  } catch (err) {
+    throw new Error(`Publicación de video falló: ${formatMetaError(err)}`)
+  }
+  if (!videoId) throw new Error('Meta no devolvió video id')
+
+  // FB doesn't give a permalink immediately for processing videos — generic URL works.
+  const url = `https://www.facebook.com/${pageId}/videos/${videoId}`
+  return { post_id: videoId, platform: 'facebook_page', media_type: 'VIDEO', url }
+}
+
+// Resume polling for a video container that didn't finish in the original
+// publish call. Caller passes container_id; we poll briefly and either publish
+// or report still-processing.
+async function resumeIgVideoPublish(igUserId, accessToken, containerId) {
+  const maxAttempts = 8
+  const delayMs = 2500
+  let lastStatus = null
+  for (let i = 0; i < maxAttempts; i++) {
+    try {
+      const { data } = await axios.get(`${META_GRAPH}/${containerId}`, {
+        params: { fields: 'status_code,status', access_token: accessToken },
+        timeout: 5000
+      })
+      lastStatus = data.status_code
+      if (lastStatus === 'FINISHED') break
+      if (lastStatus === 'ERROR') throw new Error('Instagram rechazó el video durante el procesamiento')
+      if (lastStatus === 'EXPIRED') throw new Error('El contenedor expiró')
+    } catch (err) {
+      if (err.message && (err.message.startsWith('Instagram') || err.message.startsWith('El contenedor'))) throw err
+      if (err.response) throw new Error(`Polling falló: ${formatMetaError(err)}`)
+    }
+    if (i < maxAttempts - 1) await new Promise(r => setTimeout(r, delayMs))
+  }
+  if (lastStatus !== 'FINISHED') {
+    return { status: 'processing', container_id: containerId, last_status: lastStatus }
+  }
+  let mediaId
+  try {
+    const { data } = await axios.post(`${META_GRAPH}/${igUserId}/media_publish`, null, {
+      params: { creation_id: containerId, access_token: accessToken },
+      timeout: 20000
+    })
+    mediaId = data.id
+  } catch (err) {
+    throw new Error(`Publicación falló: ${formatMetaError(err)}`)
+  }
+  let url = 'https://www.instagram.com/'
+  try {
+    const { data } = await axios.get(`${META_GRAPH}/${mediaId}`, {
+      params: { fields: 'permalink', access_token: accessToken },
+      timeout: 5000
+    })
+    if (data.permalink) url = data.permalink
+  } catch (_) {}
+  return { status: 'published', post_id: mediaId, url }
+}
+
 module.exports = async (req, res) => {
   res.setHeader('Access-Control-Allow-Origin', '*')
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS')
@@ -243,13 +414,41 @@ module.exports = async (req, res) => {
   if (req.method === 'OPTIONS') return res.status(200).end()
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' })
 
+  const action = (req.query && req.query.action) || ''
+
+  // ─── action=video-status: resume polling on a pending IG video container ─
+  if (action === 'video-status') {
+    const { container_id, empresa_id } = req.body || {}
+    if (!container_id) return res.status(400).json({ error: 'container_id es requerido' })
+    if (!empresa_id) return res.status(400).json({ error: 'empresa_id es requerido' })
+    try {
+      const creds = await getMetaCredentials(empresa_id, req.headers)
+      if (!creds || !creds.access_token) {
+        return res.status(400).json({ error: 'Sin credenciales Meta' })
+      }
+      let igAccountId = creds.ig_user_id || ''
+      if (!igAccountId && creds.page_id) {
+        igAccountId = await fetchInstagramAccountId(creds.page_id, creds.access_token)
+      }
+      if (!igAccountId) return res.status(400).json({ error: 'Sin IG Business Account ID' })
+      const result = await resumeIgVideoPublish(igAccountId, creds.access_token, container_id)
+      return res.json(result)
+    } catch (err) {
+      return res.status(500).json({ error: err.message })
+    }
+  }
+
   const {
     inventario_id,
     platform = 'facebook_page',
     caption,
     image_url,
+    video_url,
+    media_type,
     empresa_id
   } = req.body || {}
+
+  const isVideo = (media_type && media_type.toLowerCase() === 'video') || !!video_url
 
   if (!caption) return res.status(400).json({ error: 'caption es requerido' })
   if (!empresa_id) return res.status(400).json({ error: 'empresa_id es requerido' })
@@ -275,20 +474,23 @@ module.exports = async (req, res) => {
 
     let result
     if (platform === 'instagram') {
-      if (!image_url || !image_url.startsWith('http')) {
+      if (isVideo) {
+        if (!video_url || !video_url.startsWith('http')) {
+          return res.status(400).json({ error: 'Video requerido', detail: 'IG requiere video_url pública.' })
+        }
+      } else if (!image_url || !image_url.startsWith('http')) {
         return res.status(400).json({
           error: 'Imagen requerida',
           detail: 'Instagram requiere una URL de imagen pública.'
         })
       }
       // Direct IG user_id bypass: skips the FB Page lookup entirely.
-      // Useful when the token can publish but doesn't have read access to the page.
       let igAccountId = creds.ig_user_id || ''
       if (!igAccountId) {
         if (!creds.page_id) {
           return res.status(400).json({
             error: 'Falta Page ID de Facebook o IG Business Account ID',
-            detail: 'Necesitas EITHER el Page ID (para que detectemos la IG vinculada) O el IG Business Account ID directo. Guárdalos en ⚙️ Configuración o en la caja "Credenciales Meta" de la tab Campañas.'
+            detail: 'Necesitas EITHER el Page ID O el IG Business Account ID directo. Guárdalos en ⚙️ Configuración.'
           })
         }
         try {
@@ -296,14 +498,39 @@ module.exports = async (req, res) => {
         } catch (err) {
           return res.status(400).json({
             error: 'No se pudo obtener la cuenta de Instagram',
-            detail: err.message + ' — Tip: si tu token tiene permisos para postear pero no para leer la página, guarda directamente el IG Business Account ID en la tab Campañas y se saltará este paso.'
+            detail: err.message + ' — Tip: guarda el IG Business Account ID directo y se salta este paso.'
           })
         }
       }
-      result = await publishToInstagram(igAccountId, creds.access_token, { caption, imageUrl: image_url })
+      if (isVideo) {
+        result = await publishVideoToInstagram(igAccountId, creds.access_token, {
+          caption, videoUrl: video_url, mediaType: media_type
+        })
+      } else {
+        result = await publishToInstagram(igAccountId, creds.access_token, { caption, imageUrl: image_url })
+      }
     } else {
       if (!creds.page_id) throw new Error('Falta el Page ID de Facebook en las credenciales.')
-      result = await publishToFacebookPage(creds.page_id, creds.access_token, { caption, imageUrl: image_url })
+      if (isVideo) {
+        if (!video_url || !video_url.startsWith('http')) {
+          return res.status(400).json({ error: 'Video requerido', detail: 'FB requiere video_url pública.' })
+        }
+        result = await publishVideoToFacebookPage(creds.page_id, creds.access_token, { caption, videoUrl: video_url })
+      } else {
+        result = await publishToFacebookPage(creds.page_id, creds.access_token, { caption, imageUrl: image_url })
+      }
+    }
+
+    // If IG video is still processing, return 202 with container_id
+    if (result.status === 'processing') {
+      return res.status(202).json({
+        success: false,
+        status: 'processing',
+        container_id: result.container_id,
+        platform: result.platform,
+        media_type: result.media_type,
+        message: result.message
+      })
     }
 
     // Save to social_posts table (best-effort)
@@ -315,7 +542,7 @@ module.exports = async (req, res) => {
           inventario_id: inventario_id || null,
           platform,
           caption,
-          image_url: image_url || null,
+          image_url: image_url || video_url || null,
           post_id: result.post_id,
           post_url: result.url,
           status: 'published',

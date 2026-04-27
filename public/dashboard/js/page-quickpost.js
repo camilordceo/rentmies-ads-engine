@@ -9,6 +9,8 @@
 (function () {
   'use strict'
 
+  const VIDEO_EXT_RE = /\.(mp4|mov|webm|m4v)(\?|$)/i
+
   let state = {
     selectedInmuebleId: '',
     inmuebles: [],
@@ -17,10 +19,16 @@
     customInstructions: '',
     caption: '',
     platform: 'instagram',
-    aiSize: '1024x1024'
+    aiSize: '1024x1024',
+    mediaKind: 'image'   // 'image' | 'video' — derived from URL/mime
   }
 
   const { escapeHtml, escapeAttr, cardHtml } = (window.rmInmuebles || {})
+
+  function detectMediaKind(url) {
+    if (!url) return 'image'
+    return VIDEO_EXT_RE.test(url) ? 'video' : 'image'
+  }
 
   // ── Render ────────────────────────────────────────────────
 
@@ -57,12 +65,12 @@
               </div>
               <div class="ae-grid-2">
                 <div class="ae-field">
-                  <label class="ae-field-label" for="qp-img-url">URL pública de la imagen</label>
-                  <input id="qp-img-url" class="ae-input" type="url" placeholder="https://…  (auto-rellenada del inmueble)" />
+                  <label class="ae-field-label" for="qp-img-url">URL pública de imagen o video</label>
+                  <input id="qp-img-url" class="ae-input" type="url" placeholder="https://…  (imagen .jpg / video .mp4)" />
                 </div>
                 <div class="ae-field">
-                  <label class="ae-field-label" for="qp-img-file">O sube un archivo (≤ 3 MB)</label>
-                  <input id="qp-img-file" class="ae-input" type="file" accept="image/png,image/jpeg,image/webp" style="padding:7px 10px; font-size:11px;" />
+                  <label class="ae-field-label" for="qp-img-file">O sube imagen (≤3MB) o video (≤250MB)</label>
+                  <input id="qp-img-file" class="ae-input" type="file" accept="image/png,image/jpeg,image/webp,video/mp4,video/quicktime,video/webm" style="padding:7px 10px; font-size:11px;" />
                 </div>
               </div>
 
@@ -262,25 +270,39 @@
   }
 
   function syncFromState() {
-    // Image URL — manual takes priority over inmueble
+    // Media URL — manual takes priority over inmueble
     const inmueble = getSelectedInmueble()
     const effectiveUrl = state.customImageUrl || (inmueble && inmueble.imagen) || ''
-    document.getElementById('qp-img-url').value = state.customImageUrl   // keep manual visible
-    setImagePreview(effectiveUrl)
+    // Auto-detect video by URL extension if user pasted one
+    if (state.customImageUrl) state.mediaKind = detectMediaKind(state.customImageUrl)
+    else if (effectiveUrl) state.mediaKind = detectMediaKind(effectiveUrl)
+    document.getElementById('qp-img-url').value = state.customImageUrl
+    setMediaPreview(effectiveUrl, state.mediaKind)
     updatePreview()
     refreshCredsCard()
   }
 
-  function setImagePreview(url) {
+  function setMediaPreview(url, kind) {
     const wrap = document.getElementById('qp-img-preview-wrap')
     const block = document.getElementById('qp-img-preview')
-    if (url) {
-      block.style.backgroundImage = `url('${url.replace(/'/g, "\\'")}')`
-      wrap.style.display = ''
-    } else {
+    if (!url) {
       block.style.backgroundImage = ''
+      block.classList.remove('video-mode')
+      block.innerHTML = ''
       wrap.style.display = 'none'
+      return
     }
+    if (kind === 'video') {
+      block.style.backgroundImage = ''
+      block.classList.add('video-mode')
+      const safe = url.replace(/"/g, '&quot;')
+      block.innerHTML = `<video src="${safe}" controls muted preload="metadata" playsinline></video>`
+    } else {
+      block.classList.remove('video-mode')
+      block.innerHTML = ''
+      block.style.backgroundImage = `url('${url.replace(/'/g, "\\'")}')`
+    }
+    wrap.style.display = ''
   }
 
   function updatePreview() {
@@ -288,18 +310,26 @@
     if (!block) return
     const inmueble = getSelectedInmueble()
     const effectiveUrl = state.customImageUrl || (inmueble && inmueble.imagen) || ''
-    const headline = inmueble ? `${inmueble.proyecto || 'Inmueble'} · ${inmueble.ciudad || ''}`.replace(/ · $/, '') : (state.customImageUrl ? 'Imagen propia' : 'Sin inmueble')
+    const kind = effectiveUrl ? detectMediaKind(effectiveUrl) : 'image'
+    const headline = inmueble ? `${inmueble.proyecto || 'Inmueble'} · ${inmueble.ciudad || ''}`.replace(/ · $/, '') : (state.customImageUrl ? (kind === 'video' ? 'Video propio' : 'Imagen propia') : 'Sin inmueble')
     const cap = state.caption.slice(0, 140)
+    const platformLabel = state.platform === 'instagram' ? (kind === 'video' ? 'IG · Reels' : 'IG · Feed') : 'FB · Page'
+
+    let mediaHtml
+    if (!effectiveUrl) {
+      mediaHtml = `<div class="ae-img-preview" style="display:flex; align-items:center; justify-content:center; color:var(--rm-muted); font-size:12px;">Sin media</div>`
+    } else if (kind === 'video') {
+      mediaHtml = `<div class="ae-img-preview video-mode"><video src="${effectiveUrl.replace(/"/g, '&quot;')}" muted preload="metadata" playsinline></video></div>`
+    } else {
+      mediaHtml = `<div class="ae-img-preview" style="background-image: url('${effectiveUrl.replace(/'/g, "\\'")}');"></div>`
+    }
 
     block.innerHTML = `
       <div style="display:flex; flex-direction:column; gap:10px;">
-        ${effectiveUrl
-          ? `<div class="ae-img-preview" style="background-image: url('${effectiveUrl.replace(/'/g, "\\'")}');"></div>`
-          : `<div class="ae-img-preview" style="display:flex; align-items:center; justify-content:center; color:var(--rm-muted); font-size:12px;">Sin imagen</div>`
-        }
+        ${mediaHtml}
         <div>
           <div style="font-size:13px; font-weight:600; color:var(--rm-ink);">${escapeHtml(headline)}</div>
-          <div style="font-size:11px; color:var(--rm-muted); font-family:var(--rm-mono); margin-top:2px;">${escapeHtml(state.platform === 'instagram' ? 'IG · Feed' : 'FB · Page')}</div>
+          <div style="font-size:11px; color:var(--rm-muted); font-family:var(--rm-mono); margin-top:2px;">${escapeHtml(platformLabel)}</div>
           ${cap ? `<div style="font-size:11.5px; color:var(--rm-ink-2); margin-top:8px; line-height:1.5; white-space:pre-wrap;">${escapeHtml(cap)}${state.caption.length > 140 ? '…' : ''}</div>` : ''}
         </div>
       </div>
@@ -312,12 +342,48 @@
     const file = e.target.files && e.target.files[0]
     if (!file) return
     const status = document.getElementById('qp-img-status')
-    if (file.size > 3 * 1024 * 1024) {
-      status.textContent = '✗ Archivo > 3 MB'
-      e.target.value = ''
+    const isVideo = /^video\//i.test(file.type) || VIDEO_EXT_RE.test(file.name)
+
+    if (isVideo) {
+      if (file.size > 250 * 1024 * 1024) {
+        status.textContent = '✗ Video > 250 MB'; e.target.value = ''; return
+      }
+      status.textContent = '⏳ Pidiendo URL…'
+      try {
+        const empresaId = empresaIdFromStorage()
+        const r1 = await fetch('/api/ai?action=video-upload-url', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'x-empresa-id': empresaId },
+          body: JSON.stringify({ filename: file.name, contentType: file.type })
+        })
+        const meta = await r1.json()
+        if (!r1.ok) throw new Error(meta.error || 'No se pudo obtener URL')
+        status.textContent = `⏳ Subiendo video… (${(file.size / 1024 / 1024).toFixed(1)}MB)`
+        const r2 = await fetch(meta.uploadUrl, {
+          method: 'PUT',
+          headers: { 'Content-Type': file.type || 'video/mp4', 'x-upsert': 'false' },
+          body: file
+        })
+        if (!r2.ok) {
+          const t = await r2.text().catch(() => '')
+          throw new Error(`Upload falló (${r2.status}) ${t.slice(0, 80)}`)
+        }
+        state.customImageUrl = meta.publicUrl
+        state.mediaKind = 'video'
+        document.getElementById('qp-img-url').value = meta.publicUrl
+        status.textContent = '✓ Video subido'
+        syncFromState()
+      } catch (err) {
+        status.textContent = '✗ ' + err.message
+      }
       return
     }
-    status.textContent = '⏳ Subiendo a Supabase…'
+
+    // Image flow (legacy)
+    if (file.size > 3 * 1024 * 1024) {
+      status.textContent = '✗ Imagen > 3 MB'; e.target.value = ''; return
+    }
+    status.textContent = '⏳ Subiendo imagen…'
     try {
       const dataUrl = await new Promise((resolve, reject) => {
         const r = new FileReader()
@@ -326,7 +392,7 @@
         r.readAsDataURL(file)
       })
       const base64 = String(dataUrl).split(',')[1]
-      const empresaId = (function () { try { return (JSON.parse(localStorage.getItem('sb_user') || '{}')).id || 'demo' } catch (_) { return 'demo' } })()
+      const empresaId = empresaIdFromStorage()
       const r = await fetch('/api/ai?action=upload-ref', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'x-empresa-id': empresaId },
@@ -335,8 +401,9 @@
       const json = await r.json()
       if (!r.ok) throw new Error(json.error || 'Upload falló')
       state.customImageUrl = json.url
+      state.mediaKind = 'image'
       document.getElementById('qp-img-url').value = json.url
-      status.textContent = '✓ Subida'
+      status.textContent = '✓ Imagen subida'
       syncFromState()
     } catch (err) {
       status.textContent = '✗ ' + err.message
@@ -429,7 +496,8 @@
     status.classList.remove('success', 'error')
 
     const inmueble = getSelectedInmueble()
-    const imageUrl = state.customImageUrl || (inmueble && inmueble.imagen) || ''
+    const mediaUrl = state.customImageUrl || (inmueble && inmueble.imagen) || ''
+    const isVideo = mediaUrl ? detectMediaKind(mediaUrl) === 'video' : false
     const caption = state.caption.trim()
 
     if (!caption) { status.textContent = '✗ Escribe un caption'; status.classList.add('error'); return }
@@ -442,12 +510,12 @@
       return
     }
 
-    if (state.platform === 'instagram' && !imageUrl) {
-      status.textContent = '✗ Instagram requiere una imagen'; status.classList.add('error'); return
+    if (state.platform === 'instagram' && !mediaUrl) {
+      status.textContent = '✗ Instagram requiere imagen o video'; status.classList.add('error'); return
     }
 
-    btn.disabled = true; btn.textContent = '⏳ Publicando…'
-    status.textContent = ''
+    btn.disabled = true; btn.textContent = isVideo ? '⏳ Subiendo video a Meta…' : '⏳ Publicando…'
+    status.textContent = isVideo ? 'Procesando video — puede tardar 30-90s' : ''
 
     const empresaId = empresaIdFromStorage()
     const headers = {
@@ -462,27 +530,36 @@
     if (meta.ig_user_id)      headers['x-meta-ig-user-id']     = meta.ig_user_id
 
     try {
+      const body = {
+        platform: state.platform,
+        caption,
+        empresa_id: empresaId,
+        inventario_id: inmueble ? inmueble.id : null
+      }
+      if (isVideo) { body.media_type = 'video'; body.video_url = mediaUrl }
+      else { body.image_url = mediaUrl }
+
       const r = await fetch('/api/social-post', {
-        method: 'POST',
-        headers,
-        body: JSON.stringify({
-          platform: state.platform,
-          caption,
-          image_url: imageUrl,
-          empresa_id: empresaId,
-          inventario_id: inmueble ? inmueble.id : null
-        })
+        method: 'POST', headers, body: JSON.stringify(body)
       })
       const text = await r.text()
       let data = {}
       try { data = JSON.parse(text) } catch (_) { data = { error: 'Respuesta inesperada' } }
+
+      if (r.status === 202 && data.status === 'processing' && data.container_id) {
+        // IG video still processing — poll in background
+        status.innerHTML = '⏳ Video procesando en Meta · reintentando…'
+        await pollVideoUntilDone(data.container_id, headers, empresaId, status)
+        // pollVideoUntilDone updates status itself
+        return
+      }
+
       if (!r.ok) throw new Error((data.error || 'Error') + (data.detail ? ' — ' + data.detail : ''))
 
       status.innerHTML = `✓ Publicado · <a href="${escapeAttr(data.url)}" target="_blank" rel="noopener" style="color:var(--rm-green-deep); text-decoration:underline;">ver post →</a>`
       status.classList.add('success')
-      window.rmToast?.('Post publicado en ' + (state.platform === 'instagram' ? 'Instagram' : 'Facebook'), 'success')
+      window.rmToast?.((isVideo ? 'Video publicado en ' : 'Post publicado en ') + (state.platform === 'instagram' ? 'Instagram' : 'Facebook'), 'success')
 
-      // Clear caption only — keep inmueble + image so user can iterate
       state.caption = ''
       document.getElementById('qp-caption').value = ''
       updatePreview()
@@ -494,6 +571,39 @@
       btn.disabled = false
       btn.innerHTML = '<svg viewBox="0 0 24 24" width="11" height="11" fill="currentColor"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg> PUBLICAR AHORA'
     }
+  }
+
+  async function pollVideoUntilDone(containerId, headers, empresaId, status) {
+    const maxAttempts = 6   // 6 * 30s = 3 min total
+    for (let i = 0; i < maxAttempts; i++) {
+      await new Promise(r => setTimeout(r, 30000))
+      try {
+        const r = await fetch('/api/social-post?action=video-status', {
+          method: 'POST', headers,
+          body: JSON.stringify({ container_id: containerId, empresa_id: empresaId })
+        })
+        const json = await r.json()
+        if (!r.ok) throw new Error(json.error || 'Error')
+        if (json.status === 'published') {
+          status.innerHTML = `✓ Video publicado · <a href="${escapeAttr(json.url)}" target="_blank" rel="noopener" style="color:var(--rm-green-deep); text-decoration:underline;">ver post →</a>`
+          status.classList.add('success')
+          window.rmToast?.('Video publicado', 'success')
+          state.caption = ''
+          document.getElementById('qp-caption').value = ''
+          updatePreview()
+          return
+        }
+        if (json.status === 'processing') {
+          status.innerHTML = `⏳ Video aún procesando (intento ${i + 1}/${maxAttempts})…`
+          continue
+        }
+      } catch (err) {
+        status.textContent = '✗ ' + err.message
+        status.classList.add('error')
+        return
+      }
+    }
+    status.innerHTML = '⚠ Timeout — el video sigue procesando en Meta. Revisa tu IG en unos minutos.'
   }
 
   // ── Helpers ───────────────────────────────────────────────

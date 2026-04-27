@@ -164,6 +164,131 @@ function buildImagePrompt({ inmueble, customPrompt, customInstructions, hasRefer
   return parts.join(' ')
 }
 
+// ─── Batch captions: N variantes con vibes rotando, 1 sola llamada ───
+// Each vibe maps to a different angle on the property so the campaign
+// doesn't read like 10 copies of the same post. Saves ~80% vs N calls.
+const DEFAULT_VIBES = [
+  'gancho visual — empieza con una observación impactante de lo que se ve en la foto',
+  'datos duros — destaca números concretos (área, habitaciones, ubicación)',
+  'storytelling — arranca con una mini historia de quién vive ahí',
+  'urgencia — disponibilidad limitada, ahora es momento',
+  'CTA emocional — pregunta al lector qué siente al verlo',
+  'lifestyle — describe cómo es un día típico en este lugar',
+  'comparativa — por qué este vale más que la competencia del barrio',
+  'social proof — referencias a otros clientes felices o demanda',
+  'pregunta-gancho — abre con pregunta provocadora',
+  'beneficio único — un detalle diferencial que nadie más tiene'
+]
+
+async function generateBatchCaptions({ inmueble, count, vibes, platform, referenceImageUrl, customInstructions }) {
+  if (!OPENAI_KEY) throw new Error('OPENAI_API_KEY no configurada en Vercel.')
+  const n = Math.max(1, Math.min(30, parseInt(count, 10) || 1))
+  const vibeList = (vibes && vibes.length ? vibes : DEFAULT_VIBES).slice()
+  // Rotate vibes if count > vibeList.length
+  const assignedVibes = []
+  for (let i = 0; i < n; i++) assignedVibes.push(vibeList[i % vibeList.length])
+
+  const inm = inmueble || {}
+  const tipo = inm.tipo || inm.tipo_inmueble_propiedad
+  const ciudad = inm.ciudad || inm.nombre_ciudad
+  const dataLines = []
+  if (inm.proyecto) dataLines.push(`- Proyecto: ${inm.proyecto}`)
+  if (tipo) dataLines.push(`- Tipo: ${tipo}`)
+  if (ciudad) dataLines.push(`- Ciudad: ${ciudad}`)
+  if (inm.nombre_barrio && inm.nombre_barrio !== inm.proyecto) dataLines.push(`- Barrio: ${inm.nombre_barrio}`)
+  if (inm.area) dataLines.push(`- Área: ${inm.area} m²`)
+  if (inm.habitaciones) dataLines.push(`- Habitaciones: ${inm.habitaciones}`)
+  if (inm.banos) dataLines.push(`- Baños: ${inm.banos}`)
+  if (inm.precio) dataLines.push(`- Precio: ${inm.precio}`)
+  if (inm.transaccion) dataLines.push(`- Tipo de operación: ${inm.transaccion}`)
+  if (inm.descripcion) dataLines.push(`- Descripción interna: ${inm.descripcion}`)
+
+  const userText = [
+    `Necesito ${n} captions DIFERENTES para una campaña de redes sociales del mismo inmueble en ${platform || 'instagram'}.`,
+    '',
+    'Cada caption debe tener un enfoque distinto (vibe). Te paso la lista numerada de vibes — respeta el orden y aplica cada vibe al caption con el mismo índice. NO repitas frases ni estructuras entre captions.',
+    '',
+    'Vibes solicitados (en orden):',
+    ...assignedVibes.map((v, i) => `${i + 1}. ${v}`),
+    '',
+    dataLines.length ? 'Datos del inmueble:' : 'No tengo datos estructurados del inmueble — usa SOLO la imagen y/o las instrucciones del cliente.',
+    ...dataLines,
+    customInstructions && customInstructions.trim() ? `\nInstrucciones del cliente: ${customInstructions.trim()}` : '',
+    '',
+    `Devuelve un objeto JSON con array "captions" de exactamente ${n} elementos. Cada elemento: { "index": número (1..${n}), "vibe": el vibe usado, "caption": el texto final del post }.`,
+    'Cada caption debe seguir las reglas del sistema (80-150 palabras, hashtags al final, sin clichés, sin inventar precios).'
+  ].filter(Boolean).join('\n')
+
+  let input
+  if (referenceImageUrl) {
+    input = [{
+      role: 'user',
+      content: [
+        { type: 'input_text', text: userText },
+        { type: 'input_image', image_url: referenceImageUrl, detail: 'auto' }
+      ]
+    }]
+  } else {
+    input = userText
+  }
+
+  const body = {
+    model: OPENAI_CHAT,
+    instructions: CAPTION_SYSTEM,
+    input,
+    max_output_tokens: 600 + (n * 250),
+    text: {
+      format: {
+        type: 'json_schema',
+        name: 'campaign_captions',
+        strict: true,
+        schema: {
+          type: 'object',
+          additionalProperties: false,
+          required: ['captions'],
+          properties: {
+            captions: {
+              type: 'array',
+              minItems: n,
+              maxItems: n,
+              items: {
+                type: 'object',
+                additionalProperties: false,
+                required: ['index', 'vibe', 'caption'],
+                properties: {
+                  index: { type: 'integer' },
+                  vibe: { type: 'string' },
+                  caption: { type: 'string' }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+
+  try {
+    const { data } = await axios.post(`${OPENAI_BASE}/responses`, body, {
+      headers: { Authorization: `Bearer ${OPENAI_KEY}`, 'Content-Type': 'application/json' },
+      timeout: 60000
+    })
+    const text = (data && data.output_text) || extractTextFromOutput(data && data.output)
+    if (!text) throw new Error('Respuesta vacía de OpenAI')
+    let parsed
+    try { parsed = JSON.parse(text) } catch (_) {
+      throw new Error('OpenAI devolvió JSON inválido')
+    }
+    if (!parsed.captions || !Array.isArray(parsed.captions)) {
+      throw new Error('Respuesta sin array "captions"')
+    }
+    return { captions: parsed.captions, vibes: assignedVibes }
+  } catch (err) {
+    const msg = (err.response && err.response.data && err.response.data.error && err.response.data.error.message) || err.message
+    throw new Error(`Batch captions falló: ${msg}`)
+  }
+}
+
 // ─── Caption via Responses API (text + optional vision) ─────────────────
 async function generateCaption({ inmueble, platform, vibe, referenceImageUrl, customInstructions }) {
   if (!OPENAI_KEY) throw new Error('OPENAI_API_KEY no configurada en Vercel.')
@@ -281,6 +406,22 @@ async function generateImage({ prompt, referenceImageUrl, size }) {
 }
 
 const AI_BUCKET = 'ai-images'
+const VIDEO_BUCKET = 'videos-upload'
+
+async function ensureVideoBucket(sb) {
+  try {
+    const { data: buckets, error } = await sb.storage.listBuckets()
+    if (!error && Array.isArray(buckets) && buckets.find(b => b.name === VIDEO_BUCKET)) return
+  } catch (_) { /* fall through */ }
+
+  const { error: createErr } = await sb.storage.createBucket(VIDEO_BUCKET, {
+    public: true,
+    fileSizeLimit: 250 * 1024 * 1024   // 250MB — IG Reels max
+  })
+  if (createErr && !/already exists|duplicate/i.test(createErr.message || '')) {
+    throw new Error(`No se pudo crear bucket "${VIDEO_BUCKET}": ${createErr.message}`)
+  }
+}
 
 async function ensureBucket(sb) {
   // Idempotent: check first, create only if missing. Tolerant to "already exists"
@@ -368,6 +509,54 @@ module.exports = async (req, res) => {
         customInstructions: custom_instructions
       })
       return res.json(result)
+    }
+
+    if (action === 'batch-captions') {
+      const { inmueble, count, vibes, platform, reference_image_url, custom_instructions } = req.body || {}
+      if (!inmueble && !reference_image_url && !(custom_instructions && custom_instructions.trim())) {
+        return res.status(400).json({ error: 'Necesitas un inmueble, una imagen, o instrucciones del cliente.' })
+      }
+      const n = parseInt(count, 10) || 0
+      if (n < 1 || n > 30) {
+        return res.status(400).json({ error: 'count debe estar entre 1 y 30' })
+      }
+      const result = await generateBatchCaptions({
+        inmueble,
+        count: n,
+        vibes,
+        platform,
+        referenceImageUrl: reference_image_url,
+        customInstructions: custom_instructions
+      })
+      return res.json(result)
+    }
+
+    if (action === 'video-upload-url') {
+      // Returns a signed upload URL so the client can PUT the video directly to
+      // Supabase Storage (Vercel functions cap bodies at ~4.5MB — videos blow that).
+      const { filename, contentType } = req.body || {}
+      if (!filename) return res.status(400).json({ error: 'filename es requerido' })
+
+      const sb = getSupabaseService()
+      if (!sb) return res.status(500).json({ error: 'Supabase no configurado para uploads.' })
+
+      try {
+        await ensureVideoBucket(sb)
+        const safeName = String(filename).replace(/[^a-z0-9._-]/gi, '_').slice(0, 60)
+        const path = `${empresaId}/${Date.now()}-${safeName}`
+        const { data, error } = await sb.storage.from(VIDEO_BUCKET).createSignedUploadUrl(path)
+        if (error) throw new Error(error.message)
+        const { data: pub } = sb.storage.from(VIDEO_BUCKET).getPublicUrl(path)
+        return res.json({
+          uploadUrl: data.signedUrl,
+          token: data.token,
+          path,
+          publicUrl: pub.publicUrl,
+          contentType: contentType || 'video/mp4'
+        })
+      } catch (err) {
+        return res.status(500).json({ error: err.message })
+      }
     }
 
     if (action === 'upload-ref') {
