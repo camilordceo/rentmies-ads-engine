@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Conectando…</title>
+<style>
+  body { margin: 0; font-family: 'Inter', -apple-system, system-ui, sans-serif; background: #f8f8f8; color: #1a1a1a; min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 24px; }
+  .card { background: #fff; border: 1px solid #e5e5e5; border-radius: 12px; padding: 36px 32px; max-width: 420px; width: 100%; text-align: center; box-shadow: 0 4px 24px rgba(0,0,0,.04); }
+  .spinner { width: 36px; height: 36px; border: 3px solid #e5e5e5; border-top-color: #40d99d; border-radius: 50%; animation: spin .8s linear infinite; margin: 0 auto 18px; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  h1 { font-size: 18px; font-weight: 600; margin: 0 0 6px; }
+  p { font-size: 13px; color: #6b7280; line-height: 1.5; margin: 0; }
+  .err { color: #dc2626; }
+  .err-detail { font-family: ui-monospace, monospace; font-size: 11px; background: #fef2f2; padding: 8px 12px; border-radius: 6px; margin-top: 12px; text-align: left; max-height: 160px; overflow-y: auto; }
+</style>
+</head>
+<body>
+  <div class="card">
+    <div class="spinner" id="spinner"></div>
+    <h1 id="title">Conectando tu cuenta…</h1>
+    <p id="subtitle">Esto solo toma un segundo.</p>
+    <div id="err-detail" class="err-detail" style="display:none;"></div>
+  </div>
+
+<script>
+(async function () {
+  const params = new URLSearchParams(window.location.search)
+  const next = params.get('next') || '/dashboard'
+
+  // Magic link from Supabase puts tokens in the URL HASH after auth verify.
+  // Format: #access_token=...&refresh_token=...&expires_in=...&token_type=bearer&type=magiclink
+  const hash = window.location.hash.startsWith('#') ? window.location.hash.slice(1) : ''
+  const hashParams = new URLSearchParams(hash)
+  const accessToken = hashParams.get('access_token')
+  const refreshToken = hashParams.get('refresh_token')
+  const errorDescription = hashParams.get('error_description') || params.get('error_description')
+
+  if (errorDescription) return showError('Magic link rechazado por Supabase', errorDescription)
+  if (!accessToken) return showError('No se recibió access_token', 'Verifica que la URL "/onboarding/post-oauth" esté en la lista de Redirect URLs en Supabase Auth.')
+
+  try {
+    // Validate token by calling /me
+    const meRes = await fetch('/api/auth-supabase?action=me', {
+      headers: { Authorization: 'Bearer ' + accessToken }
+    })
+    if (!meRes.ok) {
+      const j = await meRes.json().catch(() => ({}))
+      return showError('Sesión inválida', j.error || 'No se pudo validar el token')
+    }
+    const meJson = await meRes.json()
+
+    // Persist session in localStorage so /app and /dashboard pick it up
+    localStorage.setItem('sb_token', accessToken)
+    if (refreshToken) localStorage.setItem('sb_refresh_token', refreshToken)
+    localStorage.setItem('sb_user', JSON.stringify({
+      id: meJson.user.id,
+      email: meJson.user.email
+    }))
+
+    // Pull the meta connection summary so we can also populate localStorage.meta_creds
+    // (lets the legacy /app and /dashboard quick-post pages "just work" without
+    // changing their reads.)
+    const empresaId = meJson.profile?.empresa_id || meJson.user.id
+    try {
+      const connRes = await fetch('/api/auth/meta/connection', {
+        headers: { Authorization: 'Bearer ' + accessToken, 'x-empresa-id': empresaId }
+      })
+      if (connRes.ok) {
+        const conn = await connRes.json()
+        if (conn && conn.long_lived_token) {
+          localStorage.setItem('meta_creds', JSON.stringify({
+            access_token: conn.long_lived_token,
+            page_id: conn.page_id || '',
+            ad_account_id: '',
+            ig_user_id: conn.ig_business_id || '',
+            waba_id: conn.waba_id || '',
+            phone_number_id: conn.whatsapp_phone_number_id || ''
+          }))
+        }
+      }
+    } catch (e) { /* non-fatal — onboarding continues */ }
+
+    // Clean the URL (remove the hash + tokens) before redirecting
+    history.replaceState(null, '', window.location.pathname)
+    window.location.replace(next)
+  } catch (err) {
+    showError('Error inesperado', err.message)
+  }
+
+  function showError(title, detail) {
+    document.getElementById('spinner').style.display = 'none'
+    const t = document.getElementById('title'); t.textContent = title; t.classList.add('err')
+    document.getElementById('subtitle').textContent = 'Vuelve a intentarlo desde /signup. Si el problema persiste, contáctanos.'
+    if (detail) {
+      const d = document.getElementById('err-detail')
+      d.style.display = 'block'
+      d.textContent = detail
+    }
+  }
+})()
+</script>
+</body>
+</html>

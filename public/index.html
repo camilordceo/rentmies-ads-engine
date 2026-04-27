@@ -28,6 +28,11 @@ nav .sp{flex:1}
 .btn-p{background:var(--teal);color:#fff;padding:13px 28px;border-radius:8px;font-size:15px;font-weight:500;font-family:'DM Sans',sans-serif}
 .btn-s{padding:13px 28px;border-radius:8px;font-size:15px;border:1px solid var(--border);font-family:'DM Sans',sans-serif}
 .btn-s:hover{border-color:var(--teal);color:var(--teal)}
+.btn-fb{display:inline-flex;align-items:center;gap:9px;background:#1877F2;color:#fff;padding:13px 24px;border-radius:8px;font-size:14.5px;font-weight:600;font-family:'Inter',sans-serif}
+.btn-fb:hover{background:#166fe5}
+.btn-fb svg{flex-shrink:0}
+.trust-line{font-size:12.5px;color:var(--muted);margin-top:14px;display:flex;align-items:center;gap:6px}
+.trust-line svg{opacity:.6}
 .hero-visual{background:var(--bg2);border:1px solid var(--border);border-radius:16px;height:360px;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,.08);transform:perspective(1000px) rotateY(-4deg) rotateX(2deg);position:relative}
 .mock-sidebar{width:56px;background:#111318;height:100%;position:absolute;display:flex;flex-direction:column;padding:16px 10px;gap:10px}
 .mock-dot{width:30px;height:30px;background:rgba(255,255,255,.08);border-radius:7px;margin:0 auto}
@@ -105,8 +110,17 @@ footer{grid-template-columns:1fr 1fr;padding:32px 24px}
     <h1>The growth stack for real estate <span>agencies</span></h1>
     <p>Generate ads, publish to social, analyze performance &mdash; all from one platform built for inmobiliarias.</p>
     <div class="cta-row">
-      <a href="/signup" class="btn-p">Start Free Trial</a>
-      <a href="#como-funciona" class="btn-s">Watch Demo (2 min)</a>
+      <a href="/api/auth/meta/login?source=signup" class="btn-fb">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+          <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
+        </svg>
+        Conectar Facebook · Empezar gratis
+      </a>
+      <a href="#como-funciona" class="btn-s">Ver demo (60 segundos)</a>
+    </div>
+    <div class="trust-line">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+      Conecta tu Meta en 30 segundos. Sin tarjeta hasta que publiques tu primer post.
     </div>
   </div>
   <div class="hero-visual">

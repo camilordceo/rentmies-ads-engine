@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Elige tu cuenta — Rentmies</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=Inter:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root { --teal:#40d99d; --teal-deep:#006c4a; --black:#1a1a1a; --muted:#6b7280; --bg:#fff; --bg2:#f8f8f8; --border:#e5e5e5; --error:#dc2626; }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family:'Inter',sans-serif; color:var(--black); background:var(--bg2); min-height:100vh; }
+  h1,h2,h3 { font-family:'DM Sans',sans-serif; }
+  nav { height:60px; background:#fff; border-bottom:1px solid var(--border); display:flex; align-items:center; padding:0 32px; }
+  .logo-text { font-size:17px; font-weight:600; color:var(--teal); }
+  .logo-sub { font-size:11px; color:var(--muted); margin-left:6px; }
+
+  main { padding:48px 24px 80px; max-width:880px; margin:0 auto; }
+  .eyebrow { font-family:ui-monospace,monospace; font-size:11px; letter-spacing:.15em; color:var(--muted); text-transform:uppercase; font-weight:700; }
+  h1.page { font-size:34px; font-weight:500; line-height:1.15; margin:6px 0 10px; letter-spacing:-.01em; }
+  h1.page em { color:var(--teal-deep); font-style:italic; font-family:'Instrument Serif',serif; font-weight:400; }
+  .sub { font-size:15px; color:var(--muted); line-height:1.6; max-width:580px; margin-bottom:32px; }
+
+  .grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(300px,1fr)); gap:14px; }
+  .card { background:#fff; border:1px solid var(--border); border-radius:10px; padding:18px; cursor:pointer; transition:border-color .15s, box-shadow .15s, transform .15s; text-align:left; }
+  .card:hover { border-color:#ccc; transform:translateY(-1px); }
+  .card.selected { border-color:var(--teal-deep); box-shadow:0 0 0 2px rgba(0,108,74,.15); background:rgba(0,108,74,.03); }
+  .card-h { display:flex; align-items:center; gap:12px; margin-bottom:12px; }
+  .pic { width:44px; height:44px; border-radius:50%; background:var(--bg2); object-fit:cover; flex-shrink:0; }
+  .pic-placeholder { width:44px; height:44px; border-radius:50%; background:linear-gradient(135deg,var(--teal),var(--teal-deep)); display:flex; align-items:center; justify-content:center; color:#fff; font-weight:600; font-size:16px; flex-shrink:0; }
+  .name { font-size:15px; font-weight:600; line-height:1.3; }
+  .cat { font-size:11px; color:var(--muted); margin-top:2px; }
+  .ig-row { display:flex; align-items:center; gap:8px; padding:8px 10px; background:var(--bg2); border-radius:6px; font-size:12px; margin-bottom:8px; }
+  .ig-row svg { color:#e1306c; flex-shrink:0; }
+  .ig-handle { font-weight:500; color:var(--black); }
+  .ig-followers { color:var(--muted); margin-left:auto; }
+  .no-ig { font-size:11px; color:var(--muted); padding:6px 0; }
+  .stats { display:flex; gap:14px; font-size:11px; color:var(--muted); padding-top:8px; border-top:1px solid var(--border); margin-top:8px; }
+  .stats span { display:flex; gap:4px; }
+  .stats strong { color:var(--black); font-weight:600; }
+  .tasks { display:flex; flex-wrap:wrap; gap:4px; margin-top:8px; }
+  .task-chip { font-size:9px; font-family:ui-monospace,monospace; letter-spacing:.08em; background:var(--bg2); padding:2px 6px; border-radius:3px; color:var(--muted); text-transform:uppercase; }
+
+  .actions { margin-top:28px; display:flex; gap:10px; align-items:center; }
+  .btn { padding:13px 28px; border-radius:8px; font-size:15px; font-weight:500; font-family:'DM Sans',sans-serif; border:none; cursor:pointer; }
+  .btn-p { background:var(--teal); color:#fff; }
+  .btn-p:disabled { opacity:.5; cursor:not-allowed; }
+  .btn-p:not(:disabled):hover { background:var(--teal-deep); }
+  .btn-s { background:#fff; border:1px solid var(--border); color:var(--black); }
+  .btn-s:hover { border-color:#ccc; }
+
+  .empty { text-align:center; padding:48px 24px; background:#fff; border:1px dashed var(--border); border-radius:12px; color:var(--muted); }
+  .err { background:#fef2f2; border:1px solid #fecaca; color:var(--error); padding:12px 16px; border-radius:8px; font-size:13px; margin-bottom:18px; display:none; }
+  .err.show { display:block; }
+  #loading { padding:48px 24px; text-align:center; color:var(--muted); }
+</style>
+</head>
+<body>
+
+<nav>
+  <a href="/" style="text-decoration:none; color:inherit;">
+    <span class="logo-text">rentmies</span><span class="logo-sub">Growth Suite</span>
+  </a>
+</nav>
+
+<main>
+  <span class="eyebrow">ELIGE TU CUENTA · 2 de 3</span>
+  <h1 class="page"><em>¿Qué página</em> quieres conectar?</h1>
+  <p class="sub" id="sub">Cargando tus páginas de Facebook…</p>
+
+  <div id="err" class="err"></div>
+  <div id="loading">Cargando…</div>
+  <div id="grid" class="grid" style="display:none;"></div>
+
+  <div class="actions" id="actions" style="display:none;">
+    <button class="btn btn-s" onclick="window.location.href='/signup'">← Volver</button>
+    <div style="flex:1;"></div>
+    <button class="btn btn-p" id="confirmBtn" disabled>Continuar →</button>
+  </div>
+</main>
+
+<script>
+let pages = []
+let selectedId = null
+let token = localStorage.getItem('sb_token')
+
+async function load() {
+  if (!token) {
+    showError('No estás autenticado. Vuelve a /signup y conecta de nuevo.')
+    return
+  }
+  try {
+    const r = await fetch('/api/auth/meta/connection', {
+      headers: { Authorization: 'Bearer ' + token }
+    })
+    if (!r.ok) {
+      const j = await r.json().catch(() => ({}))
+      return showError(j.error || 'No se pudo cargar tu conexión Meta')
+    }
+    const conn = await r.json()
+    pages = conn.available_pages || []
+    document.getElementById('loading').style.display = 'none'
+
+    if (pages.length === 0) {
+      document.getElementById('grid').style.display = 'none'
+      document.getElementById('actions').style.display = 'none'
+      const empty = document.createElement('div')
+      empty.className = 'empty'
+      empty.innerHTML = '<strong>No encontramos páginas en tu cuenta.</strong><br><br>Necesitas ser admin de al menos una Facebook Page con cuenta de Instagram Business vinculada. <br><br><a href="https://www.facebook.com/pages/create" target="_blank" style="color:var(--teal-deep);">Crear una Página →</a>'
+      document.querySelector('main').appendChild(empty)
+      return
+    }
+
+    document.getElementById('sub').textContent =
+      pages.length === 1
+        ? 'Encontramos 1 página. Confírmala para continuar.'
+        : `Tienes ${pages.length} páginas. Puedes conectar una ahora y agregar las demás después.`
+
+    if (pages.length === 1) selectedId = pages[0].id
+    renderGrid()
+  } catch (err) {
+    showError(err.message)
+  }
+}
+
+function renderGrid() {
+  const grid = document.getElementById('grid')
+  grid.style.display = ''
+  document.getElementById('actions').style.display = ''
+  grid.innerHTML = pages.map(p => cardHtml(p)).join('')
+  grid.querySelectorAll('[data-page-id]').forEach(card => {
+    card.addEventListener('click', () => {
+      selectedId = card.dataset.pageId
+      renderGrid()
+    })
+  })
+  document.getElementById('confirmBtn').disabled = !selectedId
+}
+
+function cardHtml(p) {
+  const isSelected = p.id === selectedId
+  const initial = (p.name || '?').charAt(0).toUpperCase()
+  const pic = p.picture
+    ? `<img class="pic" src="${escapeHtml(p.picture)}" alt="${escapeHtml(p.name)}" onerror="this.outerHTML='<div class=&quot;pic-placeholder&quot;>${initial}</div>'">`
+    : `<div class="pic-placeholder">${initial}</div>`
+  const igRow = p.ig_username
+    ? `<div class="ig-row">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/></svg>
+        <span class="ig-handle">@${escapeHtml(p.ig_username)}</span>
+        ${p.ig_followers != null ? `<span class="ig-followers">${formatN(p.ig_followers)} seguidores</span>` : ''}
+      </div>`
+    : `<div class="no-ig">⚠ Sin Instagram vinculado — solo podrás publicar en Facebook.</div>`
+  const tasks = (p.tasks || []).slice(0, 4).map(t => `<span class="task-chip">${escapeHtml(t)}</span>`).join('')
+  return `
+    <button type="button" class="card${isSelected ? ' selected' : ''}" data-page-id="${escapeAttr(p.id)}">
+      <div class="card-h">
+        ${pic}
+        <div>
+          <div class="name">${escapeHtml(p.name)}</div>
+          <div class="cat">${escapeHtml(p.category || 'Página')}</div>
+        </div>
+      </div>
+      ${igRow}
+      <div class="stats">
+        <span><strong>${formatN(p.fan_count || 0)}</strong> fans</span>
+        ${p.ig_followers != null ? `<span><strong>${formatN(p.ig_followers)}</strong> IG</span>` : ''}
+      </div>
+      ${tasks ? `<div class="tasks">${tasks}</div>` : ''}
+    </button>
+  `
+}
+
+function formatN(n) {
+  if (!n) return 0
+  if (n >= 1000000) return (n / 1000000).toFixed(1) + 'M'
+  if (n >= 1000) return (n / 1000).toFixed(1) + 'K'
+  return String(n)
+}
+
+function escapeHtml(s) {
+  return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))
+}
+function escapeAttr(s) { return escapeHtml(s) }
+
+function showError(msg) {
+  document.getElementById('loading').style.display = 'none'
+  const el = document.getElementById('err')
+  el.textContent = msg
+  el.classList.add('show')
+}
+
+document.getElementById('confirmBtn').addEventListener('click', async () => {
+  if (!selectedId) return
+  const btn = document.getElementById('confirmBtn')
+  btn.disabled = true; btn.textContent = 'Conectando…'
+  try {
+    const r = await fetch('/api/onboarding/select-page', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token },
+      body: JSON.stringify({ page_id: selectedId })
+    })
+    const json = await r.json()
+    if (!r.ok) throw new Error(json.error || 'Error')
+    // Refresh meta_creds in localStorage with new page details
+    if (json.meta_creds) {
+      localStorage.setItem('meta_creds', JSON.stringify(json.meta_creds))
+    }
+    window.location.replace('/onboarding/payment')
+  } catch (err) {
+    btn.disabled = false; btn.textContent = 'Continuar →'
+    showError(err.message)
+  }
+})
+
+load()
+</script>
+</body>
+</html>

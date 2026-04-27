@@ -1,22 +1,35 @@
 {
   "rewrites": [
-    { "source": "/login",    "destination": "/login.html" },
-    { "source": "/signup",   "destination": "/signup.html" },
-    { "source": "/app",      "destination": "/app/index.html" },
-    { "source": "/app/(.*)", "destination": "/app/index.html" }
+    { "source": "/login",                  "destination": "/login.html" },
+    { "source": "/signup",                 "destination": "/signup.html" },
+    { "source": "/app",                    "destination": "/app/index.html" },
+    { "source": "/app/(.*)",               "destination": "/app/index.html" },
+    { "source": "/dashboard",              "destination": "/dashboard/index.html" },
+    { "source": "/onboarding/post-oauth",  "destination": "/onboarding/post-oauth.html" },
+    { "source": "/onboarding/select-page", "destination": "/onboarding/select-page.html" },
+    { "source": "/onboarding/payment",     "destination": "/onboarding/payment.html" },
+    { "source": "/onboarding/no-pages",    "destination": "/onboarding/no-pages.html" }
   ],
   "functions": {
-    "api/generate.js":      { "maxDuration": 30 },
-    "api/meta-ads.js":      { "maxDuration": 30 },
-    "api/cron-publish.js":  { "maxDuration": 60 },
-    "api/auth-supabase.js": { "maxDuration": 15 },
-    "api/data.js":          { "maxDuration": 30 },
-    "api/health.js":        { "maxDuration": 10 },
-    "api/social-post.js":   { "maxDuration": 30 },
-    "api/ai.js":            { "maxDuration": 60 }
+    "api/generate.js":              { "maxDuration": 30 },
+    "api/meta-ads.js":              { "maxDuration": 30 },
+    "api/cron-publish.js":          { "maxDuration": 60 },
+    "api/cron-refresh-tokens.js":   { "maxDuration": 60 },
+    "api/auth-supabase.js":         { "maxDuration": 15 },
+    "api/auth/meta/login.js":       { "maxDuration": 10 },
+    "api/auth/meta/callback.js":    { "maxDuration": 30 },
+    "api/auth/meta/connection.js":  { "maxDuration": 10 },
+    "api/auth/meta/health.js":      { "maxDuration": 15 },
+    "api/auth/meta/disconnect.js":  { "maxDuration": 10 },
+    "api/onboarding/select-page.js":{ "maxDuration": 15 },
+    "api/data.js":                  { "maxDuration": 30 },
+    "api/health.js":                { "maxDuration": 10 },
+    "api/social-post.js":           { "maxDuration": 60 },
+    "api/ai.js":                    { "maxDuration": 60 }
   },
   "crons": [
-    { "path": "/api/cron-publish", "schedule": "55 13 * * *" }
+    { "path": "/api/cron-publish",         "schedule": "55 13 * * *" },
+    { "path": "/api/cron-refresh-tokens",  "schedule": "0 3 * * *" }
   ],
   "headers": [
     {
