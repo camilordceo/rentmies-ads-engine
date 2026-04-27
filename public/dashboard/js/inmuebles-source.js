@@ -10,6 +10,7 @@
 (function () {
   'use strict'
 
+  const IMPORTED_KEY = 'rm_inmuebles_imported'
   let cache = null
   let inflight = null
 
@@ -17,12 +18,37 @@
     return {
       id: item.id || '',
       proyecto: item.proyecto || item.nombre_barrio || '',
-      tipo: item.tipo || item.tipo_inmueble_propiedad || '',
+      tipo: item.tipo || item.tipo_inmueble_propiedad || item.tipo_transaccion_negocio || '',
       ciudad: item.ciudad || item.nombre_ciudad || '',
-      descripcion: item.descripcion || '',
+      descripcion: item.descripcion || item.descripcion_inmueble_propiedad || '',
       imagen: item.imagen || item.image_link_1 || '',
-      isStarter: !!isStarter
+      area: item.area || item.area_construida || item.area_total_m2 || null,
+      habitaciones: item.habitaciones || null,
+      banos: item.banos || item.numero_banos || null,
+      precio: item.precio || item.valor_arriendo || item.valor_venta || null,
+      transaccion: item.transaccion || item.tipo_transaccion_negocio || '',
+      isStarter: !!isStarter,
+      isImported: !!item._imported,
+      _raw: item._raw || null
     }
+  }
+
+  function loadImported() {
+    try {
+      const raw = JSON.parse(localStorage.getItem(IMPORTED_KEY) || '[]')
+      if (!Array.isArray(raw)) return []
+      return raw.map(p => normalize({ ...p, _imported: true, _raw: p._raw || p }, false))
+    } catch (_) { return [] }
+  }
+
+  function saveImported(items) {
+    localStorage.setItem(IMPORTED_KEY, JSON.stringify(items))
+    cache = null   // bust cache so next load() re-merges
+  }
+
+  function clearImported() {
+    localStorage.removeItem(IMPORTED_KEY)
+    cache = null
   }
 
   async function load(forceReload) {
@@ -34,6 +60,8 @@
         try { return (JSON.parse(localStorage.getItem('sb_user') || '{}')).id || 'demo' } catch (_) { return 'demo' }
       })()
 
+      const imported = loadImported()
+
       // 1. Try real inventory endpoint
       try {
         const r = await fetch('/api/data?resource=inmuebles', {
@@ -44,13 +72,20 @@
           const raw = json.inmuebles || json.data || []
           if (Array.isArray(raw) && raw.length > 0) {
             const items = raw.map(p => normalize(p, false))
-            cache = { items, source: 'api', empresaId }
+            const merged = imported.length ? [...imported, ...items] : items
+            cache = { items: merged, source: imported.length ? 'imported+api' : 'api', empresaId }
             return cache
           }
         }
       } catch (_) {}
 
-      // 2. Fall back to starter inmuebles
+      // 2. If user has imported items, use those (skip starter)
+      if (imported.length > 0) {
+        cache = { items: imported, source: 'imported', empresaId }
+        return cache
+      }
+
+      // 3. Fall back to starter inmuebles
       try {
         const r2 = await fetch('/data/inmuebles-inicio.json')
         if (r2.ok) {
@@ -107,5 +142,5 @@
     `
   }
 
-  window.rmInmuebles = { load, findById, cardHtml, escapeHtml, escapeAttr }
+  window.rmInmuebles = { load, findById, cardHtml, escapeHtml, escapeAttr, normalize, saveImported, loadImported, clearImported }
 })()

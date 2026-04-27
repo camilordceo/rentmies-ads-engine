@@ -210,10 +210,30 @@
 
   function step3Html() {
     const total = totalPosts()
-    const needsVideos = s.cfg.mediaMode === 'videos' || s.cfg.mediaMode === 'mixed'
-    const needsImages = s.cfg.mediaMode === 'images' || s.cfg.mediaMode === 'mixed'
+    const mode = s.cfg.mediaMode
     const videosCount = s.assets.filter(a => a.kind === 'video' && a.status === 'ready').length
+    const imagesCount = s.assets.filter(a => a.kind === 'image' && a.status === 'ready').length
     const captionsReady = s.posts.filter(p => p.caption).length
+
+    // Uploader config according to mode
+    let acceptAttr, uploaderTitle, uploaderHint, uploaderCount
+    if (mode === 'videos') {
+      acceptAttr = 'video/mp4,video/quicktime,video/webm'
+      uploaderTitle = '📹 Subir videos'
+      uploaderHint = 'MP4 / MOV / WEBM · max 250MB c/u · vertical 9:16 ideal para Reels · 3-90s'
+      uploaderCount = `${videosCount} videos subidos`
+    } else if (mode === 'images') {
+      acceptAttr = 'image/png,image/jpeg,image/webp'
+      uploaderTitle = '🖼 Subir imágenes propias (opcional)'
+      uploaderHint = 'JPG / PNG / WEBP · ratio 4:5 o 1:1 ideal para IG Feed · max 3MB inline / 250MB con URL firmada'
+      uploaderCount = `${imagesCount} imágenes subidas — si no subes ninguna, se usa la foto del inmueble`
+    } else {
+      // mixed
+      acceptAttr = 'image/png,image/jpeg,image/webp,video/mp4,video/quicktime,video/webm'
+      uploaderTitle = '🎬 Subir imágenes y/o videos'
+      uploaderHint = 'JPG / PNG / MP4 / MOV — sube los que quieras y los rotamos entre los slots'
+      uploaderCount = `${videosCount} videos + ${imagesCount} imágenes propias`
+    }
 
     return `
       <section class="ae-formcard">
@@ -222,29 +242,25 @@
           <span class="ae-formcard-h-accessory">${total} posts</span>
         </div>
 
-        ${needsVideos ? `
-          <div style="margin-bottom:18px;">
-            <div class="ae-field-label" style="margin-bottom:8px;">
-              Sube los videos para esta campaña
-              <span style="color:var(--rm-muted); font-weight:400;">— ${videosCount} subidos / mín. 1 para arrancar</span>
-            </div>
-            <label class="ae-cb-uploader" for="cb-video-input">
-              <div class="ae-cb-uploader-title">📹 Subir videos</div>
-              <div class="ae-cb-uploader-hint">MP4 / MOV · max 250MB c/u · vertical 9:16 ideal para Reels · 3-90s</div>
-              <input id="cb-video-input" type="file" accept="video/mp4,video/quicktime,video/webm" multiple style="display:none;" />
-            </label>
-            ${s.assets.length ? `<div class="ae-cb-asset-grid" id="cb-asset-grid" style="margin-top:14px;">${s.assets.map(assetCardHtml).join('')}</div>` : ''}
+        <div style="margin-bottom:18px;">
+          <div class="ae-field-label" style="margin-bottom:8px;">
+            ${mode === 'videos' ? 'Videos para la campaña' : (mode === 'images' ? 'Imágenes (opcional)' : 'Assets de la campaña')}
+            <span style="color:var(--rm-muted); font-weight:400;"> — ${uploaderCount}</span>
           </div>
-        ` : ''}
+          <label class="ae-cb-uploader" for="cb-asset-input">
+            <div class="ae-cb-uploader-title">${uploaderTitle}</div>
+            <div class="ae-cb-uploader-hint">${uploaderHint}</div>
+            <input id="cb-asset-input" type="file" accept="${acceptAttr}" multiple style="display:none;" />
+          </label>
+          ${s.assets.length ? `<div class="ae-cb-asset-grid" id="cb-asset-grid" style="margin-top:14px;">${s.assets.map(assetCardHtml).join('')}</div>` : ''}
+        </div>
 
-        ${needsImages ? `
-          <div style="margin-bottom:18px;">
-            <div class="ae-help info">
-              ${s.cfg.mediaMode === 'mixed'
-                ? `<strong>Mixto:</strong> los slots sin video usarán la foto del inmueble. Puedes regenerar cualquiera con IA en el paso 4.`
-                : `<strong>Solo imágenes:</strong> cada post usa la foto del inmueble. Puedes regenerar individualmente con IA en el paso 4 (cuesta ~$0.04 c/u).`
-              }
-            </div>
+        ${mode !== 'videos' ? `
+          <div class="ae-help info" style="margin-bottom:14px;">
+            ${mode === 'mixed'
+              ? `<strong>Mixto:</strong> los slots se llenan alternando — primero usamos los videos que subas, luego las imágenes que subas, y los slots restantes la foto del inmueble. Puedes ajustar slot por slot en el paso 4.`
+              : `<strong>Solo imágenes:</strong> si no subes nada, cada post usa la foto del inmueble. Puedes regenerar individualmente con IA (~$0.04 c/u) o sustituir por una imagen propia.`
+            }
           </div>
         ` : ''}
 
@@ -521,14 +537,8 @@
     }
 
     if (s.step === 3) {
-      const fileIn = document.getElementById('cb-video-input')
-      const dropZone = document.querySelector('.ae-cb-uploader')
-      if (fileIn) fileIn.addEventListener('change', handleVideoUpload)
-      if (dropZone) dropZone.addEventListener('click', e => {
-        // Forward click from the wrapping label to the file input — but only if
-        // the click didn't originate inside the asset grid below.
-        if (e.target.closest('.ae-cb-asset')) return
-      })
+      const fileIn = document.getElementById('cb-asset-input')
+      if (fileIn) fileIn.addEventListener('change', handleAssetUpload)
       document.querySelectorAll('[data-remove-asset]').forEach(btn => {
         btn.addEventListener('click', e => {
           e.stopPropagation()
@@ -685,58 +695,36 @@
     return slots
   }
 
-  // ── Step 3: video upload (signed URL → direct PUT to Supabase) ──
+  // ── Step 3: asset upload (image OR video, via shared helper) ──
 
-  async function handleVideoUpload(e) {
+  async function handleAssetUpload(e) {
     const files = Array.from(e.target.files || [])
     e.target.value = ''
+    if (!window.rmUploadAsset) {
+      window.rmToast?.('Helper de upload no cargado — refresca la página', 'error')
+      return
+    }
     for (const file of files) {
-      if (!/^video\//i.test(file.type) && !VIDEO_EXT_RE.test(file.name)) {
-        window.rmToast?.(`Saltado: "${file.name}" no es video`, 'warning')
-        continue
-      }
-      if (file.size > 250 * 1024 * 1024) {
-        window.rmToast?.(`"${file.name}" supera 250MB`, 'error')
-        continue
-      }
+      const kind = window.rmUploadAsset.detectKindFromFile(file)
       const asset = {
         id: 'ast_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6),
-        kind: 'video',
-        url: '',
-        name: file.name,
+        kind, url: '', name: file.name,
         status: 'uploading',
-        progressLabel: 'Pidiendo URL…'
+        progressLabel: 'Iniciando…'
       }
       s.assets.push(asset)
       mount()
       try {
-        // 1. Get signed upload URL
-        const empresaId = empresaIdFromStorage()
-        const r = await fetch('/api/ai?action=video-upload-url', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'x-empresa-id': empresaId },
-          body: JSON.stringify({ filename: file.name, contentType: file.type })
+        const result = await window.rmUploadAsset.upload(file, {
+          onStatus: msg => { asset.progressLabel = msg; mount() }
         })
-        const json = await r.json()
-        if (!r.ok) throw new Error(json.error || 'No se pudo obtener URL')
-        asset.progressLabel = 'Subiendo…'
-        mount()
-
-        // 2. PUT directly to Supabase using the signed URL
-        const upRes = await fetch(json.uploadUrl, {
-          method: 'PUT',
-          headers: { 'Content-Type': file.type || 'video/mp4', 'x-upsert': 'false' },
-          body: file
-        })
-        if (!upRes.ok) {
-          const t = await upRes.text().catch(() => '')
-          throw new Error(`Upload falló (${upRes.status}) ${t.slice(0, 80)}`)
-        }
-        asset.url = json.publicUrl
+        asset.url = result.url
+        asset.kind = result.kind
         asset.status = 'ready'
         regenerateMediaAssignments()
         mount()
       } catch (err) {
+        console.error('[campaign-builder] asset upload failed', err)
         asset.status = 'error'
         asset.error = err.message
         mount()
@@ -750,25 +738,34 @@
     const inmueble = getSelectedInmueble()
     const inmuebleImg = (inmueble && inmueble.imagen) || ''
     const videos = s.assets.filter(a => a.kind === 'video' && a.status === 'ready')
+    const userImages = s.assets.filter(a => a.kind === 'image' && a.status === 'ready')
     const mode = s.cfg.mediaMode
 
     s.posts.forEach((post, i) => {
-      // Don't override media that the user explicitly set later
+      // Don't override media the user explicitly picked later
       if (post._userPickedMedia) return
+
       if (mode === 'videos') {
         if (videos.length === 0) { post.mediaKind = ''; post.mediaUrl = ''; return }
         const v = videos[i % videos.length]
         post.mediaKind = 'video'; post.mediaUrl = v.url
       } else if (mode === 'images') {
-        post.mediaKind = 'image'; post.mediaUrl = inmuebleImg
-      } else {
-        // mixed: alternate. Even slots = video (if available), odd = image
-        if (videos.length > 0 && i % 2 === 0) {
-          const v = videos[Math.floor(i / 2) % videos.length]
-          post.mediaKind = 'video'; post.mediaUrl = v.url
+        // Prefer user-uploaded images, fall back to inmueble photo
+        if (userImages.length > 0) {
+          const img = userImages[i % userImages.length]
+          post.mediaKind = 'image'; post.mediaUrl = img.url
         } else {
           post.mediaKind = 'image'; post.mediaUrl = inmuebleImg
         }
+      } else {
+        // mixed: round-robin through [videos..., user images..., inmueble photo]
+        const pool = []
+        videos.forEach(v => pool.push({ kind: 'video', url: v.url }))
+        userImages.forEach(im => pool.push({ kind: 'image', url: im.url }))
+        if (inmuebleImg) pool.push({ kind: 'image', url: inmuebleImg })
+        if (pool.length === 0) { post.mediaKind = ''; post.mediaUrl = ''; return }
+        const pick = pool[i % pool.length]
+        post.mediaKind = pick.kind; post.mediaUrl = pick.url
       }
     })
   }

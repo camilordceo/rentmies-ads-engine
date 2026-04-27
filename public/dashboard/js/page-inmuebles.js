@@ -35,9 +35,15 @@
 
     const sourceBadge = state.source === 'starter'
       ? '<span class="ae-ai-badge" style="background:rgba(210,152,54,0.14); color:var(--rm-amber);">Inmuebles de muestra</span>'
-      : state.source === 'api'
-        ? `<span class="ae-ai-badge">${state.items.length} inmuebles</span>`
-        : '<span class="ae-status pending">Sin inventario</span>'
+      : state.source === 'imported'
+        ? `<span class="ae-ai-badge" style="background:rgba(0,77,53,0.14); color:var(--rm-green-deep);">${state.items.length} inmuebles importados</span>`
+        : state.source === 'imported+api'
+          ? `<span class="ae-ai-badge">${state.items.length} inmuebles (importados + API)</span>`
+          : state.source === 'api'
+            ? `<span class="ae-ai-badge">${state.items.length} inmuebles</span>`
+            : '<span class="ae-status pending">Sin inventario</span>'
+
+    const importedCount = (window.rmInmuebles?.loadImported() || []).length
 
     return `
       <div class="ae-page-shell ae-rise">
@@ -46,7 +52,7 @@
           <span class="ae-eyebrow">CATÁLOGO · INMUEBLES & PROYECTOS</span>
           <h1 class="ae-display"><span class="ae-display-prefix">Tu</span> <em>inventario</em></h1>
           <p class="ae-subhead">${state.source === 'starter'
-            ? 'Estás viendo los inmuebles de muestra (Primavera, Castelo, Praseo, Strada). Ideales para probar el flow sin importar tu catálogo real todavía.'
+            ? 'Estás viendo los inmuebles de muestra (Primavera, Castelo, Praseo, Strada). Importa tu CSV/Excel para usar tu catálogo real.'
             : 'Tu inventario sincronizado. Click en cualquier inmueble para publicarlo en Instagram o Facebook.'}</p>
         </header>
 
@@ -63,6 +69,8 @@
               <option value="">Todos los tipos</option>
               ${tipos.map(t => `<option value="${escapeAttr(t)}" ${t === state.filterTipo ? 'selected' : ''}>${escapeHtml(t)}</option>`).join('')}
             </select>
+            <button class="ae-btn-authority" id="inm-import-btn" type="button" style="font-size:11px; padding:8px 12px;">📂 Importar CSV/Excel</button>
+            ${importedCount > 0 ? `<button class="ae-btn-ghost" id="inm-clear-imported" type="button" style="font-size:11px; padding:8px 12px;" title="Borrar inmuebles importados localmente">🗑 Limpiar (${importedCount})</button>` : ''}
             <span style="margin-left:auto;">${sourceBadge}</span>
           </div>
         </section>
@@ -137,6 +145,18 @@
         window.rmRouter?.goTo('schedule')
       })
     })
+
+    document.getElementById('inm-import-btn')?.addEventListener('click', () => {
+      if (!window.rmCsvImport) { window.rmToast?.('Módulo de import no cargado', 'error'); return }
+      window.rmCsvImport.open()
+    })
+    document.getElementById('inm-clear-imported')?.addEventListener('click', () => {
+      const cnt = (window.rmInmuebles?.loadImported() || []).length
+      if (!confirm(`¿Borrar ${cnt} inmuebles importados localmente? (No afecta los datos en Supabase ni el archivo original.)`)) return
+      window.rmInmuebles?.clearImported()
+      window.rmToast?.('Inmuebles importados eliminados', 'info')
+      mount()
+    })
   }
 
   function render() {
@@ -159,6 +179,9 @@
   }
 
   document.addEventListener('rm-page-change', e => { if (e.detail.page === 'inmuebles') mount() })
+  document.addEventListener('rm-inmuebles-changed', () => {
+    if (window.rmRouter?.currentPage() === 'inmuebles') mount()
+  })
   document.addEventListener('DOMContentLoaded', () => {
     if ((window.rmRouter?.currentPage() || 'studio') === 'inmuebles') mount()
   })

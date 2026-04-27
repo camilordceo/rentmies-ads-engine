@@ -537,25 +537,48 @@ module.exports = async (req, res) => {
       const { filename, contentType } = req.body || {}
       if (!filename) return res.status(400).json({ error: 'filename es requerido' })
 
+      // Explicit env-var check up front so the user sees what's wrong instead of a generic 500.
+      const supabaseUrl = process.env.SUPABASE_URL
+      const supabaseKey = process.env.SUPABASE_SERVICE_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY
+      if (!supabaseUrl) return res.status(500).json({ error: 'SUPABASE_URL no está configurada en Vercel' })
+      if (!supabaseKey) return res.status(500).json({ error: 'SUPABASE_SERVICE_KEY (o SUPABASE_SERVICE_ROLE_KEY) no está configurada en Vercel' })
+
       const sb = getSupabaseService()
-      if (!sb) return res.status(500).json({ error: 'Supabase no configurado para uploads.' })
 
       try {
-        await ensureVideoBucket(sb)
+        // ensureVideoBucket logs and returns a clear error if listBuckets fails
+        // (e.g. the service key is actually an anon key and lacks permissions).
+        try {
+          await ensureVideoBucket(sb)
+        } catch (bucketErr) {
+          return res.status(500).json({
+            error: 'No se pudo provisionar el bucket de videos en Supabase',
+            detail: bucketErr.message,
+            hint: 'Crea manualmente un bucket llamado "videos-upload" (public, fileSizeLimit 250MB) en el panel de Supabase Storage.'
+          })
+        }
+
         const safeName = String(filename).replace(/[^a-z0-9._-]/gi, '_').slice(0, 60)
         const path = `${empresaId}/${Date.now()}-${safeName}`
         const { data, error } = await sb.storage.from(VIDEO_BUCKET).createSignedUploadUrl(path)
-        if (error) throw new Error(error.message)
+        if (error) {
+          return res.status(500).json({
+            error: 'Supabase rechazó createSignedUploadUrl',
+            detail: error.message,
+            hint: 'Verifica que el bucket "videos-upload" exista y que la SUPABASE_SERVICE_KEY tenga permisos de Storage.'
+          })
+        }
         const { data: pub } = sb.storage.from(VIDEO_BUCKET).getPublicUrl(path)
         return res.json({
           uploadUrl: data.signedUrl,
           token: data.token,
           path,
           publicUrl: pub.publicUrl,
-          contentType: contentType || 'video/mp4'
+          contentType: contentType || 'video/mp4',
+          bucket: VIDEO_BUCKET
         })
       } catch (err) {
-        return res.status(500).json({ error: err.message })
+        return res.status(500).json({ error: 'video-upload-url falló', detail: err.message })
       }
     }
 
@@ -570,8 +593,10 @@ module.exports = async (req, res) => {
       try {
         await ensureBucket(sb)
         const buffer = Buffer.from(data, 'base64')
-        if (buffer.length > 8 * 1024 * 1024) {
-          return res.status(413).json({ error: `Archivo muy grande (${(buffer.length/1024/1024).toFixed(1)}MB). Máximo 8MB.` })
+        // Vercel inline body limit is ~4.5MB and base64 inflates raw bytes by 33%.
+        // Cap raw at 3.3MB so we never hit a 413 before the handler runs.
+        if (buffer.length > 3.3 * 1024 * 1024) {
+          return res.status(413).json({ error: `Archivo muy grande (${(buffer.length/1024/1024).toFixed(1)}MB). Máximo 3.3MB inline. Para archivos más grandes usa signed URL (video-upload-url).` })
         }
         const ct = (contentType || 'image/png').split(';')[0]
         const ext = (ct.split('/')[1] || 'png').replace(/[^a-z0-9]/gi, '') || 'png'

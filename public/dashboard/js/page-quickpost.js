@@ -342,71 +342,24 @@
     const file = e.target.files && e.target.files[0]
     if (!file) return
     const status = document.getElementById('qp-img-status')
-    const isVideo = /^video\//i.test(file.type) || VIDEO_EXT_RE.test(file.name)
-
-    if (isVideo) {
-      if (file.size > 250 * 1024 * 1024) {
-        status.textContent = '✗ Video > 250 MB'; e.target.value = ''; return
-      }
-      status.textContent = '⏳ Pidiendo URL…'
-      try {
-        const empresaId = empresaIdFromStorage()
-        const r1 = await fetch('/api/ai?action=video-upload-url', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'x-empresa-id': empresaId },
-          body: JSON.stringify({ filename: file.name, contentType: file.type })
-        })
-        const meta = await r1.json()
-        if (!r1.ok) throw new Error(meta.error || 'No se pudo obtener URL')
-        status.textContent = `⏳ Subiendo video… (${(file.size / 1024 / 1024).toFixed(1)}MB)`
-        const r2 = await fetch(meta.uploadUrl, {
-          method: 'PUT',
-          headers: { 'Content-Type': file.type || 'video/mp4', 'x-upsert': 'false' },
-          body: file
-        })
-        if (!r2.ok) {
-          const t = await r2.text().catch(() => '')
-          throw new Error(`Upload falló (${r2.status}) ${t.slice(0, 80)}`)
-        }
-        state.customImageUrl = meta.publicUrl
-        state.mediaKind = 'video'
-        document.getElementById('qp-img-url').value = meta.publicUrl
-        status.textContent = '✓ Video subido'
-        syncFromState()
-      } catch (err) {
-        status.textContent = '✗ ' + err.message
-      }
+    if (!window.rmUploadAsset) {
+      status.textContent = '✗ Upload helper no cargado — refresca la página'
       return
     }
-
-    // Image flow (legacy)
-    if (file.size > 3 * 1024 * 1024) {
-      status.textContent = '✗ Imagen > 3 MB'; e.target.value = ''; return
-    }
-    status.textContent = '⏳ Subiendo imagen…'
     try {
-      const dataUrl = await new Promise((resolve, reject) => {
-        const r = new FileReader()
-        r.onload = () => resolve(r.result)
-        r.onerror = () => reject(r.error)
-        r.readAsDataURL(file)
+      const result = await window.rmUploadAsset.upload(file, {
+        onStatus: msg => { status.textContent = '⏳ ' + msg }
       })
-      const base64 = String(dataUrl).split(',')[1]
-      const empresaId = empresaIdFromStorage()
-      const r = await fetch('/api/ai?action=upload-ref', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'x-empresa-id': empresaId },
-        body: JSON.stringify({ data: base64, contentType: file.type, filename: file.name })
-      })
-      const json = await r.json()
-      if (!r.ok) throw new Error(json.error || 'Upload falló')
-      state.customImageUrl = json.url
-      state.mediaKind = 'image'
-      document.getElementById('qp-img-url').value = json.url
-      status.textContent = '✓ Imagen subida'
+      state.customImageUrl = result.url
+      state.mediaKind = result.kind
+      document.getElementById('qp-img-url').value = result.url
+      status.textContent = `✓ ${result.kind === 'video' ? 'Video' : 'Imagen'} subido`
       syncFromState()
     } catch (err) {
+      console.error('[quickpost] upload failed', err)
       status.textContent = '✗ ' + err.message
+    } finally {
+      e.target.value = ''
     }
   }
 
