@@ -3,37 +3,75 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Casi listo — Rentmies</title>
-<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=Inter:wght@400;500&display=swap" rel="stylesheet">
+<title>Activa tu cuenta — Rentmies</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Inter:wght@400;500&display=swap" rel="stylesheet">
 <style>
-  body { margin:0; font-family:'Inter',sans-serif; background:#f8f8f8; color:#1a1a1a; min-height:100vh; }
-  h1,h2 { font-family:'DM Sans',sans-serif; }
-  nav { height:60px; background:#fff; border-bottom:1px solid #e5e5e5; display:flex; align-items:center; padding:0 32px; }
-  .logo-text { font-size:17px; font-weight:600; color:#40d99d; }
-  .logo-sub { font-size:11px; color:#6b7280; margin-left:6px; }
-  main { max-width:720px; margin:0 auto; padding:48px 24px 80px; }
-  .eyebrow { font-family:ui-monospace,monospace; font-size:11px; letter-spacing:.15em; color:#6b7280; text-transform:uppercase; font-weight:700; }
-  h1.page { font-size:34px; font-weight:500; line-height:1.15; margin:6px 0 10px; }
-  h1.page em { color:#006c4a; font-style:italic; font-weight:400; }
-  .sub { font-size:15px; color:#6b7280; line-height:1.6; max-width:580px; margin-bottom:32px; }
-  .grid { display:grid; grid-template-columns:1.4fr 1fr; gap:24px; }
-  @media(max-width:760px){ .grid{grid-template-columns:1fr;} }
-  .card { background:#fff; border:1px solid #e5e5e5; border-radius:12px; padding:24px; }
-  .card h2 { font-size:18px; font-weight:600; margin-bottom:14px; }
-  ul { list-style:none; padding:0; margin:0; }
-  ul li { font-size:14px; padding:6px 0; color:#1a1a1a; display:flex; align-items:center; gap:8px; }
-  ul li::before { content:"✓"; color:#40d99d; font-weight:700; }
-  .price { font-family:'DM Sans',sans-serif; font-size:32px; font-weight:600; }
-  .price-sub { font-size:13px; color:#6b7280; margin-top:2px; }
-  .trial-pill { display:inline-block; background:rgba(64,217,157,.12); color:#006c4a; font-size:11px; font-weight:600; padding:4px 10px; border-radius:100px; margin-top:8px; }
-  .placeholder-box { padding:36px 24px; background:#fef9c3; border:1px solid #fde047; border-radius:8px; text-align:center; color:#854d0e; }
-  .placeholder-box strong { display:block; font-size:16px; margin-bottom:6px; }
-  .btn { display:inline-block; padding:12px 22px; border-radius:8px; font-size:14px; font-weight:500; font-family:'DM Sans',sans-serif; text-decoration:none; cursor:pointer; border:none; }
-  .btn-p { background:#40d99d; color:#fff; }
-  .btn-p:hover { background:#2fb87d; }
-  .actions { margin-top:24px; display:flex; gap:10px; align-items:center; }
-  .skip { font-size:13px; color:#6b7280; text-decoration:underline; cursor:pointer; }
-  .skip:hover { color:#1a1a1a; }
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: 'Inter', sans-serif; background: #f8f8f8; color: #1a1a1a; min-height: 100vh; }
+  h1, h2, h3 { font-family: 'DM Sans', sans-serif; }
+  nav { height: 60px; background: #fff; border-bottom: 1px solid #e5e5e5; display: flex; align-items: center; padding: 0 32px; }
+  .logo-text { font-size: 17px; font-weight: 600; color: #40d99d; }
+  .logo-sub { font-size: 11px; color: #6b7280; margin-left: 6px; }
+  main { max-width: 1080px; margin: 0 auto; padding: 40px 24px 80px; }
+  .eyebrow { font-family: ui-monospace, monospace; font-size: 11px; letter-spacing: .15em; color: #6b7280; text-transform: uppercase; font-weight: 700; }
+  h1.page { font-size: 32px; font-weight: 500; line-height: 1.15; margin: 6px 0 8px; }
+  h1.page em { color: #006c4a; font-style: italic; font-weight: 400; }
+  .sub { font-size: 14px; color: #6b7280; line-height: 1.6; max-width: 640px; margin-bottom: 24px; }
+
+  .env-pill { display: inline-block; padding: 3px 10px; border-radius: 999px; font-size: 10px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; margin-bottom: 12px; }
+  .env-pill.sandbox { background: #fef3c7; color: #92400e; }
+  .env-pill.prod { background: #d1fae5; color: #065f46; }
+
+  /* Plan grid */
+  .plans { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 32px; }
+  @media (max-width: 880px) { .plans { grid-template-columns: 1fr; } }
+  .plan { background: #fff; border: 2px solid #e5e5e5; border-radius: 12px; padding: 20px; cursor: pointer; transition: border-color .15s, transform .1s; position: relative; }
+  .plan:hover { border-color: #40d99d; }
+  .plan.selected { border-color: #006c4a; box-shadow: 0 4px 18px rgba(6,108,74,.12); }
+  .plan.recommended::after { content: 'RECOMENDADO'; position: absolute; top: -10px; left: 50%; transform: translateX(-50%); background: #006c4a; color: #fff; font-size: 9px; padding: 4px 10px; border-radius: 999px; letter-spacing: .12em; font-weight: 700; }
+  .plan h3 { font-size: 18px; font-weight: 600; margin: 0 0 4px; }
+  .plan .price { font-size: 28px; font-weight: 600; margin: 6px 0 2px; font-family: 'DM Sans', sans-serif; }
+  .plan .price-cop { font-size: 12px; color: #6b7280; margin-bottom: 12px; }
+  .plan ul { list-style: none; padding: 0; margin: 0 0 8px; }
+  .plan ul li { font-size: 13px; padding: 4px 0; color: #1a1a1a; display: flex; align-items: center; gap: 6px; }
+  .plan ul li::before { content: "✓"; color: #40d99d; font-weight: 700; flex-shrink: 0; }
+
+  /* Card form */
+  .checkout { display: grid; grid-template-columns: 1.4fr 1fr; gap: 24px; }
+  @media (max-width: 880px) { .checkout { grid-template-columns: 1fr; } }
+  .card { background: #fff; border: 1px solid #e5e5e5; border-radius: 12px; padding: 24px; }
+  .card h2 { font-size: 16px; font-weight: 600; margin: 0 0 18px; }
+  label { display: block; font-size: 12px; font-weight: 500; color: #374151; margin-bottom: 6px; }
+  input[type="text"], input[type="email"], input[type="tel"] { width: 100%; padding: 10px 12px; border: 1px solid #d1d5db; border-radius: 8px; font-size: 14px; font-family: inherit; transition: border-color .15s; }
+  input:focus { outline: none; border-color: #40d99d; }
+  .row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 14px; }
+  .field { margin-bottom: 14px; }
+  .accept { background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 8px; padding: 12px; margin: 16px 0; }
+  .accept label { display: flex; align-items: flex-start; gap: 8px; font-size: 12px; color: #374151; cursor: pointer; line-height: 1.45; margin-bottom: 8px; }
+  .accept label:last-child { margin-bottom: 0; }
+  .accept input[type="checkbox"] { margin-top: 2px; flex-shrink: 0; }
+  .accept a { color: #006c4a; text-decoration: underline; }
+
+  .btn { display: inline-flex; align-items: center; justify-content: center; padding: 12px 22px; border-radius: 8px; font-size: 14px; font-weight: 600; font-family: 'DM Sans', sans-serif; text-decoration: none; cursor: pointer; border: none; width: 100%; gap: 8px; }
+  .btn-primary { background: #40d99d; color: #fff; }
+  .btn-primary:hover:not(:disabled) { background: #2fb87d; }
+  .btn:disabled { opacity: .55; cursor: not-allowed; }
+
+  .summary-card { background: #1a1a1a; color: #fff; border-radius: 12px; padding: 22px; }
+  .summary-card h2 { color: #fff; }
+  .summary-row { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,.1); font-size: 13px; }
+  .summary-row.total { font-size: 16px; font-weight: 600; padding-top: 14px; border-bottom: none; }
+  .summary-card .muted { color: rgba(255,255,255,.55); font-size: 11px; margin-top: 12px; line-height: 1.5; }
+
+  .alert { padding: 12px 14px; border-radius: 8px; font-size: 13px; line-height: 1.5; margin-bottom: 14px; }
+  .alert-error { background: #fef2f2; color: #991b1b; border: 1px solid #fecaca; }
+  .alert-success { background: #d1fae5; color: #065f46; border: 1px solid #a7f3d0; }
+
+  .spinner { width: 14px; height: 14px; border: 2px solid rgba(255,255,255,.4); border-top-color: #fff; border-radius: 50%; animation: spin .8s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .skip { font-size: 12px; color: #6b7280; text-decoration: underline; cursor: pointer; display: inline-block; margin-top: 12px; }
+  .skip:hover { color: #1a1a1a; }
 </style>
 </head>
 <body>
@@ -47,39 +85,292 @@
 <main>
   <span class="eyebrow">PAGO · 3 de 3</span>
   <h1 class="page"><em>Activa</em> tu cuenta</h1>
-  <p class="sub">Tu Página y tu Instagram quedaron conectados. Escoge tu plan para empezar a publicar.</p>
+  <p class="sub">Tu Página de Facebook y tu Instagram quedaron conectados. Escoge un plan para empezar a publicar. Pago seguro vía <strong>Wompi (Bancolombia)</strong> · Cancela cuando quieras.</p>
 
-  <div class="grid">
+  <div id="env-pill" class="env-pill sandbox">SANDBOX · Prueba con tarjeta 4242 4242 4242 4242</div>
+
+  <div class="plans" id="plans">
+    <!-- rendered by JS -->
+  </div>
+
+  <div class="checkout">
     <div class="card">
-      <h2>Plan Solo Agent</h2>
-      <ul>
-        <li>1 cuenta Facebook + Instagram conectada</li>
-        <li>Posts ilimitados</li>
-        <li>AI captions con Camilord</li>
-        <li>Campañas multi-día</li>
-        <li>Importar inventario CSV/Excel</li>
-        <li>Cancela cuando quieras</li>
-      </ul>
-      <div style="margin-top:18px;">
-        <div class="price">$49 <span style="font-size:15px; font-weight:400; color:#6b7280;">USD/mes</span></div>
-        <div class="price-sub">≈ $190.000 COP/mes</div>
-        <span class="trial-pill">7 días gratis · sin tarjeta requerida</span>
-      </div>
+      <h2>Datos de pago</h2>
+      <div id="alert-slot"></div>
+
+      <form id="pay-form" autocomplete="on">
+        <div class="field">
+          <label for="email">Correo</label>
+          <input type="email" id="email" name="email" required autocomplete="email" placeholder="tu@empresa.com">
+        </div>
+        <div class="field">
+          <label for="card_holder">Nombre del titular</label>
+          <input type="text" id="card_holder" name="card_holder" required autocomplete="cc-name" placeholder="Como aparece en la tarjeta">
+        </div>
+        <div class="field">
+          <label for="number">Número de tarjeta</label>
+          <input type="text" id="number" name="number" required autocomplete="cc-number" placeholder="4242 4242 4242 4242" inputmode="numeric" maxlength="19">
+        </div>
+        <div class="row">
+          <div>
+            <label for="exp_month">MM</label>
+            <input type="text" id="exp_month" name="exp_month" required autocomplete="cc-exp-month" placeholder="06" inputmode="numeric" maxlength="2">
+          </div>
+          <div>
+            <label for="exp_year">AA</label>
+            <input type="text" id="exp_year" name="exp_year" required autocomplete="cc-exp-year" placeholder="29" inputmode="numeric" maxlength="2">
+          </div>
+        </div>
+        <div class="row">
+          <div>
+            <label for="cvc">CVC</label>
+            <input type="text" id="cvc" name="cvc" required autocomplete="cc-csc" placeholder="123" inputmode="numeric" maxlength="4">
+          </div>
+          <div>
+            <label for="installments">Cuotas</label>
+            <select id="installments" name="installments" style="width:100%; padding:10px 12px; border:1px solid #d1d5db; border-radius:8px; font-size:14px; font-family:inherit; background:#fff;">
+              <option value="1">1 cuota (sin intereses)</option>
+              <option value="3">3 cuotas</option>
+              <option value="6">6 cuotas</option>
+              <option value="12">12 cuotas</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="accept">
+          <label>
+            <input type="checkbox" id="ack_tc" required>
+            <span>Acepto el <a id="tc_link" href="#" target="_blank" rel="noopener">Reglamento de Wompi</a> y autorizo el pago.</span>
+          </label>
+          <label>
+            <input type="checkbox" id="ack_pd" required>
+            <span>Autorizo el tratamiento de mis <a id="pd_link" href="#" target="_blank" rel="noopener">datos personales</a> según la Ley 1581 de 2012.</span>
+          </label>
+        </div>
+
+        <button type="submit" class="btn btn-primary" id="pay-btn" disabled>
+          <span id="pay-btn-label">Cargando…</span>
+        </button>
+        <a class="skip" href="/dashboard" id="skip-link" style="display:none;">Ir al dashboard sin pagar (beta)</a>
+      </form>
     </div>
 
-    <div class="card">
-      <h2>Pago</h2>
-      <div class="placeholder-box">
-        <strong>⚠ Pago aún no integrado</strong>
-        Wompi se conectará en la próxima iteración. Por ahora puedes <strong>saltar al dashboard</strong> y empezar a publicar gratis durante el periodo beta.
+    <aside class="summary-card">
+      <h2>Resumen</h2>
+      <div id="summary-content">
+        <div class="summary-row"><span>Plan</span><span id="sum-plan">—</span></div>
+        <div class="summary-row"><span>Cuotas</span><span id="sum-installments">1</span></div>
+        <div class="summary-row total"><span>Total hoy</span><span id="sum-total">—</span></div>
+        <p class="muted">Cargo recurrente mensual al mismo valor. Cancela cuando quieras desde tu dashboard. Procesado por Wompi · Bancolombia.</p>
       </div>
-      <div class="actions">
-        <a class="btn btn-p" href="/dashboard">Ir al dashboard →</a>
-        <a class="skip" href="/dashboard">Saltar pago</a>
-      </div>
-    </div>
+    </aside>
   </div>
 </main>
 
+<script>
+(async function () {
+  const alertSlot = document.getElementById('alert-slot')
+  const form = document.getElementById('pay-form')
+  const payBtn = document.getElementById('pay-btn')
+  const payBtnLabel = document.getElementById('pay-btn-label')
+  const plansEl = document.getElementById('plans')
+  const envPill = document.getElementById('env-pill')
+
+  let CONFIG = null
+  let SELECTED = null
+  let ACCEPT = null
+  let WOMPI = null
+
+  function showError(msg) {
+    alertSlot.innerHTML = `<div class="alert alert-error">${msg}</div>`
+    alertSlot.scrollIntoView({ behavior: 'smooth', block: 'center' })
+  }
+  function clearAlert() { alertSlot.innerHTML = '' }
+
+  function fmtUSD(n) { return '$' + n + ' USD' }
+  function selectPlan(code) {
+    SELECTED = CONFIG.plans.find(p => p.code === code)
+    Array.from(plansEl.children).forEach(el => el.classList.toggle('selected', el.dataset.code === code))
+    document.getElementById('sum-plan').textContent = `${SELECTED.name} · ${fmtUSD(SELECTED.usd)} /mes`
+    document.getElementById('sum-total').textContent = SELECTED.price_cop_display
+    updatePayButton()
+  }
+
+  function renderPlans() {
+    plansEl.innerHTML = CONFIG.plans.map(p => `
+      <div class="plan ${p.recommended ? 'recommended' : ''}" data-code="${p.code}">
+        <h3>${p.name}</h3>
+        <div class="price">${fmtUSD(p.usd)} <span style="font-size:13px;font-weight:400;color:#6b7280;">/mes</span></div>
+        <div class="price-cop">${p.price_cop_display}</div>
+        <ul>${p.features.map(f => `<li>${f}</li>`).join('')}</ul>
+      </div>
+    `).join('')
+    plansEl.querySelectorAll('.plan').forEach(el => {
+      el.addEventListener('click', () => selectPlan(el.dataset.code))
+    })
+  }
+
+  function updatePayButton() {
+    const ackTc = document.getElementById('ack_tc').checked
+    const ackPd = document.getElementById('ack_pd').checked
+    const ready = SELECTED && ACCEPT && ackTc && ackPd
+    payBtn.disabled = !ready
+    payBtnLabel.textContent = SELECTED
+      ? `Pagar ${SELECTED.price_cop_display}`
+      : 'Selecciona un plan'
+  }
+
+  // 1. Cargar config + planes
+  try {
+    const r = await fetch('/api/wompi/plans')
+    if (!r.ok) throw new Error('No se pudo cargar la configuración de pagos')
+    CONFIG = await r.json()
+  } catch (err) {
+    showError('Error cargando planes: ' + err.message)
+    return
+  }
+  envPill.className = 'env-pill ' + (CONFIG.env === 'production' ? 'prod' : 'sandbox')
+  envPill.textContent = CONFIG.env === 'production'
+    ? 'Pagos en producción'
+    : 'SANDBOX · Prueba con tarjeta 4242 4242 4242 4242'
+  renderPlans()
+  selectPlan(CONFIG.plans.find(p => p.recommended)?.code || CONFIG.plans[0].code)
+
+  // 2. Cargar Wompi JS para session de anti-fraude
+  await new Promise((resolve) => {
+    const s = document.createElement('script')
+    s.src = CONFIG.js_lib_url
+    s.setAttribute('data-public-key', CONFIG.public_key)
+    s.async = true
+    s.onload = () => {
+      try {
+        // WompiBrick / WompiJS expone window.WidgetCheckout y/o window.WompiSession
+        // La mayoría de integraciones usan window.WompiSession para session_id.
+        if (typeof window.WompiSession === 'function') {
+          WOMPI = new window.WompiSession()
+        }
+      } catch (e) { console.warn('[wompi] init session failed', e) }
+      resolve()
+    }
+    s.onerror = () => { console.warn('[wompi] JS lib failed to load'); resolve() }
+    document.head.appendChild(s)
+  })
+
+  // 3. Cargar acceptance tokens
+  try {
+    const r = await fetch('/api/wompi/acceptance-tokens')
+    if (!r.ok) throw new Error('No se pudieron cargar los términos de Wompi')
+    ACCEPT = await r.json()
+    if (ACCEPT.presigned_acceptance_url) document.getElementById('tc_link').href = ACCEPT.presigned_acceptance_url
+    if (ACCEPT.presigned_personal_data_auth_url) document.getElementById('pd_link').href = ACCEPT.presigned_personal_data_auth_url
+  } catch (err) {
+    showError(err.message)
+    return
+  }
+
+  // 4. Pre-fill email del usuario logueado si está en localStorage
+  try {
+    const sbUser = JSON.parse(localStorage.getItem('sb_user') || 'null')
+    if (sbUser && sbUser.email) document.getElementById('email').value = sbUser.email
+  } catch (e) {}
+
+  // 5. Listeners
+  document.getElementById('ack_tc').addEventListener('change', updatePayButton)
+  document.getElementById('ack_pd').addEventListener('change', updatePayButton)
+  document.getElementById('installments').addEventListener('change', (e) => {
+    document.getElementById('sum-installments').textContent = e.target.value
+  })
+  updatePayButton()
+
+  // 6. Submit: tokenizar tarjeta → POST /api/wompi/checkout
+  form.addEventListener('submit', async (ev) => {
+    ev.preventDefault()
+    clearAlert()
+    payBtn.disabled = true
+    payBtnLabel.innerHTML = '<span class="spinner"></span> Procesando…'
+
+    const number = document.getElementById('number').value.replace(/\s+/g, '')
+    const cvc = document.getElementById('cvc').value.trim()
+    const exp_month = document.getElementById('exp_month').value.trim().padStart(2, '0')
+    const exp_year = document.getElementById('exp_year').value.trim()
+    const card_holder = document.getElementById('card_holder').value.trim()
+    const email = document.getElementById('email').value.trim()
+    const installments = parseInt(document.getElementById('installments').value, 10) || 1
+
+    try {
+      // 6.1 Tokenize en Wompi (frontend, public key)
+      const tokRes = await fetch(CONFIG.public_key.includes('test')
+        ? 'https://sandbox.wompi.co/v1/tokens/cards'
+        : 'https://production.wompi.co/v1/tokens/cards', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + CONFIG.public_key },
+        body: JSON.stringify({ number, exp_month, exp_year, cvc, card_holder })
+      })
+      const tokJson = await tokRes.json()
+      if (!tokRes.ok || !tokJson.data || !tokJson.data.id) {
+        throw new Error(
+          (tokJson.error && (tokJson.error.messages?.number?.[0] || tokJson.error.reason)) ||
+          'Tarjeta rechazada por Wompi'
+        )
+      }
+      const card_token = tokJson.data.id
+
+      // 6.2 Session id de anti-fraude (puede ser null en sandbox)
+      let session_id = null
+      try {
+        if (WOMPI && typeof WOMPI.getSessionId === 'function') {
+          session_id = await WOMPI.getSessionId()
+        }
+      } catch (e) {}
+
+      // 6.3 Llamar al backend
+      const sbToken = localStorage.getItem('sb_token') || ''
+      const out = await fetch('/api/wompi/checkout', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: sbToken ? 'Bearer ' + sbToken : ''
+        },
+        body: JSON.stringify({
+          plan_code: SELECTED.code,
+          card_token,
+          customer_email: email,
+          session_id,
+          acceptance_token: ACCEPT.acceptance_token,
+          accept_personal_auth: ACCEPT.accept_personal_auth,
+          installments
+        })
+      })
+      const outJson = await out.json()
+      if (!out.ok) {
+        throw new Error(outJson.error || ('HTTP ' + out.status))
+      }
+
+      // 6.4 Resultado
+      if (outJson.status === 'APPROVED') {
+        alertSlot.innerHTML = `<div class="alert alert-success"><strong>¡Pago aprobado!</strong> Te llevamos al dashboard…</div>`
+        setTimeout(() => { window.location.href = outJson.next || '/dashboard' }, 1200)
+      } else if (outJson.status === 'PENDING') {
+        alertSlot.innerHTML = `<div class="alert alert-success"><strong>Pago en proceso.</strong> Te avisaremos por correo cuando se confirme. Puedes seguir al dashboard.</div>`
+        document.getElementById('skip-link').style.display = 'inline-block'
+        document.getElementById('skip-link').textContent = 'Continuar al dashboard →'
+      } else {
+        throw new Error('Estado: ' + outJson.status)
+      }
+    } catch (err) {
+      console.error(err)
+      showError(err.message || 'Algo salió mal procesando tu pago.')
+    } finally {
+      payBtn.disabled = false
+      payBtnLabel.textContent = SELECTED ? `Pagar ${SELECTED.price_cop_display}` : 'Selecciona un plan'
+    }
+  })
+
+  // Format helpers para el número de tarjeta
+  document.getElementById('number').addEventListener('input', (e) => {
+    e.target.value = e.target.value.replace(/\D/g, '').replace(/(.{4})/g, '$1 ').trim()
+  })
+})()
+</script>
 </body>
 </html>

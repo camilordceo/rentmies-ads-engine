@@ -25,11 +25,18 @@
     "api/data.js":                  { "maxDuration": 30 },
     "api/health.js":                { "maxDuration": 10 },
     "api/social-post.js":           { "maxDuration": 60 },
-    "api/ai.js":                    { "maxDuration": 60 }
+    "api/ai.js":                    { "maxDuration": 60 },
+    "api/wompi/plans.js":              { "maxDuration": 10 },
+    "api/wompi/acceptance-tokens.js":  { "maxDuration": 10 },
+    "api/wompi/checkout.js":           { "maxDuration": 30 },
+    "api/wompi/webhook.js":            { "maxDuration": 15 },
+    "api/wompi/subscription.js":       { "maxDuration": 10 },
+    "api/cron-renew-subscriptions.js": { "maxDuration": 60 }
   },
   "crons": [
-    { "path": "/api/cron-publish",         "schedule": "55 13 * * *" },
-    { "path": "/api/cron-refresh-tokens",  "schedule": "0 3 * * *" }
+    { "path": "/api/cron-publish",              "schedule": "55 13 * * *" },
+    { "path": "/api/cron-refresh-tokens",       "schedule": "0 3 * * *" },
+    { "path": "/api/cron-renew-subscriptions",  "schedule": "0 4 * * *" }
   ],
   "headers": [
     {
