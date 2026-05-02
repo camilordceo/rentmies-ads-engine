@@ -1,34 +1,51 @@
 /* ─────────────────────────────────────────────────────────────
-   RENTMIES ADS ENGINE — TOP NAVIGATION (FASE 1)
-   SKILL §4 — horizontal in-canvas nav, the Ad Engine signature.
+   RENTMIES PRIME — TOP NAVIGATION
+   White bg, brand wordmark, 4 nav links with bottom border on
+   active, notifications + settings icons + avatar on the right.
    ───────────────────────────────────────────────────────────── */
 
+.rp-topbar,
 .ae-topnav {
   display: flex;
   align-items: center;
-  gap: 28px;
-  padding: 0 var(--margin-main);
-  height: var(--topnav-h);
-  background: var(--rm-surface);
-  border-bottom: 1px solid var(--rm-border);
+  gap: 32px;
+  padding: 0 32px;
+  height: var(--rp-topbar-h);
+  background: var(--rp-bg);
   position: relative;
+  border-bottom: 1px solid rgba(0,0,0,0.06);
 }
 
-/* ── Logo wordmark — Instrument Serif italic ── */
+/* Brand wordmark */
 
+.rp-topbar-brand,
 .ae-topnav-logo {
-  font-family: var(--rm-serif);
-  font-style: italic;
-  font-weight: 600;
-  font-size: 17px;
-  letter-spacing: -0.01em;
-  color: var(--rm-ink);
+  font-family: var(--rp-font);
+  font-style: normal;
+  font-weight: 800;
+  font-size: 16px;
+  letter-spacing: -0.02em;
+  color: var(--rp-ink);
   user-select: none;
   flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
-/* ── Nav links — mono UPPERCASE ── */
+.rp-topbar-brand::before {
+  content: "";
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--rp-teal);
+  margin-right: 4px;
+}
 
+/* Nav links */
+
+.rp-topbar-nav,
 .ae-topnav-nav {
   display: flex;
   align-items: stretch;
@@ -36,13 +53,14 @@
   height: 100%;
 }
 
+.rp-topbar-link,
 .ae-topnav-link {
-  font-family: var(--rm-mono);
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: var(--rm-muted);
+  font-family: var(--rp-font);
+  font-size: 14px;
+  font-weight: 500;
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--rp-muted);
   padding: 0 14px;
   display: inline-flex;
   align-items: center;
@@ -52,71 +70,128 @@
   border-bottom: 2px solid transparent;
   cursor: pointer;
   transition: color 0.15s, border-color 0.15s;
+  text-decoration: none;
 }
-.ae-topnav-link:hover { color: var(--rm-ink); }
 
+.rp-topbar-link:hover,
+.ae-topnav-link:hover {
+  color: var(--rp-ink);
+}
+
+.rp-topbar-link.active,
 .ae-topnav-link.active {
-  color: var(--rm-green-deep);
-  border-bottom-color: var(--rm-green-deep);
+  color: var(--rp-ink);
+  font-weight: 600;
+  border-bottom-color: var(--rp-ink);
 }
 
+.rp-topbar-link:focus-visible,
 .ae-topnav-link:focus-visible {
-  outline: 2px solid var(--rm-teal);
-  outline-offset: -2px;
-  border-radius: 2px;
+  outline: 2px solid var(--rp-teal);
+  outline-offset: -4px;
+  border-radius: 4px;
 }
 
-/* ── Search bar (center spacer pushes it right) ── */
+/* Spacer pushes right cluster */
 
+.rp-topbar-spacer,
 .ae-topnav-spacer { flex: 1; }
 
-.ae-search {
+/* Right cluster */
+
+.rp-topbar-right {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
-  background: var(--rm-surface-2);
-  border: 1px solid var(--rm-border);
-  border-radius: 4px;
-  padding: 6px 10px;
-  width: 240px;
-  transition: border-color 0.15s, background 0.15s;
-}
-.ae-search:focus-within {
-  border-color: var(--rm-teal);
-  background: var(--rm-surface);
-}
-
-.ae-search svg {
-  width: 13px;
-  height: 13px;
-  stroke: var(--rm-muted);
-  stroke-width: 1.8;
-  fill: none;
+  gap: 6px;
   flex-shrink: 0;
 }
 
-.ae-search input {
+/* Old search bar — hidden in Prime layout */
+.ae-search { display: none !important; }
+
+/* Old "Publicar ahora" launch button — repurpose as the primary CTA */
+.ae-launch-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 9px 16px;
+  height: 38px;
+  border-radius: var(--rp-radius-btn);
+  background: var(--rp-teal);
+  color: var(--rp-green-deep);
   border: none;
+  font-family: var(--rp-font);
+  font-weight: 700;
+  font-size: 12px;
+  letter-spacing: 0.02em;
+  text-transform: none;
+  cursor: pointer;
+  transition: background 0.15s, transform 0.15s;
+  text-decoration: none;
+  white-space: nowrap;
+  flex-shrink: 0;
+  margin-right: 8px;
+}
+.ae-launch-btn:hover  { background: var(--rp-mint); }
+.ae-launch-btn:active { transform: scale(0.97); }
+.ae-launch-btn svg    { width: 11px; height: 11px; fill: var(--rp-green-deep); flex-shrink: 0; }
+
+/* Icon buttons */
+
+.rp-icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
   background: transparent;
-  outline: none;
-  font-family: var(--rm-mono);
-  font-size: 11px;
-  color: var(--rm-ink);
+  color: var(--rp-muted);
+  border: none;
+  cursor: pointer;
+  font-size: 16px;
+  transition: background 0.15s, color 0.15s;
+}
+.rp-icon-btn:hover { background: var(--rp-surface-raised); color: var(--rp-ink); }
+.rp-icon-btn:active { transform: scale(0.96); }
+.rp-icon-btn svg { width: 18px; height: 18px; stroke: currentColor; stroke-width: 1.8; fill: none; }
+
+/* Avatar */
+
+.rp-avatar,
+.ae-rail-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  overflow: hidden;
+  background: linear-gradient(135deg, var(--rp-teal), var(--rp-green));
+  color: white;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--rp-font);
+  font-weight: 700;
+  font-size: 12px;
+  cursor: pointer;
+  user-select: none;
+  border: 2px solid var(--rp-teal);
+  flex-shrink: 0;
+  transition: transform 0.15s;
+}
+.rp-avatar:hover, .ae-rail-avatar:hover { transform: scale(1.05); }
+.rp-avatar img {
   width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
 }
-.ae-search input::placeholder {
-  color: var(--rm-muted);
-  letter-spacing: 0.04em;
-}
 
-/* ── Launch CTA — defined fully in buttons.css; topnav alignment only here ── */
+/* Mobile compaction */
 
-.ae-topnav .ae-launch-btn { flex-shrink: 0; }
-
-/* ── Mobile compaction ── */
-
-@media (max-width: 960px) {
-  .ae-search { width: 160px; }
-  .ae-topnav { gap: 14px; padding: 0 18px; }
-  .ae-topnav-link { padding: 0 10px; }
+@media (max-width: 768px) {
+  .rp-topbar, .ae-topnav { gap: 16px; padding: 0 18px; }
+  .rp-topbar-nav, .ae-topnav-nav { gap: 0; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  .rp-topbar-link, .ae-topnav-link { padding: 0 10px; font-size: 13px; }
+  .ae-launch-btn { display: none; }
 }

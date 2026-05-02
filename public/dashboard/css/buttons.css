@@ -1,133 +1,183 @@
 /* ─────────────────────────────────────────────────────────────
-   RENTMIES ADS ENGINE — BUTTON SYSTEM (FASE 1)
-   SKILL §12 — primary (dark), authority (deep green), ghost.
-   All buttons: active:scale(0.98), focus-visible: teal outline,
-   min touch target 36px (44px for rail icons).
+   RENTMIES PRIME — BUTTON SYSTEM
+   Primary: teal bg + dark text
+   Secondary: white bg + 1px border
+   Ghost: green text, no bg
+   Icon: circular ghost button
+   All buttons: active scale(0.97), 200ms transition.
    ───────────────────────────────────────────────────────────── */
 
-/* ── Base shared by all .ae-btn-* ── */
+/* Base shared by .rp-btn-* and legacy .ae-btn-* */
 
+.rp-btn-primary,
+.rp-btn-secondary,
+.rp-btn-ghost,
+.rp-btn-icon,
 .ae-btn-primary,
 .ae-btn-authority,
-.ae-btn-ghost,
-.ae-launch-btn {
+.ae-btn-ghost {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 6px;
+  gap: 8px;
   border: none;
   cursor: pointer;
-  font-family: var(--rm-mono);
+  font-family: var(--rp-font);
   font-weight: 700;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  transition: background 0.15s, color 0.15s, border-color 0.15s, transform 0.15s;
+  letter-spacing: 0;
+  text-transform: none;
+  transition: background 0.2s, color 0.2s, border-color 0.2s, transform 0.2s, box-shadow 0.2s;
   user-select: none;
   white-space: nowrap;
-  min-height: 36px;
+  text-decoration: none;
 }
 
+.rp-btn-primary:focus-visible,
+.rp-btn-secondary:focus-visible,
+.rp-btn-ghost:focus-visible,
+.rp-btn-icon:focus-visible,
 .ae-btn-primary:focus-visible,
 .ae-btn-authority:focus-visible,
-.ae-btn-ghost:focus-visible,
-.ae-launch-btn:focus-visible {
-  outline: 2px solid var(--rm-teal);
+.ae-btn-ghost:focus-visible {
+  outline: 2px solid var(--rp-teal);
   outline-offset: 2px;
 }
 
+.rp-btn-primary:active,
+.rp-btn-secondary:active,
+.rp-btn-ghost:active,
+.rp-btn-icon:active,
 .ae-btn-primary:active,
 .ae-btn-authority:active,
-.ae-btn-ghost:active,
-.ae-launch-btn:active {
-  transform: scale(0.98);
+.ae-btn-ghost:active {
+  transform: scale(0.97);
 }
 
+.rp-btn-primary:disabled,
+.rp-btn-secondary:disabled,
+.rp-btn-ghost:disabled,
 .ae-btn-primary:disabled,
 .ae-btn-authority:disabled,
-.ae-btn-ghost:disabled,
-.ae-launch-btn:disabled {
+.ae-btn-ghost:disabled {
   opacity: 0.5;
   cursor: not-allowed;
   transform: none;
 }
 
-/* ── Primary (dark ink) ── */
+/* PRIMARY — teal bg + dark text */
 
-.ae-btn-primary {
-  background: var(--rm-ink);
-  color: #fff;
-  padding: 9px 16px;
-  border-radius: 4px;
-  font-size: 11px;
-}
-.ae-btn-primary:hover { background: var(--rm-green-deep); }
-
-/* ── Authority (deep green — most emphatic) ── */
-
+.rp-btn-primary,
+.ae-btn-primary,
 .ae-btn-authority {
-  background: var(--rm-green-deep);
-  color: #fff;
-  padding: 9px 16px;
-  border-radius: 4px;
-  font-size: 11px;
+  background: var(--rp-teal);
+  color: var(--rp-green-deep);
+  padding: 12px 24px;
+  border-radius: var(--rp-radius-btn);
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  min-height: 40px;
 }
-.ae-btn-authority:hover { background: var(--rm-green); }
+.rp-btn-primary:hover,
+.ae-btn-primary:hover,
+.ae-btn-authority:hover { background: var(--rp-mint); }
 
-/* ── Ghost (secondary, white surface, sentence case allowed) ── */
+/* SECONDARY — white with thin border */
 
+.rp-btn-secondary {
+  background: white;
+  color: var(--rp-ink);
+  border: 1px solid rgba(0,0,0,0.12);
+  padding: 12px 24px;
+  border-radius: var(--rp-radius-btn);
+  font-size: 13px;
+  font-weight: 600;
+  min-height: 40px;
+}
+.rp-btn-secondary:hover {
+  border-color: rgba(0,0,0,0.2);
+  background: var(--rp-surface-raised);
+}
+
+/* GHOST — green text, no bg */
+
+.rp-btn-ghost,
 .ae-btn-ghost {
-  background: var(--rm-surface);
-  color: var(--rm-ink);
-  border: 1px solid var(--rm-border);
-  padding: 7px 12px;
-  border-radius: 4px;
-  font-family: var(--rm-font);
-  font-size: 12px;
-  font-weight: 500;
-  letter-spacing: 0;
-  text-transform: none;
-}
-.ae-btn-ghost:hover {
-  border-color: var(--rm-border-strong);
-  background: var(--rm-surface-2);
-}
-
-/* ── Launch button (the LANZAR CAMPAÑA CTA) ── */
-
-.ae-launch-btn {
-  background: var(--rm-ink);
-  color: #fff;
-  padding: 9px 14px;
-  border-radius: 4px;
-  font-size: 11px;
-}
-.ae-launch-btn:hover { background: var(--rm-green-deep); }
-
-.ae-launch-btn svg {
-  width: 11px; height: 11px;
-  fill: var(--ae-bolt);
-  flex-shrink: 0;
-}
-
-/* ── Tiny icon-only ghost (for row actions, dismissibles) ── */
-
-.ae-btn-icon {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
   background: transparent;
-  border: 1px solid var(--rm-border);
-  border-radius: 4px;
-  padding: 6px;
-  cursor: pointer;
-  color: var(--rm-ink-2);
-  transition: background 0.15s, border-color 0.15s, color 0.15s;
-  min-width: 28px;
-  min-height: 28px;
+  color: var(--rp-green);
+  border: none;
+  padding: 10px 18px;
+  border-radius: var(--rp-radius-btn);
+  font-size: 13px;
+  font-weight: 600;
+  text-transform: none;
+  letter-spacing: 0;
+  min-height: 36px;
 }
-.ae-btn-icon:hover {
-  background: var(--rm-surface-2);
-  border-color: var(--rm-border-strong);
-  color: var(--rm-ink);
+.rp-btn-ghost:hover,
+.ae-btn-ghost:hover {
+  background: rgba(0, 108, 74, 0.06);
+  color: var(--rp-green-deep);
 }
-.ae-btn-icon svg { width: 14px; height: 14px; stroke: currentColor; stroke-width: 1.8; fill: none; }
+
+/* ICON — circular ghost */
+
+.rp-btn-icon,
+.ae-btn-icon {
+  background: transparent;
+  border: none;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  padding: 0;
+  color: var(--rp-muted);
+  min-width: 0;
+  min-height: 0;
+}
+.rp-btn-icon:hover,
+.ae-btn-icon:hover { background: var(--rp-surface-raised); color: var(--rp-ink); }
+.rp-btn-icon svg,
+.ae-btn-icon svg {
+  width: 18px; height: 18px;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  fill: none;
+}
+
+/* Compact / sm sizes */
+
+.rp-btn-primary.sm,
+.rp-btn-secondary.sm,
+.rp-btn-ghost.sm,
+.ae-btn-primary.sm,
+.ae-btn-authority.sm,
+.ae-btn-ghost.sm {
+  padding: 8px 14px;
+  font-size: 12px;
+  min-height: 32px;
+}
+
+/* Block / full-width */
+
+.rp-btn-block { width: 100%; }
+
+/* Launch button (used in topbar) is styled in topnav.css */
+
+/* Action row layout */
+
+.ae-action-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-top: 8px;
+}
+.ae-action-row .ae-status-line {
+  font-family: var(--rp-font);
+  font-size: 12px;
+  color: var(--rp-muted);
+  flex: 1;
+  min-width: 200px;
+}
+.ae-action-row .ae-status-line.success { color: var(--rp-green); }
+.ae-action-row .ae-status-line.error   { color: var(--rp-red); }

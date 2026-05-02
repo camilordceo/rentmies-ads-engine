@@ -54,27 +54,49 @@
     return el
   }
 
+  function bannerHtmlSimple (label, ctaLabel, ctaHref) {
+    return `
+      <div class="rm-meta-banner-inner">
+        <span class="rm-meta-banner-icon">⚠</span>
+        <span class="rm-meta-banner-label">${label}</span>
+        <a class="rm-meta-banner-cta" href="${ctaHref}">${ctaLabel} →</a>
+        <button class="rm-meta-banner-close" aria-label="Cerrar">×</button>
+      </div>`
+  }
+
   function show(state) {
     const el = ensureBanner()
-    let label, cta, kind = 'show'
-    if (state.health === 'expired') {
-      label = 'Tu conexión con Facebook expiró. Reconecta para seguir publicando.'
-      cta = 'Reconectar'
+    let label, cta, kind = 'show', href = '/api/auth/meta/login?source=reconnect'
+
+    // System User-only: if the connection is a system_user token, "reconnect"
+    // means "go to Settings and paste a fresh token" — NOT the OAuth flow.
+    const isSut = state.token_type === 'system_user'
+
+    if (state.health === 'expired' || state.health === 'expiring_soon' && isSut === false) {
+      label = isSut
+        ? 'Tu System User token de Meta no funciona. Genera uno nuevo en Business Manager.'
+        : 'Tu conexión con Facebook expiró. Reconecta para seguir publicando.'
+      cta = isSut ? 'Ir a Settings' : 'Reconectar'
+      href = isSut ? '/dashboard#settings' : '/api/auth/meta/login?source=reconnect'
     } else if (state.health === 'revoked') {
-      label = 'Revocaste el permiso a Rentmies en Facebook. Vuelve a conectar para usar la plataforma.'
-      cta = 'Reconectar'
+      label = isSut
+        ? 'El System User fue eliminado de tu Business Manager. Pega un token nuevo.'
+        : 'Revocaste el permiso a Rentmies en Facebook. Vuelve a conectar.'
+      cta = isSut ? 'Ir a Settings' : 'Reconectar'
+      href = isSut ? '/dashboard#settings' : '/api/auth/meta/login?source=reconnect'
     } else if (state.health === 'expiring_soon') {
       label = `Tu conexión con Facebook expira en ${state.days_until_expiry} día${state.days_until_expiry === 1 ? '' : 's'}. Refresca cuando puedas.`
       cta = 'Refrescar ahora'
       kind = 'show warn'
     } else if (state.health === 'error') {
       label = 'Hay un problema con tu conexión Meta: ' + (state.error || 'desconocido')
-      cta = 'Reconectar'
+      cta = isSut ? 'Ir a Settings' : 'Reconectar'
+      href = isSut ? '/dashboard#settings' : '/api/auth/meta/login?source=reconnect'
     } else {
       hide()
       return
     }
-    el.innerHTML = bannerHtml(label, cta)
+    el.innerHTML = bannerHtmlSimple(label, cta, href)
     el.className = 'rm-meta-banner ' + kind
     document.body.classList.add('has-meta-banner')
     el.querySelector('.rm-meta-banner-close')?.addEventListener('click', () => {

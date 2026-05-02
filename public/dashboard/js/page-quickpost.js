@@ -18,9 +18,11 @@
     customImageUrl: '',
     customInstructions: '',
     caption: '',
-    platform: 'instagram',
+    platform: 'instagram',                          // legacy, kept for AI caption hint
+    platforms: new Set(['facebook_page','instagram']), // multi-select for publish
     aiSize: '1024x1024',
-    mediaKind: 'image'   // 'image' | 'video' — derived from URL/mime
+    mediaKind: 'image',  // 'image' | 'video' — derived from URL/mime
+    publishResults: null  // [{ platform, ok, url?, error? }] after a publish run
   }
 
   const { escapeHtml, escapeAttr, cardHtml } = (window.rmInmuebles || {})
@@ -34,13 +36,13 @@
 
   function html() {
     return `
-      <div class="ae-page-shell ae-rise">
+      <div class="rp-page rp-rise">
 
-        <header class="ae-page-head">
-          <span class="ae-eyebrow">PUBLICAR EN INSTAGRAM / FACEBOOK</span>
-          <h1 class="ae-display"><span class="ae-display-prefix">Quick</span> <em>Post</em></h1>
-          <p class="ae-subhead">Selecciona un inmueble (o pega cualquier imagen), escribe el caption — manual o con IA — y publica. Sin pauta requerida.</p>
-        </header>
+        <div class="rp-page-header">
+          <span class="rp-eyebrow">PUBLICAR EN INSTAGRAM / FACEBOOK</span>
+          <h1 class="rp-display">Quick <em>Post</em></h1>
+          <p class="rp-subhead">Selecciona un inmueble (o pega cualquier imagen), escribe el caption — manual o con IA — y publica. <strong>Sin pauta requerida.</strong></p>
+        </div>
 
         <div class="ae-workspace">
           <div class="ae-workspace-col">
@@ -108,39 +110,32 @@
             <div class="ae-formcard">
               <div class="ae-formcard-h">
                 <span>3. Caption</span>
-                <span class="ae-formcard-h-accessory" id="qp-caption-status"></span>
+                <span class="ae-formcard-h-accessory" id="qp-caption-status"><span id="qp-caption-counter" style="font-family:var(--rm-mono); font-size:10px; color:var(--rm-muted);">0 / 2200</span></span>
               </div>
               <div class="ae-field">
-                <textarea id="qp-caption" class="ae-textarea" rows="6" placeholder="Escribe el texto del post o usa el botón de IA abajo…"></textarea>
+                <textarea id="qp-caption" class="ae-textarea" rows="6" maxlength="2300" placeholder="Escribe el texto del post o usa el botón de IA abajo…"></textarea>
                 <div class="ae-action-row" style="margin-top:10px;">
-                  <button type="button" class="ae-btn-ghost" id="qp-ai-caption-btn">✨ Generar caption con IA</button>
+                  <button type="button" class="ae-btn-ghost" id="qp-ai-caption-btn">✨ Generar con Camilord</button>
                   <button type="button" class="ae-btn-ghost" id="qp-caption-template-btn">Plantilla rápida (sin IA)</button>
                 </div>
               </div>
             </div>
 
-            <!-- Platform + Publish -->
+            <!-- Platforms + Publish -->
             <div class="ae-formcard">
               <div class="ae-formcard-h">
-                <span>4. Publicar</span>
-                <span class="ae-formcard-h-accessory">Sin pauta · publicación orgánica</span>
+                <span>4. ¿Dónde publicamos?</span>
+                <span class="ae-formcard-h-accessory">Multi-canal · paralelo</span>
               </div>
-              <div class="ae-grid-2">
-                <div class="ae-field">
-                  <label class="ae-field-label" for="qp-platform">Plataforma</label>
-                  <select id="qp-platform" class="ae-select">
-                    <option value="instagram">📷 Instagram Business</option>
-                    <option value="facebook_page">📘 Facebook Page</option>
-                  </select>
-                </div>
-              </div>
-              <div class="ae-action-row" style="margin-top:14px;">
-                <button type="button" class="ae-btn-primary" id="qp-publish-btn" style="font-size:12px; padding:11px 18px;">
-                  <svg viewBox="0 0 24 24" width="11" height="11" fill="currentColor"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
-                  PUBLICAR AHORA
+              <div id="qp-platforms-grid" class="qp-platforms"></div>
+              <div class="ae-action-row" style="margin-top:20px;">
+                <button type="button" class="rp-btn-primary" id="qp-publish-btn" style="padding:14px 28px; min-height:auto;">
+                  <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+                  Publicar ahora
                 </button>
                 <span class="ae-status-line" id="qp-publish-status"></span>
               </div>
+              <div id="qp-publish-progress" style="margin-top:14px;"></div>
 
               <details class="ae-optional" style="margin-top:18px;">
                 <summary>💸 Pauta pagada (opcional) <span style="margin-left:auto; color:var(--rm-muted); font-weight:500;">próximamente</span></summary>
@@ -182,9 +177,50 @@
 
   // ── Wiring ────────────────────────────────────────────────
 
+  function maybeShowFirstTimeOverlay (slot) {
+    let meta = {}
+    try { meta = JSON.parse(localStorage.getItem('meta_creds') || '{}') } catch (_) {}
+    const hasCreds = !!(meta.access_token && meta.page_id)
+    if (hasCreds) return false
+    slot.innerHTML = `
+      <div class="rp-page rp-rise">
+        <div class="qp-first-time">
+          <div class="qp-first-icon">
+            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+          </div>
+          <span class="rp-eyebrow">PRIMER PASO · 10 MINUTOS</span>
+          <h1 class="qp-first-title">Conecta tu <em>Meta Business</em><br>para empezar a publicar</h1>
+          <p class="qp-first-sub">Para publicar a Facebook e Instagram necesitamos un token permanente de tu Business Manager. No usa OAuth, no caduca, y solo tú puedes revocarlo. Te guiamos paso a paso.</p>
+          <div class="qp-first-cta">
+            <a href="#settings" class="rp-btn-primary">EMPEZAR CONEXIÓN →</a>
+            <a href="/docs/GUIA_CONEXION_META.md" target="_blank" class="rp-btn-secondary">Leer guía completa</a>
+          </div>
+          <div class="qp-first-perks">
+            <div><strong>10 min</strong><br><span>de setup</span></div>
+            <div><strong>0 caducidad</strong><br><span>token permanente</span></div>
+            <div><strong>Sin OAuth</strong><br><span>tú controlas todo</span></div>
+          </div>
+        </div>
+      </div>
+      <style>
+        .qp-first-time { max-width: 640px; margin: 64px auto; text-align: center; padding: 56px 40px; background: var(--rp-surface); border-radius: var(--rp-radius-card); box-shadow: var(--rp-shadow-card); }
+        .qp-first-icon { width: 72px; height: 72px; border-radius: 18px; background: var(--rp-teal); display: inline-flex; align-items: center; justify-content: center; margin-bottom: 24px; box-shadow: 0 6px 18px rgba(64,217,157,0.3); }
+        .qp-first-title { font-family: var(--rp-font); font-style: normal; font-weight: 800; font-size: 36px; line-height: 1.1; letter-spacing: -.03em; color: var(--rp-ink); margin: 12px 0 16px; }
+        .qp-first-title em { color: var(--rp-teal); font-style: normal; font-weight: 800; }
+        .qp-first-sub { font-size: 15px; line-height: 1.6; color: var(--rp-ink-2); max-width: 480px; margin: 0 auto 32px; }
+        .qp-first-cta { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; margin-bottom: 40px; }
+        .qp-first-perks { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; padding-top: 28px; border-top: 1px solid rgba(0,0,0,0.06); }
+        .qp-first-perks > div { font-size: 12px; color: var(--rp-muted); }
+        .qp-first-perks strong { font-family: var(--rp-font); font-size: 22px; font-weight: 800; color: var(--rp-green); display: block; margin-bottom: 4px; letter-spacing: -.02em; }
+      </style>
+    `
+    return true
+  }
+
   async function mount() {
     const slot = document.querySelector('section[data-page="quickpost"]')
     if (!slot) return
+    if (maybeShowFirstTimeOverlay(slot)) return
     slot.innerHTML = html()
 
     // Load inmuebles in parallel with renderers
@@ -257,8 +293,13 @@
     })
     document.getElementById('qp-img-file').addEventListener('change', handleFileUpload)
 
-    document.getElementById('qp-platform').addEventListener('change', e => state.platform = e.target.value)
-    document.getElementById('qp-caption').addEventListener('input', e => { state.caption = e.target.value; updatePreview() })
+    renderPlatformCards()
+    document.getElementById('qp-caption').addEventListener('input', e => {
+      state.caption = e.target.value
+      updateCaptionCounter()
+      updatePreview()
+      window.rmCamilordQuickpost?.update(getCamilordContext())
+    })
 
     document.getElementById('qp-ai-caption-btn').addEventListener('click', generateAICaption)
     document.getElementById('qp-ai-image-btn').addEventListener('click', generateAIImage)
@@ -280,6 +321,8 @@
     setMediaPreview(effectiveUrl, state.mediaKind)
     updatePreview()
     refreshCredsCard()
+    renderPlatformCards()
+    window.rmCamilordQuickpost?.update(getCamilordContext())
   }
 
   function setMediaPreview(url, kind) {
@@ -443,86 +486,178 @@
 
   // ── Publish ───────────────────────────────────────────────
 
-  async function publishNow() {
+  // Platform cards (checkbox-style) — replaces the old <select>
+  function renderPlatformCards () {
+    const grid = document.getElementById('qp-platforms-grid')
+    if (!grid) return
+    let meta = {}
+    try { meta = JSON.parse(localStorage.getItem('meta_creds') || '{}') } catch (_) {}
+    const fbConn = !!(meta.access_token && meta.page_id)
+    const igConn = !!(meta.access_token && meta.ig_user_id)
+    const platforms = [
+      { id: 'facebook_page', icon: '📘', label: 'Facebook Page', sub: fbConn ? `Page ID ${meta.page_id.slice(0,6)}…` : 'No conectada', connected: fbConn },
+      { id: 'instagram',     icon: '📷', label: 'Instagram',     sub: igConn ? `IG ${(meta.ig_user_id || '').slice(0,6)}…` : 'Sin IG ID — la detectamos por la Page', connected: igConn || fbConn }
+    ]
+    grid.innerHTML = platforms.map(p => `
+      <button type="button" class="qp-pcard ${state.platforms.has(p.id) ? 'on' : ''} ${p.connected ? '' : 'unavail'}"
+              data-platform="${p.id}" ${p.connected ? '' : 'disabled'} title="${p.connected ? 'Click para alternar' : 'Configura tus credenciales en Settings'}">
+        <span class="qp-pcard-icon">${p.icon}</span>
+        <span class="qp-pcard-text">
+          <span class="qp-pcard-label">${p.label}</span>
+          <span class="qp-pcard-sub">${escapeHtml(p.sub)}</span>
+        </span>
+        <span class="qp-pcard-check" aria-hidden="true">${state.platforms.has(p.id) ? '✓' : ''}</span>
+        ${p.connected ? '' : '<a href="#settings" class="qp-pcard-cta" onclick="event.stopPropagation()">Conectar →</a>'}
+      </button>
+    `).join('')
+    grid.querySelectorAll('.qp-pcard').forEach(btn => {
+      btn.addEventListener('click', () => {
+        if (btn.disabled) return
+        const id = btn.dataset.platform
+        if (state.platforms.has(id)) state.platforms.delete(id)
+        else state.platforms.add(id)
+        renderPlatformCards()
+      })
+    })
+  }
+
+  function updateCaptionCounter () {
+    const el = document.getElementById('qp-caption-counter')
+    if (!el) return
+    const len = (state.caption || '').length
+    el.textContent = `${len} / 2200`
+    el.style.color = len > 2200 ? 'var(--rm-red)' : (len > 2000 ? 'var(--rm-amber)' : 'var(--rm-muted)')
+  }
+
+  function getCamilordContext () {
+    const inmueble = getSelectedInmueble()
+    const mediaUrl = state.customImageUrl || (inmueble && inmueble.imagen) || ''
+    return {
+      hasMedia: !!mediaUrl,
+      hasCaption: state.caption.trim().length > 0,
+      platforms: Array.from(state.platforms),
+      lastResults: state.publishResults
+    }
+  }
+
+  async function publishNow () {
     const status = document.getElementById('qp-publish-status')
+    const progress = document.getElementById('qp-publish-progress')
     const btn = document.getElementById('qp-publish-btn')
     status.classList.remove('success', 'error')
+    status.textContent = ''
+    progress.innerHTML = ''
 
     const inmueble = getSelectedInmueble()
     const mediaUrl = state.customImageUrl || (inmueble && inmueble.imagen) || ''
     const isVideo = mediaUrl ? detectMediaKind(mediaUrl) === 'video' : false
     const caption = state.caption.trim()
+    const platforms = Array.from(state.platforms)
 
     if (!caption) { status.textContent = '✗ Escribe un caption'; status.classList.add('error'); return }
+    if (caption.length > 2200) { status.textContent = '✗ Caption excede 2200 caracteres (límite IG)'; status.classList.add('error'); return }
+    if (!platforms.length) { status.textContent = '✗ Elige al menos una plataforma'; status.classList.add('error'); return }
 
     let meta = {}
     try { meta = JSON.parse(localStorage.getItem('meta_creds') || '{}') } catch (_) {}
     if (!meta.access_token) {
       status.innerHTML = '✗ Faltan credenciales Meta. <a href="#settings" style="color:var(--rm-green-deep); text-decoration:underline;">Configurarlas →</a>'
-      status.classList.add('error')
-      return
+      status.classList.add('error'); return
     }
-
-    if (state.platform === 'instagram' && !mediaUrl) {
+    if (platforms.includes('instagram') && !mediaUrl) {
       status.textContent = '✗ Instagram requiere imagen o video'; status.classList.add('error'); return
     }
+    // PNG block for IG (Meta rejects)
+    if (platforms.includes('instagram') && !isVideo && /\.png(\?|$)/i.test(mediaUrl)) {
+      status.innerHTML = '✗ Instagram solo acepta JPEG. <a href="#settings" style="color:var(--rm-green-deep);">Convierte la imagen</a> y vuelve a subirla.'
+      status.classList.add('error'); return
+    }
 
-    btn.disabled = true; btn.textContent = isVideo ? '⏳ Subiendo video a Meta…' : '⏳ Publicando…'
-    status.textContent = isVideo ? 'Procesando video — puede tardar 30-90s' : ''
+    btn.disabled = true
+    btn.innerHTML = '<span class="qp-spinner"></span> PUBLICANDO'
 
     const empresaId = empresaIdFromStorage()
-    const headers = {
-      'Content-Type': 'application/json',
-      'x-empresa-id': empresaId,
-      'x-meta-token': meta.access_token
-    }
-    if (meta.page_id)         headers['x-meta-page-id']        = meta.page_id
-    if (meta.ad_account_id)   headers['x-meta-ad-account-id']  = meta.ad_account_id
-    if (meta.waba_id)         headers['x-waba-id']             = meta.waba_id
-    if (meta.phone_number_id) headers['x-meta-phone-number-id']= meta.phone_number_id
-    if (meta.ig_user_id)      headers['x-meta-ig-user-id']     = meta.ig_user_id
+    const sbToken = localStorage.getItem('sb_token') || ''
+    const headers = { 'Content-Type': 'application/json' }
+    if (sbToken) headers.Authorization = 'Bearer ' + sbToken
+    else { headers.Authorization = 'Bearer demo_local'; headers['x-empresa-id'] = empresaId }
 
-    try {
-      const body = {
-        platform: state.platform,
-        caption,
-        empresa_id: empresaId,
-        inventario_id: inmueble ? inmueble.id : null
+    // Progress UI
+    progress.innerHTML = platforms.map(p => `
+      <div class="qp-prog-row" data-prog="${p}">
+        <span class="qp-prog-icon">${p === 'instagram' ? '📷' : '📘'}</span>
+        <span class="qp-prog-label">${p === 'instagram' ? 'Instagram' : 'Facebook'}</span>
+        <span class="qp-prog-state"><span class="qp-spinner"></span> publicando…</span>
+      </div>
+    `).join('')
+
+    const results = []
+    // Publish in PARALLEL — both platforms at once
+    await Promise.all(platforms.map(async (platform) => {
+      const url = platform === 'instagram'
+        ? '/api/posts/publish/instagram'
+        : '/api/posts/publish/facebook'
+      const body = { caption, inventario_id: inmueble ? inmueble.id : null }
+      if (platform === 'instagram') {
+        if (isVideo) { body.media_type = 'REELS'; body.video_url = mediaUrl }
+        else { body.media_type = 'IMAGE'; body.image_url = mediaUrl }
+      } else {
+        if (isVideo) body.video_url = mediaUrl   // not yet supported on the new endpoint, falls back to error
+        else if (mediaUrl) body.image_url = mediaUrl
       }
-      if (isVideo) { body.media_type = 'video'; body.video_url = mediaUrl }
-      else { body.image_url = mediaUrl }
-
-      const r = await fetch('/api/social-post', {
-        method: 'POST', headers, body: JSON.stringify(body)
-      })
-      const text = await r.text()
-      let data = {}
-      try { data = JSON.parse(text) } catch (_) { data = { error: 'Respuesta inesperada' } }
-
-      if (r.status === 202 && data.status === 'processing' && data.container_id) {
-        // IG video still processing — poll in background
-        status.innerHTML = '⏳ Video procesando en Meta · reintentando…'
-        await pollVideoUntilDone(data.container_id, headers, empresaId, status)
-        // pollVideoUntilDone updates status itself
-        return
+      try {
+        const r = await fetch(url, { method: 'POST', headers, body: JSON.stringify(body) })
+        const j = await r.json().catch(() => ({}))
+        if (r.status === 202 && j.status === 'processing') {
+          updateProgressRow(platform, { state: 'processing', message: j.message || 'Aún procesando — verifica en 1-2 min', containerId: j.container_id })
+          results.push({ platform, ok: false, processing: true, container_id: j.container_id, message: j.message })
+        } else if (r.ok && j.success) {
+          updateProgressRow(platform, { state: 'ok', url: j.permalink })
+          results.push({ platform, ok: true, url: j.permalink })
+        } else {
+          const msg = j.error || ('HTTP ' + r.status)
+          updateProgressRow(platform, { state: 'err', message: msg, suggestion: j.suggestion })
+          results.push({ platform, ok: false, error: msg, suggestion: j.suggestion })
+        }
+      } catch (err) {
+        updateProgressRow(platform, { state: 'err', message: err.message })
+        results.push({ platform, ok: false, error: err.message })
       }
+    }))
 
-      if (!r.ok) throw new Error((data.error || 'Error') + (data.detail ? ' — ' + data.detail : ''))
+    state.publishResults = results
+    btn.disabled = false
+    btn.innerHTML = '<svg viewBox="0 0 24 24" width="11" height="11" fill="currentColor"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg> PUBLICAR OTRO'
 
-      status.innerHTML = `✓ Publicado · <a href="${escapeAttr(data.url)}" target="_blank" rel="noopener" style="color:var(--rm-green-deep); text-decoration:underline;">ver post →</a>`
+    const okCount = results.filter(r => r.ok).length
+    if (okCount === results.length) {
+      status.innerHTML = `✓ Publicado en ${okCount} ${okCount === 1 ? 'canal' : 'canales'}`
       status.classList.add('success')
-      window.rmToast?.((isVideo ? 'Video publicado en ' : 'Post publicado en ') + (state.platform === 'instagram' ? 'Instagram' : 'Facebook'), 'success')
-
+      window.rmToast?.(`✓ Publicado en ${okCount} ${okCount === 1 ? 'canal' : 'canales'}`, 'success')
       state.caption = ''
       document.getElementById('qp-caption').value = ''
+      updateCaptionCounter()
       updatePreview()
-    } catch (err) {
-      status.textContent = '✗ ' + err.message
+    } else if (okCount > 0) {
+      status.innerHTML = `⚠ Publicado en ${okCount} de ${results.length}. Revisa los errores abajo.`
       status.classList.add('error')
-      window.rmToast?.('Error: ' + err.message, 'error')
-    } finally {
-      btn.disabled = false
-      btn.innerHTML = '<svg viewBox="0 0 24 24" width="11" height="11" fill="currentColor"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg> PUBLICAR AHORA'
+    } else {
+      status.textContent = '✗ Ningún post se publicó. Revisa los errores abajo.'
+      status.classList.add('error')
+    }
+
+    window.rmCamilordQuickpost?.update(getCamilordContext())
+  }
+
+  function updateProgressRow (platform, info) {
+    const row = document.querySelector(`[data-prog="${platform}"] .qp-prog-state`)
+    if (!row) return
+    if (info.state === 'ok') {
+      row.innerHTML = `<span style="color:var(--rm-green-deep); font-weight:600;">✓ Publicado</span> · <a href="${escapeAttr(info.url)}" target="_blank" rel="noopener" style="color:var(--rm-green-deep); text-decoration:underline;">ver post →</a>`
+    } else if (info.state === 'processing') {
+      row.innerHTML = `<span style="color:var(--rm-amber); font-weight:600;">⏳ Procesando</span> <span style="color:var(--rm-muted); font-size:11px;">${escapeHtml(info.message || '')}</span>`
+    } else {
+      row.innerHTML = `<span style="color:var(--rm-red); font-weight:600;">✗ Falló</span> <span style="color:var(--rm-muted); font-size:11px;">${escapeHtml(info.message || '')}</span>${info.suggestion ? `<div style="font-size:11px; color:var(--rm-ink-2); margin-top:3px;">💡 ${escapeHtml(info.suggestion)}</div>` : ''}`
     }
   }
 

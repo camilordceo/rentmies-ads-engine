@@ -1,71 +1,116 @@
 /* ─────────────────────────────────────────────────────────────
-   RENTMIES ADS ENGINE — DESIGN TOKENS (FASE 1)
-   Source of truth: .claude/skills/ads-engine-brand/SKILL.md
-   Premium Editorial B2B · Colombian high-fidelity
-   NEVER use #000 (except .ae-camilord) or #fff as page bg.
+   RENTMIES PRIME — DESIGN TOKENS
+   White canvas. Authority green for emphasis. Teal for action.
+   Editorial shadows, no visible borders.
+   Inter variable (300-900) is the only font.
    ───────────────────────────────────────────────────────────── */
 
 :root {
-  /* ── 1.1 Surfaces — warm earth palette ── */
-  --rm-bg:              #f6f3ee;   /* page canvas */
-  --rm-surface:         #ffffff;   /* cards lifted above canvas */
-  --rm-surface-2:       #faf8f4;   /* subtle surface — input bg */
-  --rm-surface-3:       #f1ede6;   /* chip backgrounds */
-  --rm-ink:             #0f1410;   /* primary text — never #000 */
-  --rm-ink-2:           #3a3f3b;   /* secondary text */
-  --rm-muted:           #7a7e79;   /* tertiary, timestamps, labels */
-  --rm-border:          #e8e3dc;   /* default border */
-  --rm-border-strong:   #d4cec3;   /* emphasized border */
+  /* ── Surfaces — WHITE is the canvas ── */
+  --rp-bg:               #ffffff;
+  --rp-surface:          #ffffff;
+  --rp-surface-raised:   #f8f8f8;
+  --rp-surface-sunken:   #f2f2f2;
+  --rp-surface-panel:    #f5f5f5;
 
-  /* ── 1.2 Brand colors ── */
-  --rm-teal:            #40d99d;   /* active states, AI presence */
-  --rm-mint:            #4fffb4;   /* hover glow on dark */
-  --rm-green:           #006c4a;   /* authority — eyebrows on white */
-  --rm-green-deep:      #004d35;   /* primary CTA bg, deep accents */
+  /* ── Text ── */
+  --rp-ink:              #1c1b1b;
+  --rp-ink-2:            #4a4a4a;
+  --rp-muted:            #888888;
 
-  /* ── 1.3 Ad Engine specific ── */
-  --ae-energy-1:        #c8e7d4;   /* energy meter — basic */
-  --ae-energy-2:        #6fbf8e;   /* optimized */
-  --ae-energy-3:        #2d9968;   /* high conversion */
-  --ae-energy-4:        #006c4a;   /* max power */
-  --ae-bolt:            #93eabf;   /* mint accent on deep green */
-  --ae-input-bg:        #faf8f4;   /* form input background */
-  --ae-card-radius:     6px;       /* all Ad Engine card corners */
+  /* ── Brand ── */
+  --rp-green:            #006c4a;
+  --rp-green-deep:       #004d35;
+  --rp-teal:             #40d99d;
+  --rp-mint:             #4fffb4;
 
-  /* ── 1.4 Semantic ── */
-  --rm-red:             #c14f3a;
-  --rm-amber:           #d29836;
-  --rm-violet:          #7c6aa8;
-  --rm-blue:            #4f7ac1;
+  /* ── Semantic ── */
+  --rp-red:              #dc3545;
+  --rp-amber:            #f5a623;
 
-  /* ── 2.1 Typography ── */
-  --rm-font:    'Inter', system-ui, -apple-system, sans-serif;
-  --rm-serif:   'Instrument Serif', Georgia, serif;
-  --rm-mono:    'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, monospace;
+  /* ── Editorial shadows only ── */
+  --rp-shadow-card:      0 1px 3px rgba(0,0,0,0.04), 0 4px 12px rgba(0,0,0,0.03);
+  --rp-shadow-hover:     0 8px 24px rgba(0,0,0,0.06);
+  --rp-shadow-float:     0 16px 48px rgba(0,0,0,0.08);
 
-  /* ── 3.2 Spacing system (8px base) ── */
-  --gutter:       24px;
-  --margin-main:  32px;
-  --stack-xs:     4px;
-  --stack-sm:     8px;
-  --stack-md:     16px;
-  --stack-lg:     24px;
-  --stack-xl:     48px;
+  /* ── Radius ── */
+  --rp-radius-card:      12px;
+  --rp-radius-btn:       8px;
+  --rp-radius-pill:      9999px;
+  --rp-radius-input:     8px;
 
-  /* ── Shadows — XS only (1px Y, 4% opacity) ── */
-  --rm-shadow-xs: 0 1px 2px rgba(15, 20, 16, 0.04);
-  --rm-shadow-sm: 0 2px 6px rgba(15, 20, 16, 0.05), 0 1px 2px rgba(15, 20, 16, 0.04);
-  --rm-shadow-md: 0 8px 24px rgba(15, 20, 16, 0.08);
+  /* ── Font ── */
+  --rp-font:             'Inter', system-ui, -apple-system, sans-serif;
+
+  /* ── Spacing system ── */
+  --rp-stack-xs:         4px;
+  --rp-stack-sm:         8px;
+  --rp-stack-md:         16px;
+  --rp-stack-lg:         24px;
+  --rp-stack-xl:         48px;
 
   /* ── Layout ── */
-  --rail-w:       64px;
-  --camilord-w:   320px;
-  --topnav-h:     56px;
+  --rp-panel-w:          340px;
+  --rp-topbar-h:         64px;
+
+  /* ─────────────────────────────────────────────────────────────
+     Legacy aliases — keep --rm-*/--ae-* mapped to new tokens so
+     inline styles in existing page modules keep rendering with
+     the new aesthetic until they're migrated to .rp-*.
+     ───────────────────────────────────────────────────────────── */
+
+  --rm-bg:               var(--rp-bg);
+  --rm-surface:          var(--rp-surface);
+  --rm-surface-2:        var(--rp-surface-raised);
+  --rm-surface-3:        var(--rp-surface-sunken);
+  --rm-ink:              var(--rp-ink);
+  --rm-ink-2:            var(--rp-ink-2);
+  --rm-muted:            var(--rp-muted);
+  --rm-border:           rgba(0,0,0,0.06);
+  --rm-border-strong:    rgba(0,0,0,0.12);
+
+  --rm-teal:             var(--rp-teal);
+  --rm-mint:             var(--rp-mint);
+  --rm-green:            var(--rp-green);
+  --rm-green-deep:       var(--rp-green-deep);
+  --rm-green-vibrant:    var(--rp-teal);
+
+  --rm-red:              var(--rp-red);
+  --rm-amber:            var(--rp-amber);
+  --rm-violet:           #7c6aa8;
+  --rm-blue:             #4f7ac1;
+
+  --rm-font:             var(--rp-font);
+  --rm-serif:            var(--rp-font);
+  --rm-mono:             var(--rp-font);
+
+  --ae-energy-1:         #c8e7d4;
+  --ae-energy-2:         #6fbf8e;
+  --ae-energy-3:         #2d9968;
+  --ae-energy-4:         var(--rp-green);
+  --ae-bolt:             var(--rp-mint);
+  --ae-input-bg:         var(--rp-surface-raised);
+  --ae-card-radius:      var(--rp-radius-card);
+
+  --gutter:              24px;
+  --margin-main:         32px;
+  --stack-xs:            4px;
+  --stack-sm:            8px;
+  --stack-md:            16px;
+  --stack-lg:            24px;
+  --stack-xl:            48px;
+
+  --rm-shadow-xs:        var(--rp-shadow-card);
+  --rm-shadow-sm:        var(--rp-shadow-card);
+  --rm-shadow-md:        var(--rp-shadow-hover);
+
+  --rail-w:              0px;
+  --camilord-w:          var(--rp-panel-w);
+  --topnav-h:            var(--rp-topbar-h);
 }
 
 /* ─────────────────────────────────────────────────────────────
-   Animation keyframes — restrained, transform/opacity only,
-   always under 500ms. Wrap usage in prefers-reduced-motion.
+   Animation keyframes
    ───────────────────────────────────────────────────────────── */
 
 @keyframes ae-pulse {
@@ -83,6 +128,11 @@
   to   { opacity: 1; transform: translateY(0); }
 }
 
+@keyframes rp-shimmer {
+  0%, 100% { opacity: 1; }
+  50%      { opacity: 0.6; }
+}
+
 @media (prefers-reduced-motion: no-preference) {
   .ae-rise        { animation: ae-rise 0.2s ease forwards; }
   .ae-rise-d-1    { animation-delay: 60ms; }
@@ -90,10 +140,14 @@
   .ae-rise-d-3    { animation-delay: 180ms; }
   .ae-rise-d-4    { animation-delay: 240ms; }
   .ae-feed-in     { animation: ae-feed-in 0.15s ease forwards; }
+  .rp-rise        { animation: ae-rise 0.25s ease forwards; }
+  .rp-rise-d-1    { animation-delay: 80ms; }
+  .rp-rise-d-2    { animation-delay: 160ms; }
+  .rp-rise-d-3    { animation-delay: 240ms; }
 }
 
 /* ─────────────────────────────────────────────────────────────
-   Resets — minimal, scoped to Ad Engine
+   Resets — minimal, scoped to Rentmies Prime
    ───────────────────────────────────────────────────────────── */
 
 *, *::before, *::after { box-sizing: border-box; }
@@ -103,10 +157,11 @@ html, body {
   padding: 0;
   width: 100%;
   height: 100%;
-  overflow: hidden;          /* shell scroll is internal — no body scroll */
-  background: var(--rm-bg);
-  color: var(--rm-ink);
-  font-family: var(--rm-font);
+  overflow: hidden;
+  background: var(--rp-bg);
+  color: var(--rp-ink);
+  font-family: var(--rp-font);
+  font-feature-settings: 'cv11', 'ss01', 'ss03';
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeLegibility;
@@ -114,11 +169,8 @@ html, body {
 
 a { color: inherit; text-decoration: none; }
 
-/* Hide scrollbar utility — keep scroll, hide chrome */
 .hide-scrollbar { scrollbar-width: none; -ms-overflow-style: none; }
 .hide-scrollbar::-webkit-scrollbar { display: none; }
-
-/* ── Accessibility utilities ── */
 
 .sr-only {
   position: absolute;
@@ -130,38 +182,41 @@ a { color: inherit; text-decoration: none; }
   border: 0;
 }
 
-.ae-skip-link {
+.ae-skip-link, .rp-skip-link {
   position: absolute;
   top: -100px;
   left: 8px;
-  background: var(--rm-green-deep);
+  background: var(--rp-ink);
   color: #fff;
   padding: 10px 16px;
-  border-radius: 4px;
+  border-radius: var(--rp-radius-btn);
   z-index: 200;
-  font-family: var(--rm-mono);
+  font-family: var(--rp-font);
   font-size: 11px;
   font-weight: 700;
   letter-spacing: 0.1em;
   text-transform: uppercase;
   text-decoration: none;
-  transition: top 0.15s ease;
+  transition: top 0.2s ease;
 }
-.ae-skip-link:focus { top: 8px; }
+.ae-skip-link:focus, .rp-skip-link:focus { top: 8px; }
 
-/* Universal focus ring — keyboard only via :focus-visible */
 *:focus { outline: none; }
 *:focus-visible {
-  outline: 2px solid var(--rm-teal);
+  outline: 2px solid var(--rp-teal);
   outline-offset: 2px;
   border-radius: 4px;
 }
 
-/* Respect user's reduced-motion preference globally */
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
   }
+}
+
+::selection {
+  background: rgba(64, 217, 157, 0.25);
+  color: var(--rp-ink);
 }

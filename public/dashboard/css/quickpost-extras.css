@@ -1,0 +1,101 @@
+/* Quick Post — multi-platform selector cards + publish progress
+   Updated to Rentmies Prime aesthetics — soft shadows, no borders. */
+
+.qp-platforms {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 12px;
+}
+
+.qp-pcard {
+  display: grid;
+  grid-template-columns: 36px 1fr auto;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 18px;
+  background: var(--rp-surface);
+  border: none;
+  border-radius: var(--rp-radius-card);
+  cursor: pointer;
+  text-align: left;
+  font-family: var(--rp-font);
+  color: var(--rp-ink);
+  box-shadow: var(--rp-shadow-card);
+  transition: box-shadow 0.2s, transform 0.15s;
+}
+.qp-pcard:hover:not([disabled]) {
+  box-shadow: var(--rp-shadow-hover);
+  transform: translateY(-1px);
+}
+.qp-pcard.on {
+  box-shadow: 0 0 0 2px var(--rp-teal), var(--rp-shadow-card);
+  background: rgba(64, 217, 157, 0.04);
+}
+.qp-pcard.unavail { opacity: 0.5; cursor: not-allowed; }
+.qp-pcard-icon { font-size: 22px; line-height: 1; text-align: center; }
+.qp-pcard-text { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.qp-pcard-label {
+  font-family: var(--rp-font);
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--rp-ink);
+}
+.qp-pcard-sub {
+  font-family: var(--rp-font);
+  font-size: 11px;
+  color: var(--rp-muted);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.qp-pcard-check {
+  width: 24px; height: 24px; border-radius: 50%;
+  background: var(--rp-teal); color: white;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 13px; font-weight: 700;
+  opacity: 0; transition: opacity 0.15s, transform 0.2s;
+  transform: scale(0.7);
+}
+.qp-pcard.on .qp-pcard-check { opacity: 1; transform: scale(1); }
+.qp-pcard-cta {
+  font-family: var(--rp-font);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--rp-green);
+  text-decoration: none;
+}
+.qp-pcard-cta:hover { color: var(--rp-teal); }
+
+/* Per-platform publish progress */
+.qp-prog-row {
+  display: grid;
+  grid-template-columns: 28px 130px 1fr;
+  align-items: start;
+  gap: 14px;
+  padding: 12px 16px;
+  background: var(--rp-surface-raised);
+  border: none;
+  border-radius: var(--rp-radius-card);
+  margin-bottom: 8px;
+  font-family: var(--rp-font);
+  font-size: 13px;
+}
+.qp-prog-icon { font-size: 16px; line-height: 1.4; }
+.qp-prog-label { font-weight: 700; color: var(--rp-ink); }
+.qp-prog-state { color: var(--rp-ink-2); line-height: 1.45; }
+
+/* Spinner */
+.qp-spinner {
+  display: inline-block;
+  width: 11px; height: 11px;
+  border: 1.5px solid currentColor;
+  border-top-color: transparent;
+  border-radius: 50%;
+  animation: qp-spin 0.8s linear infinite;
+  vertical-align: -2px;
+  margin-right: 6px;
+  opacity: 0.8;
+}
+@keyframes qp-spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .qp-spinner { animation: none; } }

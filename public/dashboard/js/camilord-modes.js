@@ -1,145 +1,186 @@
 /* ─────────────────────────────────────────────────────────────
-   Camilord modes — swaps the panel's content based on which page
-   the user is on. Studio mode lives in camilord-brain.js. Dashboard,
-   History, and Analytics modes live here.
+   Rentmies Prime — Camilo AI panel
+   Single light-bg template adapts content via mode (intro + feed
+   + tabs). Each page passes lead-feed copy customized to the page.
    ───────────────────────────────────────────────────────────── */
 
 (function () {
   'use strict'
 
-  function panelEl() { return document.querySelector('.ae-camilord') }
+  function panelEl() { return document.querySelector('.ae-camilord, .rp-panel') }
 
-  // ── Templates ──────────────────────────────────────────────
+  const SPARKLE_SVG = `
+    <svg viewBox="0 0 24 24"><path d="M12 2 L13.8 8.2 L20 10 L13.8 11.8 L12 18 L10.2 11.8 L4 10 L10.2 8.2 Z" fill="currentColor"/></svg>
+  `
 
-  const STUDIO_TEMPLATE = `
-    <div class="ae-cam-header">
-      <div>
-        <div class="ae-cam-title">
-          <span class="ae-live-dot"></span>
-          Camilord AI
+  function header(eyebrow, intro) {
+    return `
+      <div class="rp-cam-header">
+        <div class="rp-cam-header-icon">${SPARKLE_SVG}</div>
+        <div class="rp-cam-header-text">
+          <div class="rp-cam-title">Camilo AI</div>
+          <div class="rp-cam-eyebrow">${escapeHtml(eyebrow || 'Intelligent Insights')}</div>
         </div>
-        <div class="ae-cam-status">Listo para asistir</div>
       </div>
-      <button class="ae-cam-close" aria-label="Cerrar copiloto">
-        <svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-      </button>
-    </div>
-    <div class="ae-cam-quote"><p data-current="">Estoy listo. Dame un inmueble y armo la campaña completa.</p></div>
-    <div class="ae-cam-section">Sugerencias de hoy</div>
-    <div class="ae-cam-suggestions"></div>
-    <div class="ae-cam-spacer"></div>
-    <div class="ae-cam-chat">
-      <div class="ae-cam-chat-row">
-        <input type="text" placeholder="Pregunta a Camilord...">
-        <button class="ae-cam-chat-send" aria-label="Enviar">
-          <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+      <div class="rp-cam-intro"><p>${intro}</p></div>
+    `
+  }
+
+  function leadFeed(title, items) {
+    return `
+      <div class="rp-cam-section">${escapeHtml(title)}</div>
+      <div class="rp-feed">
+        ${items.map(it => `
+          <div class="rp-feed-item">
+            <div class="rp-feed-title">${escapeHtml(it.title)}</div>
+            <div class="rp-feed-body">${escapeHtml(it.body)}</div>
+            <div class="rp-feed-time">${escapeHtml(it.time)}</div>
+          </div>
+        `).join('')}
+      </div>
+    `
+  }
+
+  function askCamilo() {
+    return `
+      <div class="ae-cam-spacer"></div>
+      <div class="rp-ask-camilo">
+        <button class="rp-ask-camilo-btn" type="button">
+          <svg viewBox="0 0 24 24" width="14" height="14" stroke-linecap="round" stroke-linejoin="round" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+          Ask Camilo
         </button>
       </div>
-    </div>
-  `
-
-  const DASHBOARD_TEMPLATE = `
-    <div class="ae-cam-hero">
-      <svg viewBox="0 0 24 24"><polygon points="12 2 15 9 22 10 17 15 18 22 12 19 6 22 7 15 2 10 9 9 12 2"/></svg>
-    </div>
-    <h2 class="ae-cam-bigtitle">Camilord AI Insights</h2>
-    <div class="ae-cam-bigsub">Contextual Optimization</div>
-
-    <div class="ae-cam-insight">
-      💡 Tu post de TikTok tiene un <strong>15% más</strong> de probabilidad de éxito a las <em>7 PM</em>. Mover la programación de las 19:00 → 19:00 hora pico local.
-      <br>
-      <button class="ae-cam-cta" data-action="apply-time">APLICAR CAMBIO →</button>
-    </div>
-
-    <div class="ae-cam-section">Feedback en vivo</div>
-    <div class="ae-cam-feedback">
-      <div class="ae-cam-feedback-item done">
-        <div class="ae-cam-feedback-title">✓ Instagram optimizado</div>
-        <div class="ae-cam-feedback-sub">Copy actualizado con keywords de alta conversión para zona Norte.</div>
+      <div class="rp-cam-tabs">
+        <button class="rp-cam-tab active" data-cam-tab="insights"><span class="rp-cam-tab-dot"></span>Insights</button>
+        <button class="rp-cam-tab" data-cam-tab="audience"><span class="rp-cam-tab-dot"></span>Audience</button>
+        <button class="rp-cam-tab" data-cam-tab="creative"><span class="rp-cam-tab-dot"></span>Creative</button>
+        <button class="rp-cam-tab" data-cam-tab="market"><span class="rp-cam-tab-dot"></span>Market</button>
       </div>
-      <div class="ae-cam-feedback-item pending">
-        <div class="ae-cam-feedback-title">🕐 Revisión pendiente: TikTok</div>
-        <div class="ae-cam-feedback-sub">Faltan tags de ubicación para mejorar alcance orgánico.</div>
-      </div>
-      <div class="ae-cam-feedback-item done">
-        <div class="ae-cam-feedback-title">✓ Bid auto-ajustado</div>
-        <div class="ae-cam-feedback-sub">Subí el CPC max +12% en horario estelar para los 3 ads top.</div>
-      </div>
-    </div>
+    `
+  }
 
-    <div class="ae-cam-spacer"></div>
+  function escapeHtml(s) {
+    return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c])
+  }
 
-    <div class="ae-cam-chat">
-      <div class="ae-cam-chat-row">
-        <input type="text" placeholder="Pregunta a Camilord...">
-        <button class="ae-cam-chat-send" aria-label="Enviar">
-          <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
-        </button>
-      </div>
-    </div>
-  `
+  // ─────────────────────────────────────────────────────────────
+  // Templates by page
+  // ─────────────────────────────────────────────────────────────
 
-  const HISTORY_TEMPLATE = `
-    <div class="ae-cam-hero">
-      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-    </div>
-    <h2 class="ae-cam-bigtitle">Decision Log</h2>
-    <div class="ae-cam-bigsub">Auditable · Reversible</div>
+  function tplDashboard() {
+    return header('Intelligent Insights', `
+      Tu performance está <strong>14% por encima</strong> de la proyección. He optimizado <em>3 campañas</em> en las últimas 24h.
+    `) + leadFeed('Lead Generation Feed', [
+      { title: 'New High-Value Lead',     body: 'Comprador calificado interesado en El Poblado · presupuesto $850M.', time: 'Just now' },
+      { title: 'CPL bajó -18%',           body: 'Penthouse Calle 93: el ángulo "estatus" supera al de "ubicación" 2.4×.', time: '2 min ago' },
+      { title: 'Tour agendado',           body: 'WhatsApp programó visita para el sábado 10am · Rosales 2BR.',         time: '12 min ago' },
+      { title: 'Video viral en Reels',    body: '4.2k views en 2 horas · Santa Bárbara penthouse.',                     time: '1 hr ago' }
+    ]) + askCamilo()
+  }
 
-    <div class="ae-cam-insight">
-      Cada acción que tomo queda registrada con su métrica gatillo. Puedes revertir cualquier decisión desde el detalle de la fila.
-    </div>
+  function tplCampaigns() {
+    return header('Campaign Intelligence', `
+      Detecté <em>3 oportunidades</em> de escalamiento esta semana. Las propiedades de Bogotá Norte tienen <strong>+34% engagement</strong>.
+    `) + leadFeed('Optimization Feed', [
+      { title: 'Auto-bid ajustado',       body: 'CPC max +12% en horario estelar para los 3 ads top.',                  time: 'Just now' },
+      { title: 'Carrusel multi-foto',     body: 'Castelo Medellín: 8 fotos detectadas, generando carrusel.',            time: '5 min ago' },
+      { title: 'Pause sugerido',          body: 'TikTok Marbella · CTR 0.4% últimos 3 días. Reasignar a Meta Feed.',    time: '18 min ago' }
+    ]) + askCamilo()
+  }
 
-    <div class="ae-cam-section">Decisiones de hoy</div>
-    <div class="ae-cam-feedback">
-      <div class="ae-cam-feedback-item done">
-        <div class="ae-cam-feedback-title">12 generaciones</div>
-        <div class="ae-cam-feedback-sub">Headlines, copy variations y carruseles para 3 propiedades activas.</div>
-      </div>
-      <div class="ae-cam-feedback-item done">
-        <div class="ae-cam-feedback-title">4 publicaciones</div>
-        <div class="ae-cam-feedback-sub">Meta Feed e Instagram Stories. CTR promedio inicial 3.2%.</div>
-      </div>
-      <div class="ae-cam-feedback-item pending">
-        <div class="ae-cam-feedback-title">1 pausa</div>
-        <div class="ae-cam-feedback-sub">'Pain Point' en Marbella, CTR bajo 0.4%. Te recomiendo testear 'Estatus' en su lugar.</div>
-      </div>
-    </div>
+  function tplContent() {
+    return header('Content Intelligence', `
+      Tus fotos con <em>luz natural</em> reciben <strong>+40% engagement</strong>. Mejor horario en Colombia: <em>6-8pm</em>.
+    `) + leadFeed('Creative Feed', [
+      { title: 'Caption listo',           body: 'Generé copy con ángulo "estilo de vida" para Strada Bogotá.',          time: 'Just now' },
+      { title: 'Imagen IA generada',      body: 'Rosales penthouse · banda inferior con precio en verde Rentmies.',     time: '3 min ago' },
+      { title: 'Video editado',           body: 'Drone fly-through Calle 93 · 12s · listo para Reels.',                  time: '15 min ago' }
+    ]) + askCamilo()
+  }
 
-    <div class="ae-cam-spacer"></div>
-  `
+  function tplAnalytics() {
+    return header('Performance Insights', `
+      CTR subió <strong>+0.6 pts</strong> esta semana. El driver principal: el ángulo <em>estatus</em> en El Poblado pasó de 1.8% → 4.4%.
+    `) + leadFeed('Learnings This Week', [
+      { title: 'Hora pico: 6-8pm',        body: '+34% engagement en este window. Programando ahí por defecto.',          time: 'Today' },
+      { title: 'Meta > TikTok',           body: 'CPL en Meta Feed $18 vs. TikTok $31. Reasignando budget.',              time: 'Yesterday' },
+      { title: 'Carrusel > foto única',   body: '+1.4 pts CTR cuando el inmueble tiene 4+ fotos.',                       time: '2 days ago' }
+    ]) + askCamilo()
+  }
 
-  const ANALYTICS_TEMPLATE = `
-    <div class="ae-cam-hero">
-      <svg viewBox="0 0 24 24"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
-    </div>
-    <h2 class="ae-cam-bigtitle">Performance Insights</h2>
-    <div class="ae-cam-bigsub">7 días</div>
+  function tplQuickPost() {
+    return header('Quick Post Assistant', `
+      Sube una foto de tu mejor inmueble. Yo me encargo del <em>caption</em>, el ángulo psicológico y los hashtags.
+    `) + leadFeed('Suggestions', [
+      { title: 'Luz natural = +40%',      body: 'Las fotos al amanecer o atardecer reciben más engagement.',             time: 'Tip' },
+      { title: 'Mejor horario',           body: 'Publica entre 6pm y 8pm hora Colombia para máximo alcance.',            time: 'Tip' },
+      { title: 'Hashtags geo',            body: 'Añade #ChapineroBogota o #PobladoMedellin para alcance local.',         time: 'Tip' }
+    ]) + askCamilo()
+  }
 
-    <div class="ae-cam-insight">
-      📈 Tu CTR subió <strong>+0.6 pts</strong> esta semana. El driver principal: el ángulo <em>Estatus</em> en Marbella, que pasó de 1.8% → 4.4%.
-      <br>
-      <button class="ae-cam-cta" data-action="duplicate-winner">DUPLICAR LO QUE FUNCIONA →</button>
-    </div>
+  function tplSchedule() {
+    return header('Campaign Builder', `
+      Diseña tu pauta multi-día. Te recomendaré los <strong>mejores horarios</strong> y la <em>distribución óptima</em> entre Meta e IG.
+    `) + leadFeed('Recommendations', [
+      { title: 'Pico de Bogotá',          body: 'Lunes y miércoles 7pm tienen +28% reach en zona Norte.',               time: 'Tip' },
+      { title: 'Reels > Feed',            body: 'En propiedades premium, Reels convierten 2.1× mejor que Feed.',         time: 'Tip' }
+    ]) + askCamilo()
+  }
 
-    <div class="ae-cam-section">Aprendizajes</div>
-    <div class="ae-cam-feedback">
-      <div class="ae-cam-feedback-item done">
-        <div class="ae-cam-feedback-title">Hora pico: 6-8pm</div>
-        <div class="ae-cam-feedback-sub">+34% engagement en este window. Programando ahí por defecto.</div>
-      </div>
-      <div class="ae-cam-feedback-item done">
-        <div class="ae-cam-feedback-title">Meta &gt; TikTok esta semana</div>
-        <div class="ae-cam-feedback-sub">CPL en Meta Feed €18 vs. TikTok €31. Reasignando budget.</div>
-      </div>
-    </div>
+  function tplInmuebles() {
+    return header('Inventory Intelligence', `
+      Click en cualquier inmueble para publicarlo. Si no has importado tu catálogo, te muestro <em>5 propiedades</em> de muestra.
+    `) + leadFeed('Top Performers', [
+      { title: 'El Poblado penthouse',    body: '847 vistas · 12 leads esta semana · CPL $14.',                          time: '7d' },
+      { title: 'Rosales 2BR',             body: '623 vistas · 8 leads · video de drone con +60% retention.',             time: '7d' }
+    ]) + askCamilo()
+  }
 
-    <div class="ae-cam-spacer"></div>
-  `
+  function tplWhatsApp() {
+    return header('WhatsApp Templates', `
+      Trae tus templates desde Meta Graph en vivo. Necesitas <strong>WABA ID</strong> en Settings.
+    `) + leadFeed('Recent Activity', [
+      { title: 'Template aprobada',       body: 'lead_followup_v2 · pasó revisión Meta en 2 horas.',                    time: 'Today' },
+      { title: '12 mensajes enviados',    body: 'Follow-up automático a leads sin respuesta en 48h.',                   time: 'Today' }
+    ]) + askCamilo()
+  }
 
-  // ── Mode swap ──────────────────────────────────────────────
+  function tplSettings() {
+    return header('Connection Settings', `
+      Las credenciales se guardan en este navegador. Para sincronizar entre dispositivos, configura <em>Supabase</em> en Vercel.
+    `) + leadFeed('Status', [
+      { title: 'Meta Business',           body: 'Page + Instagram + WhatsApp Business conectados.',                      time: 'Now' },
+      { title: 'OpenAI',                  body: 'Caption + image generation activa.',                                    time: 'Now' }
+    ]) + askCamilo()
+  }
+
+  function tplStudio() {
+    return header('Creative Studio', `
+      Estoy listo. Dame un inmueble y armo la <em>campaña completa</em> — copy, imagen, ángulos psicológicos, plataformas. Solo aprueba.
+    `) + leadFeed('Today\'s Suggestions', [
+      { title: 'Optimizar para Stories',  body: 'Vertical 9:16 · 3 propiedades listas para Stories esta tarde.',         time: 'Just now' },
+      { title: 'Keywords competencia',    body: 'Detecté 8 keywords nuevas que tu competencia usa esta semana.',         time: '15 min ago' }
+    ]) + askCamilo()
+  }
+
+  // ─────────────────────────────────────────────────────────────
+  // Mode swap
+  // ─────────────────────────────────────────────────────────────
 
   let currentMode = null
+
+  const TEMPLATES = {
+    studio:    tplStudio,
+    dashboard: tplDashboard,
+    history:   tplCampaigns,
+    analytics: tplAnalytics,
+    quickpost: tplQuickPost,
+    schedule:  tplSchedule,
+    inmuebles: tplInmuebles,
+    whatsapp:  tplWhatsApp,
+    settings:  tplSettings,
+    posts:     tplContent
+  }
 
   function setMode(page) {
     const panel = panelEl()
@@ -147,69 +188,20 @@
     if (page === currentMode) return
     currentMode = page
 
-    // Studio mode lets camilord-brain.js do its dynamic thing
-    if (page === 'studio') {
-      panel.innerHTML = STUDIO_TEMPLATE
-      // Trigger a store-emission so camilord-brain re-applies its quote/suggestions
-      window.rmStore?.set({})
-      return
-    }
+    const tpl = TEMPLATES[page] || tplDashboard
+    panel.innerHTML = tpl()
 
-    if (page === 'dashboard') panel.innerHTML = DASHBOARD_TEMPLATE
-    else if (page === 'history')   panel.innerHTML = HISTORY_TEMPLATE
-    else if (page === 'analytics') panel.innerHTML = ANALYTICS_TEMPLATE
-    else if (page === 'quickpost') panel.innerHTML = QUICKPOST_TEMPLATE
-    else if (page === 'schedule')  panel.innerHTML = SCHEDULE_TEMPLATE
-    else if (page === 'inmuebles') panel.innerHTML = INMUEBLES_TEMPLATE
-    else if (page === 'whatsapp')  panel.innerHTML = WHATSAPP_TEMPLATE
-    else if (page === 'settings')  panel.innerHTML = SETTINGS_TEMPLATE
+    // Wire vertical tabs (no-op behavior, just visual selection)
+    panel.querySelectorAll('[data-cam-tab]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        panel.querySelectorAll('[data-cam-tab]').forEach(b => b.classList.toggle('active', b === btn))
+      })
+    })
+
+    // Re-fire store update if Studio (lets camilord-brain reactivity work if loaded)
+    if (page === 'studio') window.rmStore?.set({})
   }
 
-  const QUICKPOST_TEMPLATE = `
-    <div class="ae-cam-hero"><svg viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg></div>
-    <h2 class="ae-cam-bigtitle">Quick Post</h2>
-    <div class="ae-cam-bigsub">Publicar orgánico</div>
-    <div class="ae-cam-quote"><p><em>Toma una foto cualquiera, dame un caption, y publico.</em> Sin pauta requerida — la pauta paga llega cuando estés listo.</p></div>
-    <div class="ae-cam-section">Tips</div>
-    <div class="ae-cam-suggestions">
-      <div class="ae-cam-suggestion"><span>IG necesita imagen 1:1 ó 4:5</span></div>
-      <div class="ae-cam-suggestion action"><span>Configura tus credenciales primero</span></div>
-    </div>
-    <div class="ae-cam-spacer"></div>
-  `
-
-  const SCHEDULE_TEMPLATE = `
-    <div class="ae-cam-hero"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/></svg></div>
-    <h2 class="ae-cam-bigtitle">Programador</h2>
-    <div class="ae-cam-bigsub">Cliente-side · setTimeout</div>
-    <div class="ae-cam-quote"><p>Mantén la pestaña abierta. Cuando llegue la hora, disparo el POST a Graph automáticamente. Para programación robusta a largo plazo, viene el cron server-side.</p></div>
-    <div class="ae-cam-spacer"></div>
-  `
-
-  const INMUEBLES_TEMPLATE = `
-    <div class="ae-cam-hero"><svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></div>
-    <h2 class="ae-cam-bigtitle">Tu Inventario</h2>
-    <div class="ae-cam-bigsub">Catálogo activo</div>
-    <div class="ae-cam-quote"><p>Click en cualquier inmueble para publicarlo. Si todavía no has importado tu catálogo, te muestro 5 propiedades de muestra para que pruebes el flow.</p></div>
-    <div class="ae-cam-spacer"></div>
-  `
-
-  const WHATSAPP_TEMPLATE = `
-    <div class="ae-cam-hero"><svg viewBox="0 0 24 24"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg></div>
-    <h2 class="ae-cam-bigtitle">WhatsApp Business</h2>
-    <div class="ae-cam-bigsub">Templates aprobados</div>
-    <div class="ae-cam-quote"><p>Trae tus templates desde Meta Graph en vivo. Necesitas WABA ID en Settings.</p></div>
-    <div class="ae-cam-spacer"></div>
-  `
-
-  const SETTINGS_TEMPLATE = `
-    <div class="ae-cam-hero"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06"/></svg></div>
-    <h2 class="ae-cam-bigtitle">Credenciales</h2>
-    <div class="ae-cam-bigsub">Tus llaves, tu control</div>
-    <div class="ae-cam-quote"><p>Las credenciales se guardan en este navegador (localStorage). Si las quieres en servidor, configura SUPABASE_URL + SERVICE_KEY en Vercel.</p></div>
-    <div class="ae-cam-spacer"></div>
-  `
-
   document.addEventListener('rm-page-change', e => setMode(e.detail.page))
-  document.addEventListener('DOMContentLoaded', () => setMode(window.rmRouter?.currentPage() || 'studio'))
+  document.addEventListener('DOMContentLoaded', () => setMode(window.rmRouter?.currentPage() || 'dashboard'))
 })()

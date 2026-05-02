@@ -1,93 +1,87 @@
 /* ─────────────────────────────────────────────────────────────
-   Responsive — mobile pass at <768px.
-   - 3-column shell collapses to single column
-   - Camilord hides; floating action button (FAB) opens it as full-
-     screen overlay
-   - Topnav nav links collapse into a hamburger; logo + launch stay
-   - Photo grid: 4 cols → 3 cols → 2 cols
-   - All form 2-col grids → 1 col (already handled in cards-forms)
+   RENTMIES PRIME — Responsive
+   - 1024px and below: panel hides, FAB appears
+   - 768px and below: topbar nav scrolls horizontally, KPIs go 2-up
+   - 540px and below: launch button collapses to icon
    ───────────────────────────────────────────────────────────── */
 
-/* ── Hamburger button (in topnav) ── */
-
-.ae-topnav-burger {
-  display: none;   /* desktop default off */
-  background: transparent;
-  border: 1px solid var(--rm-border);
-  border-radius: 4px;
-  padding: 6px 8px;
-  cursor: pointer;
-  align-items: center;
-  justify-content: center;
+@media (max-width: 1024px) {
+  .rp-panel, .ae-camilord {
+    display: none;
+  }
+  .rp-panel.rp-panel-open, .ae-camilord.rp-panel-open {
+    display: flex !important;
+    flex-direction: column;
+    position: fixed;
+    inset: 0;
+    z-index: 90;
+    width: 100%;
+    max-width: 100%;
+    background: var(--rp-surface-panel);
+  }
 }
-.ae-topnav-burger svg { width: 18px; height: 14px; stroke: var(--rm-ink); stroke-width: 2; fill: none; }
-
-/* FAB removed — was rendering as an orphan giant circle when CSS broke.
-   Camilord is reachable via ⌘/ shortcut + the close button on the panel. */
-
-/* ── Mobile breakpoint ── */
 
 @media (max-width: 768px) {
-  /* Shell collapses to rail + (topbar / main). Camilord hidden, no FAB. */
   .ae-app {
-    grid-template-columns: var(--rail-w) minmax(0, 1fr) !important;
+    grid-template-columns: minmax(0, 1fr) !important;
     grid-template-areas:
-      "rail topbar"
-      "rail main" !important;
-  }
-  .ae-camilord {
-    display: none !important;
+      "topbar"
+      "main" !important;
   }
 
-  /* Topnav: hide nav links, expose hamburger. Logo + launch keep */
-  .ae-topnav { gap: 12px; padding: 0 14px; }
-  .ae-topnav-nav { display: none; }
-  .ae-topnav-burger { display: inline-flex; }
-  .ae-search { display: none; }
-  .ae-launch-btn { padding: 8px 12px; font-size: 10px; }
+  .rp-topbar, .ae-topnav { gap: 16px; padding: 0 18px; }
+  .rp-topbar-nav, .ae-topnav-nav {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    flex: 1;
+    min-width: 0;
+  }
+  .rp-topbar-nav::-webkit-scrollbar,
+  .ae-topnav-nav::-webkit-scrollbar { display: none; }
+  .rp-topbar-link, .ae-topnav-link { padding: 0 12px; font-size: 13px; flex-shrink: 0; }
+
+  .ae-launch-btn {
+    padding: 8px 12px;
+    font-size: 11px;
+  }
   .ae-launch-btn span { display: none; }
-  .ae-launch-btn::after { content: 'LANZAR'; font-family: var(--rm-mono); font-weight: 700; letter-spacing: 0.1em; font-size: 10px; }
+  .ae-launch-btn::after {
+    content: 'Publicar';
+    font-family: var(--rp-font);
+    font-weight: 700;
+    font-size: 12px;
+  }
 
-  /* When hamburger expanded, render the nav as a dropdown */
-  .ae-topnav-nav.open {
-    display: flex;
-    position: absolute;
-    top: var(--topnav-h);
-    left: 0;
-    right: 0;
-    background: var(--rm-surface);
-    border-bottom: 1px solid var(--rm-border);
-    flex-direction: column;
-    align-items: stretch;
-    height: auto;
-    padding: 8px 0;
-    z-index: 50;
-    box-shadow: var(--rm-shadow-md);
-  }
-  .ae-topnav-nav.open .ae-topnav-link {
-    height: auto;
-    padding: 12px 18px;
-    border-bottom: none;
-    justify-content: flex-start;
-  }
-  .ae-topnav-nav.open .ae-topnav-link.active {
-    border-left: 3px solid var(--rm-green-deep);
-    background: var(--rm-surface-2);
-  }
+  .rp-stats { grid-template-columns: repeat(2, 1fr); }
+  .rp-display { font-size: 32px; }
+  .rp-display.hero { font-size: 32px; }
+  .rp-page { padding: 24px 16px 60px; }
+
+  .rp-icon-btn { width: 36px; height: 36px; }
+  .rp-icon-btn svg { width: 16px; height: 16px; }
 }
 
 @media (max-width: 540px) {
-  .ae-topnav-logo { display: none; }
+  .rp-topbar-brand, .ae-topnav-logo {
+    font-size: 14px;
+  }
   .ae-launch-btn::after { content: '⚡'; font-size: 14px; }
   .ae-launch-btn { padding: 8px 10px; }
   .ae-launch-btn svg { display: none; }
+
+  .rp-topbar-right .rp-icon-btn:first-child { display: none; }
 }
 
-/* ── Touch target safety ── */
+/* Touch target safety */
 @media (max-width: 768px) {
-  button, a, .ae-rail-link, .ae-cam-suggestion, .ae-postcard-add { min-height: 44px; }
-  .ae-filter-pill { min-height: 32px; padding: 8px 12px; }
+  button, a, .rp-feed-item, .rp-cam-tab, .rp-chip {
+    min-height: 40px;
+  }
+  .rp-filter-pill, .rp-view-tab {
+    min-height: 36px;
+  }
 }
 
-/* ── Studio mobile: phone preview drops below forms (already handled
-      via .ae-studio-row breakpoint at 960px in studio.css) ── */
+/* Hide hamburger menu (legacy) */
+.ae-topnav-burger { display: none !important; }

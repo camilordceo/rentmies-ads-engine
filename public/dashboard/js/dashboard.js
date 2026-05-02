@@ -1,197 +1,142 @@
 /* ─────────────────────────────────────────────────────────────
-   Parrilla de Contenidos — scheduled posts grid.
-   Reads from rmStore.campaignDrafts (populated by persist.js) +
-   any future server response. Falls back to a curated mock set
-   so the page is never empty during demo.
+   Dashboard — Command Center (Rentmies Prime)
+   Hero: editorial title + subhead with bold delta
+   KPIs: 4-card row with one highlight (teal) variant
+   Recommendations: 2-column property image + editorial text
    ───────────────────────────────────────────────────────────── */
 
 (function () {
   'use strict'
 
-  const MOCK_POSTS = [
+  const KPIS = [
+    { label: 'TOTAL SPEND',      value: '$42,850.00', delta: '+8.2% vs Last Month',  up: true },
+    { label: 'ACTIVE LEADS',     value: '218',        delta: '+24% this week',       up: true },
+    { label: 'CONVERSION RATE',  value: '4.4%',       delta: '+0.6 pts vs last',     up: true },
+    { label: 'AI PREDICTED CPL', value: '$18',        delta: '-$3 vs benchmark',     up: true, highlight: true }
+  ]
+
+  const RECOS = [
     {
-      channel: 'instagram', icon: '📷', label: 'Instagram Feed',
-      time: 'Hoy, 18:30 PM', status: 'scheduled',
-      property: 'Residencial Los Olivos', tone: 'warm',
-      optimization: 'Ajustó la puja para horario estelar y optimizó el copy para generar urgencia en leads jóvenes profesionales.'
+      img: 'https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?w=600&h=800&fit=crop',
+      eyebrow: 'CAMPAIGN OPTIMIZATION',
+      title: 'Scale Penthouse Calle 93 to Stories',
+      text: 'CTR de 4.8% en Feed sugiere demanda alta. Mover el 30% del budget a Instagram Stories puede multiplicar el alcance entre compradores premium 24-45.',
+      cta: 'Apply Recommendation',
+      action: 'apply-stories'
     },
     {
-      channel: 'tiktok', icon: '🎵', label: 'TikTok Creative',
-      time: 'Mañana, 19:00 PM', status: 'pending',
-      property: 'Villa Victoria Luxury', tone: 'rose',
-      optimization: 'Detectó que videos verticales con primer plano de fachada rinden +28% en Marbella. Ajusté el corte del video.'
+      img: 'https://images.unsplash.com/photo-1564013799919-ab600027ffc6?w=600&h=800&fit=crop',
+      eyebrow: 'CREATIVE INSIGHT',
+      title: 'Castelo Medellín · ángulo "estatus" gana',
+      text: 'En las últimas 72h, el ángulo psicológico "estatus" superó a "ubicación" 2.4×. Camilo sugiere generar 3 variantes adicionales con esa narrativa.',
+      cta: 'Generate Variants',
+      action: 'generate-variants'
     },
     {
-      channel: 'facebook_page', icon: '📘', label: 'Facebook Marketplace',
-      time: 'Hoy, 20:00 PM', status: 'live',
-      property: 'Apartamento Primavera', tone: 'leaf',
-      optimization: 'Activé bid automático para CPL bajo. Los primeros 3 leads ya entraron por WhatsApp.'
+      img: 'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=600&h=800&fit=crop',
+      eyebrow: 'BUDGET REALLOCATION',
+      title: 'Reasignar de TikTok → Meta Feed',
+      text: 'CPL en TikTok subió a $31 vs. $18 en Meta. Reasignar $1,200/semana mejora la eficiencia de la pauta sin reducir el alcance total proyectado.',
+      cta: 'Reassign Budget',
+      action: 'reassign'
     },
     {
-      channel: 'whatsapp', icon: '💬', label: 'WhatsApp Status',
-      time: 'Hoy, 16:00 PM', status: 'scheduled',
-      property: 'Castelo Medellín', tone: 'sand',
-      optimization: 'Generé caption corto para Status (24h). Recomiendo combinarlo con Instagram Stories para reforzar.'
+      img: 'https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=600&h=800&fit=crop',
+      eyebrow: 'CONTENT TIMING',
+      title: 'Hora pico: 6-8pm para Bogotá Norte',
+      text: 'Tus posts entre 6pm y 8pm reciben +34% engagement en Bogotá Norte. Programando ahí por defecto las próximas 7 publicaciones de Rosales y Calle 93.',
+      cta: 'Auto-Schedule',
+      action: 'auto-schedule'
     }
   ]
 
-  async function getCampaigns() {
-    // Try server first via data-bridge
-    if (window.rmData) {
-      try {
-        const { campaigns } = await window.rmData.listCampaigns()
-        if (campaigns && campaigns.length) return mapCampaigns(campaigns)
-      } catch (_) {}
-    }
-    return MOCK_POSTS
-  }
-
-  function mapCampaigns(list) {
-    return list.slice(0, 8).map((c, i) => {
-        const channel = (c.platforms && c.platforms[0]) || 'instagram'
-        const channelMeta = CHANNEL_META[channel] || CHANNEL_META.instagram
-        const scheduledLabel = c.schedule?.when === 'now' ? 'Inmediato' :
-                                c.schedule?.when === 'tomorrow' ? 'Mañana 9am' :
-                                (c.schedule?.custom_date ? new Date(c.schedule.custom_date).toLocaleString('es-CO', { dateStyle:'short', timeStyle:'short' }) : 'Programado')
-        return {
-          channel,
-          icon: channelMeta.icon,
-          label: channelMeta.label,
-          time: scheduledLabel,
-          status: c.status === 'draft' ? 'pending' : (c.status || 'scheduled'),
-          property: c.name || c.prompt_config?.location || 'Inmueble sin nombre',
-          tone: TONES[i % TONES.length],
-          optimization: optimizationCopy(c)
-        }
-    })
-  }
-
-  const CHANNEL_META = {
-    instagram:         { icon: '📷', label: 'Instagram Feed' },
-    instagram_stories: { icon: '📱', label: 'Instagram Stories' },
-    tiktok:            { icon: '🎵', label: 'TikTok Creative' },
-    facebook_page:     { icon: '📘', label: 'Facebook Marketplace' },
-    whatsapp:          { icon: '💬', label: 'WhatsApp Status' }
-  }
-  const TONES = ['warm', 'rose', 'leaf', 'sand', 'ocean', 'dark']
-
-  function optimizationCopy(c) {
-    const angles = Object.entries(c.prompt_config?.angles || {}).filter(([_, v]) => v).map(([k]) => k)
-    const photoCount = c.prompt_config?.photo_count || 0
-    if (angles.length >= 3) return `Activos ${angles.length} ángulos psicológicos. Camilord va a A/B testear ${angles.slice(0,2).join(' vs. ')} en las primeras 24h.`
-    if (photoCount >= 4) return `${photoCount} fotos detectadas — generaré carrusel multi-foto para multiplicar impresiones.`
-    return 'Estoy generando los creativos. Te aviso cuando estén listos para revisar.'
-  }
-
-  function html(state) {
-    const campaigns = state.campaigns
-    const kpi = computeKpi(campaigns)
+  function html() {
     return `
-      <div class="ae-parrilla ae-rise">
-        <div class="ae-breadcrumb">
-          DASHBOARD <span class="sep">/</span> <span class="current">SCHEDULED POSTS</span>
+      <div class="rp-page rp-rise">
+        <div class="rp-page-header">
+          <span class="rp-eyebrow">REAL ESTATE MARKETING CLOUD</span>
+          <h1 class="rp-display">Command Center</h1>
+          <p class="rp-subhead">Your current performance is <strong>14% above projection</strong>. Camilo está optimizando 3 campañas activas en este momento.</p>
         </div>
 
-        <header>
-          <span class="ae-eyebrow" style="margin-bottom:12px;">CALENDARIO DE PUBLICACIÓN</span>
-          <h1 class="ae-display">Parrilla de <em>Contenidos</em></h1>
-          <p class="ae-subhead">Camilord programa, optimiza y publica en automático. Tú revisas y apruebas.</p>
-        </header>
+        <!-- KPI cards -->
+        <div class="rp-stats">
+          ${KPIS.map(k => `
+            <div class="rp-stat ${k.highlight ? 'highlight' : ''}">
+              <div class="rp-stat-label">${k.label}</div>
+              <div class="rp-stat-value">${k.value}</div>
+              <div class="rp-stat-delta ${k.up ? 'up' : 'down'}">${k.up ? '↗' : '↘'} ${k.delta}</div>
+            </div>
+          `).join('')}
+        </div>
 
-        <section class="ae-kpi-row ae-rise ae-rise-d-1">
-          <div class="ae-kpi featured">
-            <span class="ae-kpi-label">Posts Listos</span>
-            <span class="ae-kpi-value">${kpi.ready}</span>
-          </div>
-          <div class="ae-kpi">
-            <span class="ae-kpi-label">Canales Activos</span>
-            <span class="ae-kpi-value">${String(kpi.channels).padStart(2,'0')}</span>
-          </div>
-          <div class="ae-kpi">
-            <span class="ae-kpi-label">Alcance Estimado</span>
-            <span class="ae-kpi-value">${kpi.reach}</span>
-          </div>
-          <div class="ae-kpi">
-            <span class="ae-kpi-label">Ahorro IA</span>
-            <span class="ae-kpi-value">${kpi.savedHours}h</span>
-          </div>
-        </section>
+        <!-- Recommendations -->
+        <h2 class="rp-section-title">
+          Camilo's Recommendations
+          <span class="rp-ai-badge">AI Agent Active</span>
+        </h2>
 
-        <section class="ae-postgrid ae-rise ae-rise-d-2">
-          ${campaigns.map(postcardHtml).join('')}
-          <button class="ae-postcard-add" onclick="window.openLaunchWizard?.()" aria-label="Programar nueva publicación">
-            <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-            <span>Programar nueva publicación</span>
-          </button>
-        </section>
+        <div class="rp-recos">
+          ${RECOS.map(r => `
+            <div class="rp-reco">
+              <div class="rp-reco-img" style="background-image: url('${r.img}')"></div>
+              <div class="rp-reco-body">
+                <div class="rp-reco-eyebrow">${r.eyebrow}</div>
+                <div class="rp-reco-title">${r.title}</div>
+                <div class="rp-reco-text">${r.text}</div>
+                <button class="rp-reco-cta" data-action="${r.action}">${r.cta}</button>
+              </div>
+            </div>
+          `).join('')}
+        </div>
+
+        <!-- Quick links section -->
+        <h2 class="rp-section-title">Quick Actions</h2>
+        <div class="rp-recos">
+          <div class="rp-reco">
+            <div class="rp-reco-img" style="background: linear-gradient(135deg, var(--rp-teal), var(--rp-green)); display:flex; align-items:center; justify-content:center;">
+              <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="1.5"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+            </div>
+            <div class="rp-reco-body">
+              <div class="rp-reco-eyebrow">PUBLISH NOW</div>
+              <div class="rp-reco-title">Quick Post a property</div>
+              <div class="rp-reco-text">Selecciona un inmueble, genera el caption con Camilo y publica en Instagram + Facebook en paralelo.</div>
+              <button class="rp-reco-cta" onclick="window.rmRouter?.goTo('quickpost')">Open Quick Post</button>
+            </div>
+          </div>
+          <div class="rp-reco">
+            <div class="rp-reco-img" style="background: linear-gradient(135deg, var(--rp-green-deep), #00382a); display:flex; align-items:center; justify-content:center;">
+              <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="1.5"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+            </div>
+            <div class="rp-reco-body">
+              <div class="rp-reco-eyebrow">CAMPAIGN BUILDER</div>
+              <div class="rp-reco-title">Plan your week ahead</div>
+              <div class="rp-reco-text">Diseña pauta multi-día con Smart Campaign Creator. Camilo arma copy, imagen y horarios óptimos por ti.</div>
+              <button class="rp-reco-cta" onclick="window.rmRouter?.goTo('schedule')">Open Campaigns</button>
+            </div>
+          </div>
+        </div>
       </div>
     `
   }
 
-  function postcardHtml(p) {
-    const statusLabel = ({
-      scheduled: 'Scheduled',
-      pending:   'Pending',
-      live:      'Live',
-      paused:    'Paused'
-    })[p.status] || p.status
-    return `
-      <article class="ae-postcard">
-        <div class="ae-postcard-head">
-          <div class="ae-postcard-meta">
-            <span class="ae-postcard-icon">${p.icon}</span>
-            <div>
-              <div class="ae-postcard-title">${escapeHtml(p.label)}</div>
-              <div class="ae-postcard-time">${escapeHtml(p.time)}</div>
-            </div>
-          </div>
-          <span class="ae-status ${p.status}">${statusLabel}</span>
-        </div>
-        <div class="ae-postcard-image" data-tone="${p.tone}">
-          <span class="ae-postcard-image-label">${escapeHtml(p.property)}</span>
-        </div>
-        <div class="ae-postcard-optimization">
-          <span class="ae-postcard-opt-icon">✦</span>
-          <div class="ae-postcard-opt-body">
-            <div class="ae-postcard-opt-label">Camilord Optimization</div>
-            <div class="ae-postcard-opt-text">${escapeHtml(p.optimization)}</div>
-          </div>
-        </div>
-      </article>
-    `
-  }
-
-  function computeKpi(campaigns) {
-    const ready = campaigns.filter(c => c.status === 'scheduled' || c.status === 'live').length
-    const channels = new Set(campaigns.map(c => c.channel)).size
-    const reachNum = campaigns.length * 3100
-    const reach = reachNum >= 1000 ? `${(reachNum / 1000).toFixed(1)}k` : String(reachNum)
-    const savedHours = Math.round(campaigns.length * 4.5)
-    return { ready: String(ready).padStart(2, '0'), channels, reach, savedHours }
-  }
-
-  function escapeHtml(s) {
-    return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c])
-  }
-
-  async function render() {
+  function render() {
     const slot = document.querySelector('section[data-page="dashboard"]')
     if (!slot) return
-    // Show skeleton while we resolve campaigns
-    if (window.rmStates) window.rmStates.skeleton(slot, 4)
-    const campaigns = await getCampaigns()
-    slot.innerHTML = html({ campaigns })
+    slot.innerHTML = html()
+
+    slot.querySelectorAll('[data-action]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        window.rmToast?.('✨ Camilo está aplicando la recomendación…', 'success')
+      })
+    })
   }
 
   document.addEventListener('rm-page-change', e => {
     if (e.detail.page === 'dashboard') render()
   })
 
-  // Render once on first visit + when localStorage updates
   document.addEventListener('DOMContentLoaded', () => {
     render()
-    window.addEventListener('storage', e => {
-      if (e.key === 'rm_campaign_drafts') render()
-    })
   })
 })()

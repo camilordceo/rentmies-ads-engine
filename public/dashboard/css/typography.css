@@ -1,158 +1,271 @@
 /* ─────────────────────────────────────────────────────────────
-   RENTMIES ADS ENGINE — TYPOGRAPHY (FASE 1)
-   Three-tier system from SKILL §2.1 — §2.4
-   Inter (UI) · Instrument Serif italic (editorial) · JetBrains Mono (data)
+   RENTMIES PRIME — TYPOGRAPHY
+   Inter variable handles everything via weight:
+     300 light · 400 body · 500 labels · 600 titles
+     700 section · 800 display/KPI · 900 hero numbers
    ───────────────────────────────────────────────────────────── */
 
 body {
-  font-family: var(--rm-font);
+  font-family: var(--rp-font);
   font-size: 14px;
-  line-height: 1.55;
-  color: var(--rm-ink);
-}
-
-/* ── Editorial Display (the signature pattern) ──
-   "Fuel your Ads: <em>Villa Victoria</em>"
-   Italic Instrument Serif with optional green-deep prefix.   */
-
-.ae-display {
-  font-family: var(--rm-serif);
-  font-style: italic;
   font-weight: 400;
-  font-size: 44px;
-  line-height: 1.05;
-  letter-spacing: -0.025em;
-  color: var(--rm-ink);
-  margin: 0;
+  line-height: 1.55;
+  color: var(--rp-ink);
+  letter-spacing: -0.005em;
 }
 
-.ae-display-prefix {
-  color: var(--rm-green-deep);
+/* ─────────────────────────────────────────────────────────────
+   Display — bold sans, tight tracking. Editorial titles.
+   ───────────────────────────────────────────────────────────── */
+
+.rp-display {
+  font-family: var(--rp-font);
+  font-weight: 800;
+  font-size: 42px;
+  line-height: 1.05;
+  letter-spacing: -0.03em;
+  color: var(--rp-ink);
+  margin: 0 0 16px;
+}
+
+.rp-display em {
+  color: var(--rp-teal);
+  font-style: normal;
+  font-weight: 800;
+}
+
+.rp-display.hero {
+  font-size: 48px;
+  font-weight: 900;
 }
 
 @media (max-width: 720px) {
-  .ae-display { font-size: 34px; }
+  .rp-display { font-size: 32px; }
+  .rp-display.hero { font-size: 36px; }
 }
 
-/* ── Subhead — the brief explainer below the display ── */
+/* Subhead */
 
-.ae-subhead {
-  font-family: var(--rm-font);
-  font-size: 14px;
+.rp-subhead {
+  font-family: var(--rp-font);
+  font-size: 16px;
   font-weight: 400;
-  line-height: 1.55;
-  color: var(--rm-ink-2);
-  max-width: 540px;
-  margin: 12px 0 0;
+  line-height: 1.6;
+  color: var(--rp-ink-2);
+  max-width: 560px;
+  margin: 0;
 }
 
-/* ── Eyebrow — mono UPPERCASE label above the display ── */
+.rp-subhead strong {
+  font-weight: 700;
+  color: var(--rp-ink);
+}
 
-.ae-eyebrow {
-  font-family: var(--rm-mono);
+/* Eyebrow — authority green, uppercase, tracked */
+
+.rp-eyebrow {
+  font-family: var(--rp-font);
   font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 0.18em;
+  font-weight: 700;
+  letter-spacing: 0.15em;
   text-transform: uppercase;
-  color: var(--rm-ink-2);
-  margin: 0 0 14px;
+  color: var(--rp-green);
+  margin: 0 0 12px;
   display: block;
 }
 
-.ae-eyebrow.muted { color: var(--rm-muted); }
+.rp-eyebrow.muted { color: var(--rp-muted); }
+.rp-eyebrow.teal  { color: var(--rp-teal); }
+.rp-eyebrow.ink   { color: var(--rp-ink); }
 
-.ae-eyebrow.teal { color: var(--rm-teal); }
+/* Section titles */
 
-/* ── Headlines (non-editorial, sans-serif) ── */
+.rp-section-title {
+  font-family: var(--rp-font);
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  line-height: 1.3;
+  color: var(--rp-ink);
+  margin: 0;
+}
+
+.rp-section-subtitle {
+  font-family: var(--rp-font);
+  font-size: 14px;
+  font-weight: 400;
+  color: var(--rp-muted);
+  margin: 4px 0 0;
+}
+
+/* Card title */
+
+.rp-card-title {
+  font-family: var(--rp-font);
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  line-height: 1.3;
+  color: var(--rp-ink);
+  margin: 0 0 4px;
+}
+
+.rp-card-subtitle {
+  font-family: var(--rp-font);
+  font-size: 13px;
+  color: var(--rp-muted);
+  margin: 0 0 20px;
+}
+
+/* Stat values */
+
+.rp-stat-value {
+  font-family: var(--rp-font);
+  font-size: 28px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  line-height: 1.05;
+  color: var(--rp-ink);
+}
+
+.rp-stat-value.green { color: var(--rp-green); }
+.rp-stat-value.teal  { color: var(--rp-teal); }
+
+/* Body */
+
+.rp-body {
+  font-family: var(--rp-font);
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 1.6;
+  color: var(--rp-ink);
+}
+
+.rp-body-muted { color: var(--rp-ink-2); }
+
+/* Mono utility now uses Inter tabular nums */
+
+.rp-mono, .rm-mono {
+  font-family: var(--rp-font);
+  font-feature-settings: 'tnum' 1, 'cv11' 1;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ─────────────────────────────────────────────────────────────
+   Legacy .ae-* aliases — point to new visual system
+   ───────────────────────────────────────────────────────────── */
+
+.ae-display {
+  font-family: var(--rp-font);
+  font-style: normal;
+  font-weight: 800;
+  font-size: 42px;
+  line-height: 1.05;
+  letter-spacing: -0.03em;
+  color: var(--rp-ink);
+  margin: 0 0 16px;
+}
+.ae-display em {
+  font-family: var(--rp-font);
+  font-style: normal;
+  font-weight: 800;
+  color: var(--rp-teal);
+}
+.ae-display-prefix {
+  font-weight: 800;
+  color: var(--rp-ink);
+}
+@media (max-width: 720px) { .ae-display { font-size: 32px; } }
+
+.ae-subhead {
+  font-family: var(--rp-font);
+  font-size: 16px;
+  font-weight: 400;
+  line-height: 1.6;
+  color: var(--rp-ink-2);
+  max-width: 560px;
+  margin: 12px 0 0;
+}
+
+.ae-eyebrow {
+  font-family: var(--rp-font);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--rp-green);
+  margin: 0 0 12px;
+  display: block;
+}
+.ae-eyebrow.muted { color: var(--rp-muted); }
+.ae-eyebrow.teal  { color: var(--rp-teal); }
 
 .ae-headline {
-  font-family: var(--rm-font);
-  font-size: 32px;
-  font-weight: 600;
+  font-family: var(--rp-font);
+  font-size: 28px;
+  font-weight: 700;
   letter-spacing: -0.02em;
   line-height: 1.15;
-  color: var(--rm-ink);
+  color: var(--rp-ink);
   margin: 0;
 }
 
 .ae-section-title {
-  font-family: var(--rm-font);
-  font-size: 24px;
-  font-weight: 600;
+  font-family: var(--rp-font);
+  font-size: 20px;
+  font-weight: 700;
   letter-spacing: -0.01em;
-  color: var(--rm-ink);
+  color: var(--rp-ink);
   margin: 0;
 }
 
 .ae-card-title {
-  font-family: var(--rm-font);
-  font-size: 15px;
-  font-weight: 600;
-  color: var(--rm-ink);
+  font-family: var(--rp-font);
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--rp-ink);
   margin: 0;
 }
 
-/* ── Body and supporting ── */
-
 .ae-body {
-  font-family: var(--rm-font);
+  font-family: var(--rp-font);
   font-size: 14px;
   font-weight: 400;
-  line-height: 1.55;
-  color: var(--rm-ink);
+  line-height: 1.6;
+  color: var(--rp-ink);
 }
-
-.ae-body-muted {
-  color: var(--rm-ink-2);
-}
-
-/* ── Mono micro — IDs, timestamps, data signatures ── */
-
-.rm-mono {
-  font-family: var(--rm-mono);
-  font-feature-settings: 'tnum' 1, 'liga' 0;
-}
+.ae-body-muted { color: var(--rp-ink-2); }
 
 .ae-mono-micro {
-  font-family: var(--rm-mono);
+  font-family: var(--rp-font);
   font-size: 9px;
   font-weight: 700;
   letter-spacing: 0.15em;
   text-transform: uppercase;
-  color: var(--rm-muted);
+  color: var(--rp-muted);
 }
-
-/* ── Serif utility (rarely used outside .ae-display) ── */
-
-.rm-serif {
-  font-family: var(--rm-serif);
-  font-style: italic;
-  font-weight: 400;
-}
-
-/* ── Stat values (used by .ae-stat) ── */
 
 .ae-stat-value {
-  font-family: var(--rm-font);
-  font-size: 26px;
-  font-weight: 700;
+  font-family: var(--rp-font);
+  font-size: 28px;
+  font-weight: 800;
   letter-spacing: -0.02em;
-  line-height: 1.1;
-  color: var(--rm-ink);
+  line-height: 1.05;
+  color: var(--rp-ink);
 }
 
 .ae-stat-value-xl {
-  font-family: var(--rm-font);
+  font-family: var(--rp-font);
   font-size: 30px;
   font-weight: 800;
   letter-spacing: -0.02em;
   line-height: 1.05;
-  color: var(--rm-green-deep);
+  color: var(--rp-green);
 }
 
-/* ── Selection — match the editorial vibe ── */
-
-::selection {
-  background: rgba(64, 217, 157, 0.25);
-  color: var(--rm-ink);
+.rm-serif {
+  font-family: var(--rp-font);
+  font-style: normal;
+  font-weight: 700;
+  letter-spacing: -0.01em;
 }

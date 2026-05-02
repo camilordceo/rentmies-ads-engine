@@ -1,84 +1,67 @@
 /* ─────────────────────────────────────────────────────────────
-   RENTMIES ADS ENGINE — 3-COLUMN APP SHELL
-   Topnav is its own grid area (NOT inside canvas) so the
-   horizontal layout is structurally rigid and content can't
-   push columns wider than they should be.
-
-   Grid:
-     ┌──────┬───────────────┬──────────┐
-     │      │  topbar (56)  │          │  ← row 1: 56px
-     │ rail │───────────────│ camilord │
-     │ 64px │  main (1fr)   │  320px   │  ← row 2: 1fr
-     └──────┴───────────────┴──────────┘
+   RENTMIES PRIME — APP SHELL
+   2-column grid: main content + 340px Camilo AI panel.
+   The TOP BAR spans only the main column (panel has its own).
+   ┌──────────────────┬──────────────┐
+   │  topbar (64)     │              │
+   │                  │   panel      │
+   │  main (1fr)      │   340px      │
+   │                  │              │
+   └──────────────────┴──────────────┘
    ───────────────────────────────────────────────────────────── */
 
 .ae-app {
   display: grid;
-  grid-template-columns: var(--rail-w) minmax(0, 1fr) var(--camilord-w);
-  grid-template-rows: var(--topnav-h) 1fr;
+  grid-template-columns: minmax(0, 1fr) var(--rp-panel-w);
+  grid-template-rows: var(--rp-topbar-h) 1fr;
   grid-template-areas:
-    "rail topbar copilot"
-    "rail main   copilot";
+    "topbar panel"
+    "main   panel";
   width: 100vw;
-  max-width: 100vw;          /* prevent overflow */
+  max-width: 100vw;
   height: 100vh;
   max-height: 100vh;
-  background: var(--rm-bg);
-  overflow: hidden;          /* contain children — no horizontal scroll on body */
-  position: relative;        /* positioning context for overlays (palette, drawers, toasts) */
-}
-
-/* ── Grid children: every one needs min-width: 0 so its content
-      doesn't force the column wider than declared. ── */
-
-.ae-rail {
-  grid-area: rail;
-  min-width: 0;
-  max-width: var(--rail-w);
+  background: var(--rp-bg);
   overflow: hidden;
-  background: var(--rm-ink);
+  position: relative;
 }
 
-.ae-topnav {
+/* Old rail removed — hide if it survives in the DOM */
+.ae-rail { display: none !important; }
+
+/* Topbar */
+
+.ae-topnav, .rp-topbar {
   grid-area: topbar;
   min-width: 0;
   max-width: 100%;
-  overflow: hidden;
-  height: var(--topnav-h);
-  background: var(--rm-surface);
-  border-bottom: 1px solid var(--rm-border);
+  overflow: visible;
+  height: var(--rp-topbar-h);
+  background: var(--rp-bg);
+  border-bottom: 1px solid rgba(0,0,0,0.06);
 }
 
-.ae-canvas {
+/* Main canvas */
+
+.ae-canvas, .rp-main {
   grid-area: main;
   min-width: 0;
   max-width: 100%;
   display: flex;
   flex-direction: column;
-  overflow: hidden;          /* internal scroll lives on .ae-content */
-  background: var(--rm-bg);
+  overflow: hidden;
+  background: var(--rp-bg);
 }
 
-.ae-camilord {
-  grid-area: copilot;
-  min-width: 0;
-  max-width: var(--camilord-w);
-  overflow-y: auto;
-  overflow-x: hidden;
-  background: #000;
-}
-
-/* ── Main canvas internals ── */
-
-.ae-content {
+.ae-content, .rp-content {
   flex: 1;
   min-height: 0;
   overflow-y: auto;
   overflow-x: hidden;
+  background: var(--rp-bg);
 }
 
-/* Page sections — visibility hard-pinned in CSS so JS races can never
-   leave multiple pages stacked. */
+/* Page sections — visibility hard-pinned in CSS */
 .ae-content > section[data-page] {
   display: none !important;
   width: 100%;
@@ -91,94 +74,129 @@
 .ae-content::-webkit-scrollbar      { width: 8px; }
 .ae-content::-webkit-scrollbar-track { background: transparent; }
 .ae-content::-webkit-scrollbar-thumb {
-  background: var(--rm-border-strong);
+  background: rgba(0,0,0,0.12);
   border-radius: 999px;
 }
 
-/* ── Page utility — every working page wraps its content here ── */
+/* Right panel */
 
+.ae-camilord, .rp-panel {
+  grid-area: panel;
+  min-width: 0;
+  max-width: var(--rp-panel-w);
+  overflow-y: auto;
+  overflow-x: hidden;
+  background: var(--rp-surface-panel);
+  border-left: 1px solid rgba(0,0,0,0.06);
+}
+
+.ae-camilord::-webkit-scrollbar { width: 6px; }
+.ae-camilord::-webkit-scrollbar-track { background: transparent; }
+.ae-camilord::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.1); border-radius: 999px; }
+
+/* ─────────────────────────────────────────────────────────────
+   Page wrapper — every page wraps content in .rp-page
+   ───────────────────────────────────────────────────────────── */
+
+.rp-page {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 40px 40px 80px;
+  box-sizing: border-box;
+}
+
+.rp-page-header {
+  margin-bottom: 40px;
+}
+
+.rp-page-header .rp-eyebrow { margin-bottom: 12px; }
+.rp-page-header .rp-display { margin-bottom: 16px; }
+
+/* Legacy aliases for existing modules */
 .ae-page,
 .ae-page-shell {
   width: 100%;
-  max-width: 1200px;
+  max-width: 1100px;
   margin: 0 auto;
-  padding: 28px 32px 80px;
+  padding: 40px 40px 80px;
   box-sizing: border-box;
-}
-@media (max-width: 760px) {
-  .ae-page,
-  .ae-page-shell { padding: 18px 16px 60px; }
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
 }
 
 .ae-page-head {
   display: flex;
   flex-direction: column;
   gap: 0;
-  margin-bottom: 16px;
+  margin-bottom: 24px;
 }
 
-/* ── Mobile fallback — hide Camilord, single content column ── */
+@media (max-width: 760px) {
+  .rp-page,
+  .ae-page,
+  .ae-page-shell { padding: 24px 20px 60px; }
+}
+
+/* ─────────────────────────────────────────────────────────────
+   Mobile fallback — hide panel, single column
+   ───────────────────────────────────────────────────────────── */
+
+@media (max-width: 1024px) {
+  .ae-app {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: var(--rp-topbar-h) 1fr;
+    grid-template-areas:
+      "topbar"
+      "main";
+  }
+  .ae-camilord, .rp-panel { display: none; }
+  .ae-camilord.rp-panel-open, .rp-panel.rp-panel-open {
+    display: flex;
+    flex-direction: column;
+    position: fixed;
+    inset: 0;
+    z-index: 90;
+    max-width: 100%;
+    width: 100%;
+  }
+}
 
 @media (max-width: 768px) {
-  .ae-app {
-    grid-template-columns: var(--rail-w) minmax(0, 1fr);
-    grid-template-rows: var(--topnav-h) 1fr;
-    grid-template-areas:
-      "rail topbar"
-      "rail main";
-  }
-  .ae-camilord { display: none; }
+  .rp-page,
+  .ae-page,
+  .ae-page-shell { padding: 24px 16px 60px; }
 }
 
-/* ── Migration banner — kept light so it doesn't crop content.
-      Fixed sits below the topnav, can be dismissed via close btn. ── */
+/* Old preview banner — keep hidden */
+.ae-preview-banner { display: none !important; }
 
-.ae-preview-banner {
-  display: none;             /* hidden by default — uncomment 'flex' below to enable */
+/* ─────────────────────────────────────────────────────────────
+   Camilo FAB — visible only on mobile when panel is hidden
+   ───────────────────────────────────────────────────────────── */
+
+.rp-fab {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: var(--rp-teal);
+  color: white;
+  border: none;
+  box-shadow: var(--rp-shadow-float);
+  display: none;
   align-items: center;
-  gap: 14px;
-  flex-wrap: wrap;
-  background: linear-gradient(135deg, var(--rm-green-deep), var(--rm-ink));
-  color: #fff;
-  padding: 10px 24px;
-  border-bottom: 1px solid rgba(255,255,255,0.08);
-  font-size: 12px;
-  line-height: 1.4;
-  z-index: 30;
-}
-.ae-preview-banner.show { display: flex; }
-.ae-preview-banner-pill {
-  display: inline-flex;
-  align-items: center;
-  background: var(--rm-teal);
-  color: var(--rm-green-deep);
-  font-family: var(--rm-mono);
-  font-size: 9px;
-  font-weight: 700;
-  letter-spacing: 0.18em;
-  padding: 3px 8px;
-  border-radius: 999px;
-  flex-shrink: 0;
-}
-.ae-preview-banner-text { flex: 1; min-width: 200px; color: rgba(255,255,255,0.85); }
-.ae-preview-banner-text a {
-  color: var(--rm-mint);
-  text-decoration: underline;
-  text-underline-offset: 2px;
-}
-.ae-preview-banner-cta {
-  font-family: var(--rm-mono);
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: var(--rm-mint);
-  background: rgba(255,255,255,0.06);
-  border: 1px solid rgba(255,255,255,0.18);
-  border-radius: 4px;
-  padding: 6px 10px;
-  text-decoration: none;
-  flex-shrink: 0;
+  justify-content: center;
   cursor: pointer;
+  z-index: 80;
+  transition: transform 0.2s;
 }
-.ae-preview-banner-cta:hover { background: rgba(255,255,255,0.12); }
+.rp-fab:hover { transform: scale(1.06); }
+.rp-fab:active { transform: scale(0.96); }
+.rp-fab svg { width: 24px; height: 24px; stroke: currentColor; stroke-width: 2; fill: none; }
+
+@media (max-width: 1024px) {
+  .rp-fab { display: flex; }
+}

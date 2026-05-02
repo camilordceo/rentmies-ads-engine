@@ -23,13 +23,13 @@
     const meta = (() => { try { return JSON.parse(localStorage.getItem('meta_creds') || '{}') } catch (_) { return {} } })()
 
     return `
-      <div class="ae-page-shell ae-rise">
+      <div class="rp-page rp-rise">
 
-        <header class="ae-page-head">
-          <span class="ae-eyebrow">WHATSAPP BUSINESS · TEMPLATES</span>
-          <h1 class="ae-display"><span class="ae-display-prefix">Mensajes</span> <em>aprobados por Meta</em></h1>
-          <p class="ae-subhead">Trae los templates que tienes provisionados en tu WABA. Categorías, status, score de calidad — todo desde Graph API en vivo.</p>
-        </header>
+        <div class="rp-page-header">
+          <span class="rp-eyebrow">WHATSAPP BUSINESS · TEMPLATES</span>
+          <h1 class="rp-display">Mensajes <em>aprobados por Meta</em></h1>
+          <p class="rp-subhead">Trae los templates que tienes provisionados en tu WABA. <strong>Categorías, status, score de calidad</strong> — todo desde Graph API en vivo.</p>
+        </div>
 
         ${!meta.access_token || !meta.waba_id ? `
           <div class="ae-help warn">

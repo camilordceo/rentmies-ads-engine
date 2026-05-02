@@ -101,13 +101,12 @@
   // ── DOM patching ───────────────────────────────────────────
 
   function setQuote(panel, html) {
-    const card = panel.querySelector('.ae-cam-quote')
+    const card = panel.querySelector('.rp-cam-intro, .ae-cam-quote')
     if (!card) return
     const p = card.querySelector('p')
     if (!p) return
-    if (p.dataset.current === html) return  // no-op
+    if (p.dataset.current === html) return
     p.dataset.current = html
-    // Cross-fade
     p.style.transition = 'opacity 0.2s ease'
     p.style.opacity = '0'
     setTimeout(() => {
@@ -117,20 +116,23 @@
   }
 
   function setSuggestions(panel, suggestions) {
-    const slot = panel.querySelector('.ae-cam-suggestions')
+    const slot = panel.querySelector('.rp-feed, .ae-cam-suggestions')
     if (!slot) return
     if (suggestions.length === 0) {
       slot.innerHTML = `
-        <div style="background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08); border-radius:4px; padding:11px 14px; font-size:11.5px; color:rgba(255,255,255,0.55); line-height:1.5;">
-          Todo en orden — listo para lanzar cuando quieras.
+        <div class="rp-feed-item">
+          <div class="rp-feed-title">Todo en orden</div>
+          <div class="rp-feed-body">Listo para lanzar cuando quieras.</div>
+          <div class="rp-feed-time">Just now</div>
         </div>
       `
       return
     }
     slot.innerHTML = suggestions.map(s => `
-      <button class="ae-cam-suggestion ${s.kind}" data-key="${s.key}">
-        <span>${escapeHtml(s.label)}</span>
-        <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+      <button class="rp-feed-item" data-key="${s.key}" type="button">
+        <div class="rp-feed-title">${escapeHtml(s.label)}</div>
+        <div class="rp-feed-body">Sugerencia automática</div>
+        <div class="rp-feed-time">Just now</div>
       </button>
     `).join('')
     slot.querySelectorAll('[data-key]').forEach(btn => {
@@ -148,7 +150,7 @@
   // ── Mount + subscribe ─────────────────────────────────────
 
   function mount() {
-    const panel = document.querySelector('.ae-camilord')
+    const panel = document.querySelector('.rp-panel, .ae-camilord')
     if (!panel) return
 
     // Update status sub-line based on whether we're idle or actively analyzing

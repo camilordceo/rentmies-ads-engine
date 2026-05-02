@@ -46,15 +46,15 @@
     const importedCount = (window.rmInmuebles?.loadImported() || []).length
 
     return `
-      <div class="ae-page-shell ae-rise">
+      <div class="rp-page rp-rise">
 
-        <header class="ae-page-head">
-          <span class="ae-eyebrow">CATÁLOGO · INMUEBLES & PROYECTOS</span>
-          <h1 class="ae-display"><span class="ae-display-prefix">Tu</span> <em>inventario</em></h1>
-          <p class="ae-subhead">${state.source === 'starter'
-            ? 'Estás viendo los inmuebles de muestra (Primavera, Castelo, Praseo, Strada). Importa tu CSV/Excel para usar tu catálogo real.'
-            : 'Tu inventario sincronizado. Click en cualquier inmueble para publicarlo en Instagram o Facebook.'}</p>
-        </header>
+        <div class="rp-page-header">
+          <span class="rp-eyebrow">CATÁLOGO · INMUEBLES & PROYECTOS</span>
+          <h1 class="rp-display">Tu <em>inventario</em></h1>
+          <p class="rp-subhead">${state.source === 'starter'
+            ? 'Estás viendo los inmuebles de muestra (Primavera, Castelo, Praseo, Strada). <strong>Importa tu CSV/Excel</strong> para usar tu catálogo real.'
+            : 'Tu inventario sincronizado. Click en cualquier inmueble para <strong>publicarlo</strong> en Instagram o Facebook.'}</p>
+        </div>
 
         <section class="ae-formcard compact">
           <div style="display:flex; align-items:center; gap:12px; flex-wrap:wrap;">
