@@ -25,6 +25,8 @@
     return `
       <div class="rp-page rp-rise">
 
+        <div data-rp-subnav>${window.rpSubnav ? window.rpSubnav.html('whatsapp') : ''}</div>
+
         <div class="rp-page-header">
           <span class="rp-eyebrow">WHATSAPP BUSINESS · TEMPLATES</span>
           <h1 class="rp-display">Mensajes <em>aprobados por Meta</em></h1>

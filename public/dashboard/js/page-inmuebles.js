@@ -48,6 +48,8 @@
     return `
       <div class="rp-page rp-rise">
 
+        <div data-rp-subnav>${window.rpSubnav ? window.rpSubnav.html('inmuebles') : ''}</div>
+
         <div class="rp-page-header">
           <span class="rp-eyebrow">CATÁLOGO · INMUEBLES & PROYECTOS</span>
           <h1 class="rp-display">Tu <em>inventario</em></h1>

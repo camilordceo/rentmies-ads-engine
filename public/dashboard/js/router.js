@@ -15,6 +15,9 @@
     return VALID_PAGES.includes(hash) ? hash : DEFAULT_PAGE
   }
 
+  // Content section in the top bar groups four sub-routes
+  const CONTENT_GROUP = ['quickpost', 'inmuebles', 'posts', 'whatsapp']
+
   function applyPage(name) {
     if (!VALID_PAGES.includes(name)) name = DEFAULT_PAGE
 
@@ -22,9 +25,13 @@
       section.classList.toggle('is-active', section.dataset.page === name)
     })
 
-    // Top nav active state — both new and legacy classes
+    // Top nav active state — Content link stays active for any of its sub-routes
     document.querySelectorAll('.rp-topbar-link[data-page], .ae-topnav-link[data-page]').forEach(link => {
-      link.classList.toggle('active', link.dataset.page === name)
+      const isContentLink = link.dataset.page === 'quickpost'
+      const isActive = isContentLink
+        ? CONTENT_GROUP.includes(name)
+        : link.dataset.page === name
+      link.classList.toggle('active', isActive)
     })
 
     // Rail (legacy) active state — kept for safety, rail is hidden anyway

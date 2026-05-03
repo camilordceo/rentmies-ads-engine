@@ -72,6 +72,8 @@
 
     return `
       <div class="rp-page rp-rise">
+        <div data-rp-subnav>${window.rpSubnav ? window.rpSubnav.html('posts') : ''}</div>
+
         <div class="rp-page-header">
           <span class="rp-eyebrow">HISTORIAL · PUBLICACIONES</span>
           <h1 class="rp-display">Lo que has <em>publicado</em></h1>

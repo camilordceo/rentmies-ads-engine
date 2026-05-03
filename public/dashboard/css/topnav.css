@@ -187,6 +187,52 @@
   display: block;
 }
 
+/* ─────────────────────────────────────────────────────────────
+   Sub-nav (segmented pill row inside Content section pages)
+   ───────────────────────────────────────────────────────────── */
+
+.rp-subnav {
+  display: inline-flex;
+  gap: 4px;
+  padding: 4px;
+  background: var(--rp-surface-raised);
+  border-radius: var(--rp-radius-pill);
+  margin-bottom: 32px;
+  align-self: flex-start;
+  flex-wrap: wrap;
+}
+
+.rp-subnav-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 18px;
+  border-radius: var(--rp-radius-pill);
+  font-family: var(--rp-font);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--rp-muted);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  text-decoration: none;
+  transition: background 0.15s, color 0.15s, box-shadow 0.2s;
+  white-space: nowrap;
+}
+.rp-subnav-link:hover { color: var(--rp-ink); }
+.rp-subnav-link.active {
+  background: var(--rp-surface);
+  color: var(--rp-ink);
+  box-shadow: var(--rp-shadow-card);
+}
+.rp-subnav-link svg {
+  width: 14px;
+  height: 14px;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  fill: none;
+}
+
 /* Mobile compaction */
 
 @media (max-width: 768px) {
@@ -194,4 +240,6 @@
   .rp-topbar-nav, .ae-topnav-nav { gap: 0; overflow-x: auto; -webkit-overflow-scrolling: touch; }
   .rp-topbar-link, .ae-topnav-link { padding: 0 10px; font-size: 13px; }
   .ae-launch-btn { display: none; }
+  .rp-subnav { width: 100%; overflow-x: auto; }
+  .rp-subnav-link { padding: 8px 14px; font-size: 12px; }
 }

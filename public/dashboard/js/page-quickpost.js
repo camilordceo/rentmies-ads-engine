@@ -38,6 +38,8 @@
     return `
       <div class="rp-page rp-rise">
 
+        <div data-rp-subnav>${window.rpSubnav ? window.rpSubnav.html('quickpost') : ''}</div>
+
         <div class="rp-page-header">
           <span class="rp-eyebrow">PUBLICAR EN INSTAGRAM / FACEBOOK</span>
           <h1 class="rp-display">Quick <em>Post</em></h1>
