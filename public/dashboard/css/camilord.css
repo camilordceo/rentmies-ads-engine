@@ -13,6 +13,20 @@
   overflow-x: hidden;
   padding: 24px 20px 28px;
   position: relative;
+  min-width: 0;
+  max-width: var(--rp-panel-w);
+  box-sizing: border-box;
+}
+
+/* Defensive: nothing inside the right panel may exceed its bounds.
+   Long Italian-style serif quotes were clipping at the right edge. */
+.ae-camilord *, .rp-panel * {
+  max-width: 100%;
+  min-width: 0;
+  overflow-wrap: break-word;
+  word-wrap: break-word;
+  word-break: break-word;
+  hyphens: auto;
 }
 
 /* Header: sparkle icon + Camilo AI + INTELLIGENT INSIGHTS eyebrow */
@@ -123,6 +137,11 @@
   line-height: 1.55;
   color: var(--rp-ink-2);
   transition: opacity 0.2s ease;
+  overflow-wrap: break-word;
+  word-wrap: break-word;
+  word-break: break-word;
+  hyphens: auto;
+  padding-right: 4px;
 }
 .ae-cam-quote p em,
 .rp-cam-intro p em {
