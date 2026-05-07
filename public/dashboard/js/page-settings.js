@@ -63,6 +63,8 @@
          : `Estado: ${conn.status || 'desconocido'}`)
       : 'No conectado'
 
+    const isConnected = conn && conn.connected && conn.status === 'active'
+
     return `
       <div class="rp-page rp-rise">
 
@@ -71,6 +73,22 @@
           <h1 class="rp-display">Conecta tu <em>Meta Business</em></h1>
           <p class="rp-subhead">Pega un System User Token desde tu Business Manager. Es <strong>permanente, no caduca</strong>, y solo accede a los assets que tú le asignes.</p>
         </div>
+
+        ${!isConnected ? `
+          <section class="ae-formcard" style="background:linear-gradient(135deg, rgba(64,217,157,0.10), rgba(0,108,74,0.04)); border-left:3px solid var(--rp-teal);">
+            <div class="ae-formcard-h">
+              <span style="display:flex; align-items:center; gap:10px;">
+                ✨ <span>¿Primera vez? Te guiamos paso a paso</span>
+              </span>
+            </div>
+            <p style="font-size:14px; line-height:1.55; color:var(--rm-ink-2); margin:8px 0 16px;">
+              Si nunca has conectado Meta antes, usa nuestro asistente guiado. Te llevamos por cada
+              clic en Meta, con explicaciones simples y validación automática. Toma <strong>~12 minutos</strong>.
+            </p>
+            <a class="ae-btn-authority" href="#connect" style="text-decoration:none;">Empezar conexión guiada →</a>
+            <a class="ae-btn-ghost" href="#" id="s-skip-wizard" style="margin-left:10px;">O pega tu token directamente abajo ↓</a>
+          </section>
+        ` : ''}
 
         <!-- ═══════════ META CONNECTION CARD ═══════════ -->
         <section class="ae-formcard" id="settings-meta-card">

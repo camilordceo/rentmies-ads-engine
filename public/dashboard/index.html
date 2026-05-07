@@ -36,6 +36,7 @@
   <link rel="stylesheet" href="css/working-pages.css">
   <link rel="stylesheet" href="css/quickpost-extras.css">
   <link rel="stylesheet" href="css/posts-history.css">
+  <link rel="stylesheet" href="css/connect-wizard.css">
 
   <!-- Module scripts — order matters: store first, then dependents -->
   <script src="js/toast.js" defer></script>
@@ -51,6 +52,8 @@
   <script src="js/auth.js" defer></script>
   <script src="js/page-quickpost.js" defer></script>
   <script src="js/page-settings.js" defer></script>
+  <script src="js/page-connect-wizard.js" defer></script>
+  <script src="js/connect-prompt.js" defer></script>
   <script src="js/page-posts-history.js" defer></script>
   <script src="js/camilord-quickpost.js" defer></script>
   <script src="js/page-inmuebles.js" defer></script>
@@ -135,6 +138,9 @@
 
       <!-- SETTINGS / Credentials -->
       <section data-page="settings"><!-- page-settings.js renders here --></section>
+
+      <!-- CONNECT WIZARD — first-time Meta onboarding -->
+      <section data-page="connect"><!-- page-connect-wizard.js renders here --></section>
 
       <!-- HISTORY (legacy preview) -->
       <section data-page="history"><!-- history.js renders here --></section>

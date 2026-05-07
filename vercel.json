@@ -8,7 +8,8 @@
     { "source": "/onboarding/post-oauth",  "destination": "/onboarding/post-oauth.html" },
     { "source": "/onboarding/select-page", "destination": "/onboarding/select-page.html" },
     { "source": "/onboarding/payment",     "destination": "/onboarding/payment.html" },
-    { "source": "/onboarding/no-pages",    "destination": "/onboarding/no-pages.html" }
+    { "source": "/onboarding/no-pages",    "destination": "/onboarding/no-pages.html" },
+    { "source": "/welcome",                "destination": "/welcome.html" }
   ],
   "functions": {
     "api/generate.js":              { "maxDuration": 30 },
@@ -22,6 +23,15 @@
     "api/auth/meta/health.js":      { "maxDuration": 15 },
     "api/auth/meta/disconnect.js":  { "maxDuration": 10 },
     "api/onboarding/select-page.js":{ "maxDuration": 15 },
+    "api/credentials/meta/index.js":   { "maxDuration": 10 },
+    "api/credentials/meta/test.js":    { "maxDuration": 20 },
+    "api/credentials/meta/health.js":  { "maxDuration": 10 },
+    "api/wizard/validate-token.js":    { "maxDuration": 20 },
+    "api/wizard/config.js":            { "maxDuration": 5 },
+    "api/posts/publish/facebook.js":   { "maxDuration": 30 },
+    "api/posts/publish/instagram.js":  { "maxDuration": 60 },
+    "api/posts/list.js":               { "maxDuration": 10 },
+    "api/media/upload.js":             { "maxDuration": 30 },
     "api/data.js":                  { "maxDuration": 30 },
     "api/health.js":                { "maxDuration": 10 },
     "api/social-post.js":           { "maxDuration": 60 },

@@ -7,7 +7,7 @@
 (function () {
   'use strict'
 
-  const VALID_PAGES = ['studio', 'quickpost', 'schedule', 'inmuebles', 'whatsapp', 'dashboard', 'history', 'analytics', 'settings', 'posts']
+  const VALID_PAGES = ['studio', 'quickpost', 'schedule', 'inmuebles', 'whatsapp', 'dashboard', 'history', 'analytics', 'settings', 'posts', 'connect']
   const DEFAULT_PAGE = 'dashboard'
 
   function currentPage() {
