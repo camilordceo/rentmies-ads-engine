@@ -254,19 +254,14 @@
     })
   }
 
-  // Public API
+  // Public API — kept for legacy callers, but no longer wired to the topbar.
+  // The topbar "Publicar ahora" link now navigates to #quickpost via its
+  // native href, instead of opening this side-drawer wizard.
   window.openLaunchWizard = open
   window.closeLaunchWizard = closeWizard
 
-  // Wire the topnav button (already present in index.html)
   document.addEventListener('DOMContentLoaded', () => {
-    document.querySelectorAll('.ae-launch-btn').forEach(btn => {
-      btn.addEventListener('click', e => {
-        e.preventDefault()
-        open()
-      })
-    })
-    // ESC closes
+    // ESC still closes the legacy drawer if it's somehow opened.
     document.addEventListener('keydown', e => {
       if (e.key === 'Escape' && document.querySelector('.ae-launch.open')) closeWizard()
     })
