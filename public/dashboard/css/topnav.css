@@ -157,6 +157,14 @@
 .rp-icon-btn:active { transform: scale(0.96); }
 .rp-icon-btn svg { width: 18px; height: 18px; stroke: currentColor; stroke-width: 1.8; fill: none; }
 
+/* Camilo panel toggle — tinted when panel is open (aria-pressed=true) */
+.rp-panel-toggle[aria-pressed="true"] {
+  color: var(--rp-teal);
+  background: rgba(64, 217, 157, 0.1);
+}
+.rp-panel-toggle[aria-pressed="true"] svg { fill: currentColor; stroke: currentColor; }
+.rp-panel-toggle[aria-pressed="false"] svg { fill: none; }
+
 /* Avatar */
 
 .rp-avatar,

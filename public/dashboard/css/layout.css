@@ -26,6 +26,16 @@
   position: relative;
 }
 
+/* Collapsed state — Camilo AI panel hidden on desktop */
+.ae-app.rp-panel-collapsed {
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-areas:
+    "topbar"
+    "main";
+}
+.ae-app.rp-panel-collapsed .ae-camilord,
+.ae-app.rp-panel-collapsed .rp-panel { display: none; }
+
 /* Old rail removed — hide if it survives in the DOM */
 .ae-rail { display: none !important; }
 
