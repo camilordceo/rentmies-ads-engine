@@ -1,0 +1,541 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>¡Listo! · Tu primer post — Rentmies</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --rm-bg:#f6f3ee; --rm-surface:#fff; --rm-surface-2:#faf8f4; --rm-surface-3:#f1ede6;
+  --rm-ink:#0f1410; --rm-ink-2:#3a3f3b; --rm-muted:#7a7e79;
+  --rm-border:#e8e3dc; --rm-border-strong:#d4cec3;
+  --rm-teal:#40d99d; --rm-mint:#4fffb4; --rm-green:#006c4a; --rm-green-deep:#004d35;
+  --rm-red:#c14f3a; --rm-amber:#d29836;
+  --ae-input-bg:#faf8f4; --ae-card-radius:6px; --ae-bolt:#93eabf;
+  --rm-font:'Inter',system-ui,sans-serif;
+  --rm-serif:'Instrument Serif',Georgia,serif;
+  --rm-mono:'JetBrains Mono',ui-monospace,Menlo,monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:var(--rm-bg);color:var(--rm-ink);font-family:var(--rm-font);font-size:14px;line-height:1.55;min-height:100vh}
+a{color:inherit;text-decoration:none}
+
+.ae-shell{max-width:1080px;margin:0 auto;padding:32px 40px 80px}
+.ae-topnav{display:flex;align-items:center;height:56px;border-bottom:1px solid var(--rm-border);padding:0 40px;background:var(--rm-surface);position:sticky;top:0;z-index:5}
+.ae-topnav-logo{font-family:var(--rm-serif);font-style:italic;font-weight:600;font-size:17px;letter-spacing:-0.01em;color:var(--rm-ink)}
+.ae-topnav-logo em{color:var(--rm-green-deep)}
+.ae-topnav .sp{flex:1}
+.ae-topnav .skip{font-family:var(--rm-mono);font-size:11px;font-weight:600;letter-spacing:0.12em;color:var(--rm-muted);text-transform:uppercase}
+.ae-topnav .skip:hover{color:var(--rm-ink)}
+
+.ae-eyebrow{font-family:var(--rm-mono);font-size:11px;font-weight:600;letter-spacing:0.18em;text-transform:uppercase;color:var(--rm-ink-2)}
+.ae-display{font-family:var(--rm-serif);font-weight:400;font-size:44px;line-height:1.05;letter-spacing:-0.025em;color:var(--rm-ink);margin:8px 0 12px}
+.ae-display em{font-style:italic;color:var(--rm-green-deep)}
+.ae-subhead{font-size:14px;color:var(--rm-ink-2);max-width:540px;line-height:1.6}
+
+/* Connected accounts chips */
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:20px}
+.chip{display:inline-flex;align-items:center;gap:8px;background:var(--rm-surface);border:1px solid var(--rm-border);border-radius:999px;padding:7px 14px 7px 9px;font-size:12px;font-weight:500;color:var(--rm-ink)}
+.chip .dot{width:6px;height:6px;border-radius:50%;background:var(--rm-teal);box-shadow:0 0 8px var(--rm-teal);animation:ae-pulse 1.6s ease-in-out infinite}
+.chip svg{flex-shrink:0}
+.chip .label{color:var(--rm-muted);font-family:var(--rm-mono);font-size:9px;letter-spacing:0.12em;text-transform:uppercase;font-weight:600}
+.chip .name{color:var(--rm-ink)}
+
+/* Stat divider */
+.divider{height:1px;background:var(--rm-border);margin:36px 0}
+
+/* Quickstart options */
+.opts{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:18px}
+.opt{background:var(--rm-surface);border:1px solid var(--rm-border);border-radius:var(--ae-card-radius);padding:18px 18px 16px;cursor:pointer;text-align:left;transition:border-color .15s,transform .12s,box-shadow .15s;display:flex;flex-direction:column;gap:8px;font-family:inherit;color:inherit;width:100%}
+.opt:hover{border-color:var(--rm-green-deep);transform:translateY(-1px);box-shadow:0 1px 2px rgba(15,20,16,.04)}
+.opt.active{border-color:var(--rm-green-deep);box-shadow:inset 0 0 0 1px var(--rm-green-deep)}
+.opt-num{font-family:var(--rm-mono);font-size:9px;font-weight:700;letter-spacing:0.15em;color:var(--rm-green-deep);text-transform:uppercase}
+.opt-title{font-size:15px;font-weight:600;color:var(--rm-ink);line-height:1.3}
+.opt-desc{font-size:12px;color:var(--rm-muted);line-height:1.5}
+
+/* Composer card */
+.composer{margin-top:24px;background:var(--rm-surface);border:1px solid var(--rm-border);border-radius:var(--ae-card-radius);padding:24px;display:none;box-shadow:0 1px 2px rgba(15,20,16,.04)}
+.composer.show{display:block;animation:ae-rise .25s ease}
+.composer-h{display:flex;align-items:center;justify-content:space-between;font-size:15px;font-weight:600;margin-bottom:18px;padding-bottom:14px;border-bottom:1px solid var(--rm-border)}
+.composer-h .ae-ai-badge{display:inline-flex;align-items:center;gap:5px;padding:3px 8px;border-radius:999px;background:rgba(64,217,157,0.12);color:var(--rm-green-deep);font-family:var(--rm-mono);font-size:9px;font-weight:700;letter-spacing:0.1em}
+.composer-h .ae-ai-badge::before{content:'';width:5px;height:5px;border-radius:50%;background:var(--rm-teal);box-shadow:0 0 8px var(--rm-teal);animation:ae-pulse 1.6s ease-in-out infinite}
+
+.field{margin-bottom:14px}
+.field-label{display:block;font-size:12px;font-weight:600;color:var(--rm-ink-2);margin-bottom:6px}
+.input,.textarea{width:100%;padding:10px 12px;background:var(--ae-input-bg);border:1px solid var(--rm-border);border-radius:4px;font-family:var(--rm-font);font-size:13px;color:var(--rm-ink);transition:border-color .15s,background .15s}
+.input:focus,.textarea:focus{outline:none;border-color:var(--rm-teal);background:var(--rm-surface)}
+.textarea{min-height:96px;resize:vertical;line-height:1.5}
+
+/* Image dropzone */
+.drop{position:relative;border:1.5px dashed var(--rm-border-strong);border-radius:var(--ae-card-radius);padding:24px;text-align:center;background:var(--rm-surface-2);cursor:pointer;transition:border-color .15s,background .15s}
+.drop:hover,.drop.over{border-color:var(--rm-green-deep);background:var(--rm-surface)}
+.drop input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer}
+.drop-title{font-size:13px;font-weight:600;color:var(--rm-ink);margin-bottom:4px}
+.drop-sub{font-size:11px;color:var(--rm-muted);font-family:var(--rm-mono);letter-spacing:0.1em;text-transform:uppercase}
+.drop.has-file{border-style:solid;padding:0;background:var(--rm-surface)}
+.drop.has-file img{display:block;width:100%;max-height:280px;object-fit:cover;border-radius:var(--ae-card-radius)}
+.drop-clear{position:absolute;top:8px;right:8px;background:rgba(15,20,16,.7);color:#fff;border:none;border-radius:4px;padding:4px 8px;font-family:var(--rm-mono);font-size:9px;font-weight:700;letter-spacing:0.1em;cursor:pointer;display:none}
+.drop.has-file .drop-clear{display:block}
+
+/* Caption row + AI button */
+.cap-row{position:relative}
+.cap-ai{position:absolute;right:8px;bottom:8px;background:var(--rm-ink);color:#fff;border:none;border-radius:4px;padding:7px 11px;font-family:var(--rm-mono);font-size:10px;font-weight:700;letter-spacing:0.1em;cursor:pointer;display:inline-flex;align-items:center;gap:5px;transition:background .15s,transform .12s}
+.cap-ai:hover:not(:disabled){background:var(--rm-green-deep)}
+.cap-ai:disabled{opacity:.5;cursor:not-allowed}
+.cap-ai:active{transform:scale(.98)}
+
+/* Platform toggles */
+.toggles{display:flex;gap:8px;flex-wrap:wrap}
+.toggle{display:inline-flex;align-items:center;gap:7px;padding:8px 14px;border:1px solid var(--rm-border);background:var(--rm-surface);border-radius:999px;cursor:pointer;font-size:12px;font-weight:500;color:var(--rm-ink-2);transition:all .15s;font-family:inherit}
+.toggle.on{background:var(--rm-green-deep);color:#fff;border-color:var(--rm-green-deep)}
+.toggle.disabled{opacity:.4;cursor:not-allowed}
+.toggle svg{flex-shrink:0}
+
+/* Submit row */
+.publish-row{display:flex;align-items:center;gap:12px;margin-top:20px;padding-top:20px;border-top:1px solid var(--rm-border)}
+.publish-btn{background:var(--rm-green-deep);color:#fff;border:none;padding:12px 22px;border-radius:4px;font-family:var(--rm-mono);font-size:11px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;cursor:pointer;display:inline-flex;align-items:center;gap:8px;transition:background .15s,transform .12s}
+.publish-btn:hover:not(:disabled){background:var(--rm-ink)}
+.publish-btn:disabled{opacity:.5;cursor:not-allowed}
+.publish-btn:active{transform:scale(.98)}
+.publish-note{font-size:11px;color:var(--rm-muted);font-family:var(--rm-mono);letter-spacing:0.08em;text-transform:uppercase}
+
+/* Status / result banner */
+.banner{padding:14px 16px;border-radius:var(--ae-card-radius);font-size:13px;line-height:1.5;margin-bottom:14px;display:none}
+.banner.show{display:block;animation:ae-rise .25s ease}
+.banner.err{background:#fef2f2;color:#991b1b;border:1px solid #fecaca}
+.banner.ok{background:rgba(64,217,157,0.12);color:var(--rm-green-deep);border:1px solid rgba(64,217,157,.3)}
+.banner.info{background:rgba(210,152,54,0.12);color:var(--rm-amber);border:1px solid rgba(210,152,54,.3)}
+.banner a{color:inherit;font-weight:600;text-decoration:underline}
+
+.spinner{display:inline-block;width:12px;height:12px;border:2px solid rgba(255,255,255,.4);border-top-color:#fff;border-radius:50%;animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes ae-pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.4;transform:scale(1.3)}}
+@keyframes ae-rise{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+@media (prefers-reduced-motion: reduce){.chip .dot,.ae-ai-badge::before{animation:none}*{animation:none!important;transition:none!important}}
+
+/* Loading state for the page */
+.loading-card{padding:32px;background:var(--rm-surface);border:1px solid var(--rm-border);border-radius:var(--ae-card-radius);text-align:center;color:var(--rm-muted);font-size:13px}
+.loading-card .spinner{border-color:rgba(0,77,53,.2);border-top-color:var(--rm-green-deep);width:20px;height:20px;margin-bottom:10px;display:block;margin-left:auto;margin-right:auto}
+
+@media(max-width:760px){
+  .ae-shell{padding:24px 20px 60px}
+  .ae-display{font-size:32px}
+  .opts{grid-template-columns:1fr}
+  .ae-topnav{padding:0 20px}
+}
+</style>
+</head>
+<body>
+
+<header class="ae-topnav">
+  <span class="ae-topnav-logo">rentmies <em>·</em> Growth Suite</span>
+  <div class="sp"></div>
+  <a href="/dashboard" class="skip">Saltar al dashboard →</a>
+</header>
+
+<main class="ae-shell">
+
+  <div id="loading" class="loading-card">
+    <div class="spinner"></div>
+    Cargando tu cuenta…
+  </div>
+
+  <div id="content" style="display:none">
+    <span class="ae-eyebrow">PASO 4 DE 4 · BIENVENIDA</span>
+    <h1 class="ae-display">¡Listo, <em id="hello-name">agente</em>!<br>Tu cuenta <em>está conectada.</em></h1>
+    <p class="ae-subhead">Puedes publicar tu primer post ahora mismo. Te toma 60 segundos. O entra al dashboard si prefieres explorar primero.</p>
+
+    <div class="chips" id="chips"></div>
+
+    <div class="divider"></div>
+
+    <span class="ae-eyebrow">EMPIEZA POR AQUÍ</span>
+    <div class="opts" id="opts">
+      <button class="opt" data-opt="quick" type="button">
+        <span class="opt-num">01 · 60 SEGUNDOS</span>
+        <span class="opt-title">Subir foto + caption</span>
+        <span class="opt-desc">Publica tu primer post directo desde aquí. Sin pasar por el dashboard.</span>
+      </button>
+      <button class="opt" data-opt="inventory" type="button">
+        <span class="opt-num">02 · CATÁLOGO</span>
+        <span class="opt-title">Conectar inventario</span>
+        <span class="opt-desc">Importa tus inmuebles para generar posts en lote con IA.</span>
+      </button>
+      <button class="opt" data-opt="dashboard" type="button">
+        <span class="opt-num">03 · EXPLORAR</span>
+        <span class="opt-title">Saltar al dashboard</span>
+        <span class="opt-desc">Mira la app primero. Vuelve a publicar cuando quieras.</span>
+      </button>
+    </div>
+
+    <!-- Inline mini-composer (revealed when option 1 is picked) -->
+    <section class="composer" id="composer" aria-live="polite">
+      <div class="composer-h">
+        <span>Tu primer post</span>
+        <span class="ae-ai-badge">CAMILORD ACTIVE</span>
+      </div>
+
+      <div id="banner" class="banner"></div>
+
+      <div class="field">
+        <label class="field-label">Imagen del inmueble</label>
+        <div class="drop" id="drop">
+          <input type="file" id="file" accept="image/jpeg,image/jpg,image/png,image/webp">
+          <button class="drop-clear" id="dropClear" type="button">QUITAR</button>
+          <div id="dropEmpty">
+            <div class="drop-title">Arrastra una foto o haz clic</div>
+            <div class="drop-sub">JPG · PNG · WEBP · MAX 8MB</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="field">
+        <label class="field-label">Caption</label>
+        <div class="cap-row">
+          <textarea class="textarea" id="caption" placeholder="Apartamento de 2 habitaciones en El Poblado, vista a la montaña, $450M…"></textarea>
+          <button class="cap-ai" id="captionAi" type="button" disabled>
+            <svg width="9" height="9" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2L14.5 9.5L22 12L14.5 14.5L12 22L9.5 14.5L2 12L9.5 9.5L12 2Z"/></svg>
+            CAMILORD ESCRIBE
+          </button>
+        </div>
+      </div>
+
+      <div class="field">
+        <label class="field-label">¿Dónde publicamos?</label>
+        <div class="toggles" id="toggles">
+          <button class="toggle on" data-platform="facebook_page" type="button">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
+            Facebook
+          </button>
+          <button class="toggle on" data-platform="instagram" type="button" id="igToggle">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/></svg>
+            Instagram
+          </button>
+        </div>
+      </div>
+
+      <div class="publish-row">
+        <button class="publish-btn" id="publishBtn" type="button" disabled>PUBLICAR AHORA</button>
+        <span class="publish-note" id="publishNote">FALTA IMAGEN + CAPTION</span>
+      </div>
+    </section>
+  </div>
+
+</main>
+
+<script>
+const SB_TOKEN = localStorage.getItem('sb_token') || ''
+const SB_USER = (() => { try { return JSON.parse(localStorage.getItem('sb_user') || 'null') } catch { return null } })()
+const STATE = { connection: null, file: null, imageUrl: null, platforms: new Set(['facebook_page', 'instagram']), busy: false }
+
+const $ = (id) => document.getElementById(id)
+
+if (!SB_TOKEN) {
+  // No session — bounce to signup
+  window.location.replace('/signup?next=/welcome')
+}
+
+async function bootstrap () {
+  try {
+    const r = await fetch('/api/auth/meta/connection', {
+      headers: { Authorization: 'Bearer ' + SB_TOKEN }
+    })
+    if (!r.ok) {
+      // No connection yet → push them through OAuth
+      window.location.replace('/api/auth/meta/login?source=signup')
+      return
+    }
+    STATE.connection = await r.json()
+    renderShell()
+  } catch (err) {
+    $('loading').textContent = 'No pudimos cargar tu cuenta. ' + err.message
+  }
+}
+
+function renderShell () {
+  $('loading').style.display = 'none'
+  $('content').style.display = ''
+
+  const conn = STATE.connection
+  const firstName = (conn.meta_user_name || (SB_USER && SB_USER.email && SB_USER.email.split('@')[0]) || 'agente').split(' ')[0]
+  $('hello-name').textContent = firstName
+
+  // Build chips for connected accounts
+  const chips = []
+  if (conn.page_name) {
+    chips.push(chipHtml({
+      icon: '<svg width="12" height="12" viewBox="0 0 24 24" fill="#1877F2"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>',
+      label: 'Facebook',
+      name: conn.page_name
+    }))
+  }
+  if (conn.ig_username) {
+    chips.push(chipHtml({
+      icon: '<svg width="12" height="12" viewBox="0 0 24 24" fill="#e1306c"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4z"/></svg>',
+      label: 'Instagram',
+      name: '@' + conn.ig_username,
+      live: true
+    }))
+  } else {
+    // Disable IG toggle if no IG linked
+    const igBtn = $('igToggle')
+    igBtn.classList.remove('on')
+    igBtn.classList.add('disabled')
+    igBtn.disabled = true
+    igBtn.title = 'Sin cuenta de Instagram vinculada a esta página'
+    STATE.platforms.delete('instagram')
+  }
+  if (conn.whatsapp_display_name || conn.whatsapp_phone_number_id) {
+    chips.push(chipHtml({
+      icon: '<svg width="12" height="12" viewBox="0 0 24 24" fill="#25D366"><path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-.999 3.648 3.742-.981z"/></svg>',
+      label: 'WhatsApp',
+      name: conn.whatsapp_display_name || ('+' + conn.whatsapp_phone_number_id)
+    }))
+  }
+  $('chips').innerHTML = chips.join('') || '<span style="color:var(--rm-muted);font-size:12px">Sin cuentas conectadas — completa el onboarding desde /signup.</span>'
+
+  // Wire option buttons
+  document.querySelectorAll('.opt').forEach(b => {
+    b.addEventListener('click', () => onOpt(b.dataset.opt))
+  })
+
+  // Wire composer
+  setupComposer()
+}
+
+function chipHtml ({ icon, label, name, live }) {
+  return `
+    <span class="chip">
+      ${live ? '<span class="dot"></span>' : ''}
+      ${icon}
+      <span class="label">${label}</span>
+      <span class="name">${escapeHtml(name)}</span>
+    </span>`
+}
+
+function onOpt (kind) {
+  document.querySelectorAll('.opt').forEach(b => b.classList.toggle('active', b.dataset.opt === kind))
+  if (kind === 'quick') {
+    $('composer').classList.add('show')
+    $('composer').scrollIntoView({ behavior: 'smooth', block: 'start' })
+  } else if (kind === 'inventory') {
+    window.location.href = '/dashboard#inmuebles'
+  } else if (kind === 'dashboard') {
+    window.location.href = '/dashboard'
+  }
+}
+
+function setupComposer () {
+  // File pick + drag & drop
+  const drop = $('drop'), file = $('file'), empty = $('dropEmpty'), clear = $('dropClear')
+  file.addEventListener('change', e => onFile(e.target.files[0]))
+  drop.addEventListener('dragover', e => { e.preventDefault(); drop.classList.add('over') })
+  drop.addEventListener('dragleave', () => drop.classList.remove('over'))
+  drop.addEventListener('drop', e => {
+    e.preventDefault(); drop.classList.remove('over')
+    if (e.dataTransfer.files && e.dataTransfer.files[0]) onFile(e.dataTransfer.files[0])
+  })
+  clear.addEventListener('click', e => { e.stopPropagation(); resetFile() })
+
+  // Caption + AI button enable
+  const caption = $('caption')
+  caption.addEventListener('input', updatePublish)
+  $('captionAi').addEventListener('click', generateCaption)
+
+  // Platform toggles
+  document.querySelectorAll('.toggle').forEach(t => {
+    t.addEventListener('click', () => {
+      if (t.disabled) return
+      const p = t.dataset.platform
+      if (STATE.platforms.has(p)) { STATE.platforms.delete(p); t.classList.remove('on') }
+      else { STATE.platforms.add(p); t.classList.add('on') }
+      updatePublish()
+    })
+  })
+
+  $('publishBtn').addEventListener('click', publish)
+}
+
+async function onFile (f) {
+  if (!f) return
+  if (f.size > 8 * 1024 * 1024) return banner('La imagen pesa más de 8MB. Comprímela primero.', 'err')
+  if (!/^image\/(jpeg|jpg|png|webp)$/i.test(f.type)) return banner('Formato no soportado. Usa JPG, PNG o WEBP.', 'err')
+
+  STATE.file = f
+  STATE.imageUrl = null
+  $('captionAi').disabled = true
+  banner('Subiendo imagen…', 'info')
+
+  // Preview
+  const url = URL.createObjectURL(f)
+  const drop = $('drop')
+  drop.classList.add('has-file')
+  $('dropEmpty').style.display = 'none'
+  // Insert preview img
+  let img = drop.querySelector('img')
+  if (!img) { img = document.createElement('img'); drop.insertBefore(img, drop.firstChild) }
+  img.src = url
+
+  // Upload to Supabase Storage via /api/ai?action=upload-ref
+  try {
+    const b64 = await fileToBase64(f)
+    const r = await fetch('/api/ai?action=upload-ref', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ image_base64: b64, mime: f.type })
+    })
+    const j = await r.json()
+    if (!r.ok || !j.url) throw new Error(j.error || j.detail || 'No se pudo subir la imagen')
+    STATE.imageUrl = j.url
+    $('captionAi').disabled = false
+    banner('Imagen lista. Escribe un caption o deja que Camilord lo escriba por ti.', 'ok')
+    updatePublish()
+  } catch (err) {
+    banner('Error subiendo imagen: ' + err.message + ' — intenta otra foto.', 'err')
+  }
+}
+
+function resetFile () {
+  STATE.file = null; STATE.imageUrl = null
+  $('file').value = ''
+  const drop = $('drop')
+  drop.classList.remove('has-file')
+  const img = drop.querySelector('img')
+  if (img) img.remove()
+  $('dropEmpty').style.display = ''
+  $('captionAi').disabled = true
+  clearBanner()
+  updatePublish()
+}
+
+function fileToBase64 (f) {
+  return new Promise((res, rej) => {
+    const r = new FileReader()
+    r.onload = () => res(r.result.split(',')[1])
+    r.onerror = rej
+    r.readAsDataURL(f)
+  })
+}
+
+async function generateCaption () {
+  if (!STATE.imageUrl) return
+  const btn = $('captionAi'); const orig = btn.innerHTML
+  btn.disabled = true; btn.innerHTML = '<span class="spinner" style="width:9px;height:9px;border-width:1.5px;border-color:rgba(255,255,255,.4);border-top-color:#fff"></span> ESCRIBIENDO'
+  try {
+    const r = await fetch('/api/ai?action=caption', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        reference_image_url: STATE.imageUrl,
+        platform: STATE.platforms.has('instagram') ? 'instagram' : 'facebook_page',
+        custom_instructions: 'Caption corto y directo para inmobiliaria colombiana. Tono moderno y confiable. Sin emojis excesivos.'
+      })
+    })
+    const j = await r.json()
+    if (!r.ok) throw new Error(j.error || j.detail || 'AI no respondió')
+    const text = j.caption || j.text || j.copy || ''
+    if (!text) throw new Error('Camilord no devolvió texto. Escribe el caption manualmente.')
+    $('caption').value = text
+    updatePublish()
+  } catch (err) {
+    banner('Camilord no pudo escribir: ' + err.message, 'err')
+  } finally {
+    btn.disabled = false; btn.innerHTML = orig
+  }
+}
+
+function updatePublish () {
+  const hasImg = !!STATE.imageUrl
+  const hasCap = $('caption').value.trim().length > 0
+  const hasPlatform = STATE.platforms.size > 0
+  const ok = hasImg && hasCap && hasPlatform && !STATE.busy
+  $('publishBtn').disabled = !ok
+  let note = ''
+  if (!hasImg) note = 'FALTA IMAGEN'
+  else if (!hasCap) note = 'FALTA CAPTION'
+  else if (!hasPlatform) note = 'ELIGE AL MENOS UNA PLATAFORMA'
+  else note = STATE.platforms.size === 2 ? 'PUBLICA EN AMBAS A LA VEZ' : ('SOLO ' + Array.from(STATE.platforms)[0].toUpperCase().replace('_PAGE',''))
+  $('publishNote').textContent = note
+}
+
+async function publish () {
+  if (STATE.busy) return
+  STATE.busy = true
+  $('publishBtn').disabled = true
+  $('publishBtn').innerHTML = '<span class="spinner"></span> PUBLICANDO'
+  banner('Enviando a Meta…', 'info')
+
+  const empresaId = (SB_USER && SB_USER.id) || ''
+  const conn = STATE.connection
+  const headers = {
+    'Content-Type': 'application/json',
+    'x-meta-token': conn.long_lived_token,
+    'x-meta-page-id': conn.page_id || '',
+    'x-meta-ig-user-id': conn.ig_business_id || ''
+  }
+
+  const platforms = Array.from(STATE.platforms)
+  const results = []
+  let anyOk = false, firstUrl = null
+
+  for (const platform of platforms) {
+    try {
+      const r = await fetch('/api/social-post', {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({
+          empresa_id: empresaId,
+          platform,
+          caption: $('caption').value.trim(),
+          image_url: STATE.imageUrl
+        })
+      })
+      const j = await r.json()
+      if (r.ok && j.success) {
+        results.push({ platform, ok: true, url: j.url })
+        anyOk = true; firstUrl = firstUrl || j.url
+      } else {
+        results.push({ platform, ok: false, error: j.detail || j.error || ('HTTP ' + r.status) })
+      }
+    } catch (err) {
+      results.push({ platform, ok: false, error: err.message })
+    }
+  }
+
+  STATE.busy = false
+  $('publishBtn').innerHTML = 'PUBLICAR OTRO'
+
+  if (anyOk) {
+    const okList = results.filter(r => r.ok).map(r => `<a href="${escapeAttr(r.url)}" target="_blank">${labelOf(r.platform)} →</a>`).join(' · ')
+    const failList = results.filter(r => !r.ok).map(r => `${labelOf(r.platform)}: ${escapeHtml(r.error)}`).join(' · ')
+    banner(
+      `<strong>¡Publicado!</strong> ${okList}` +
+      (failList ? ` <br><span style="opacity:.8">Fallaron: ${failList}</span>` : '') +
+      ` <br>Puedes <a href="/dashboard">ir al dashboard</a> o publicar otro post.`,
+      'ok'
+    )
+    // Reset for the next post — keep image so they can send to the other platform if they want
+    $('caption').value = ''
+    updatePublish()
+  } else {
+    banner('No se pudo publicar: ' + results.map(r => `${labelOf(r.platform)}: ${escapeHtml(r.error)}`).join(' · ') + '. Si el token expiró, <a href="/api/auth/meta/login?source=reconnect">reconecta tu cuenta</a>.', 'err')
+    $('publishBtn').textContent = 'REINTENTAR'
+    updatePublish()
+  }
+}
+
+function labelOf (p) { return p === 'instagram' ? 'Instagram' : 'Facebook' }
+function banner (html, kind) {
+  const el = $('banner')
+  el.className = 'banner show ' + kind
+  el.innerHTML = html
+}
+function clearBanner () { $('banner').className = 'banner' }
+function escapeHtml (s) { return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])) }
+function escapeAttr (s) { return escapeHtml(s) }
+
+bootstrap()
+</script>
+</body>
+</html>

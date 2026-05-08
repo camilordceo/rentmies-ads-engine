@@ -349,7 +349,7 @@
       // 6.4 Resultado
       if (outJson.status === 'APPROVED') {
         alertSlot.innerHTML = `<div class="alert alert-success"><strong>¡Pago aprobado!</strong> Te llevamos al dashboard…</div>`
-        setTimeout(() => { window.location.href = outJson.next || '/dashboard' }, 1200)
+        setTimeout(() => { window.location.href = outJson.next || '/welcome' }, 1200)
       } else if (outJson.status === 'PENDING') {
         alertSlot.innerHTML = `<div class="alert alert-success"><strong>Pago en proceso.</strong> Te avisaremos por correo cuando se confirme. Puedes seguir al dashboard.</div>`
         document.getElementById('skip-link').style.display = 'inline-block'

@@ -237,7 +237,7 @@ module.exports = async (req, res) => {
       status: wompiTx.status,
       subscription_id: subId,
       reference,
-      next: wompiTx.status === 'APPROVED' ? '/dashboard' : null
+      next: wompiTx.status === 'APPROVED' ? '/welcome' : null
     })
   } catch (err) {
     console.error('[wompi/checkout]', err.message)

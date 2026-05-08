@@ -64,6 +64,23 @@ CREATE TABLE IF NOT EXISTS meta_connections (
 CREATE INDEX IF NOT EXISTS idx_meta_connections_meta_user_id
   ON meta_connections (meta_user_id);
 
+-- ── System User Token (Camino B) extensions ────────────────────
+-- Same table also holds connections that came from a System User token
+-- pasted in Settings (no OAuth). token_type tells us the origin so the
+-- token-refresh cron can skip system_user rows (those tokens never expire).
+ALTER TABLE meta_connections
+  ADD COLUMN IF NOT EXISTS token_type           TEXT DEFAULT 'oauth'
+    CHECK (token_type IN ('oauth', 'system_user')),
+  ADD COLUMN IF NOT EXISTS business_manager_id  TEXT,
+  ADD COLUMN IF NOT EXISTS system_user_id       TEXT,
+  ADD COLUMN IF NOT EXISTS last_tested_at       TIMESTAMPTZ;
+
+-- Allow meta_user_id and token_expires_at to be NULL for system_user rows
+-- (system users have no human "meta_user", and their token doesn't expire).
+ALTER TABLE meta_connections
+  ALTER COLUMN meta_user_id     DROP NOT NULL,
+  ALTER COLUMN token_expires_at DROP NOT NULL;
+
 -- ── published_posts ───────────────────────────────────────────
 -- Track every post published via the new OAuth flow. Augments
 -- the existing social_posts table; we're keeping both because
