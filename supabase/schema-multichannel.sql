@@ -387,6 +387,12 @@ ALTER TABLE tiktok_videos                  ENABLE ROW LEVEL SECURITY;
 -- ║ HELPFUL VIEWS                                                ║
 -- ╚══════════════════════════════════════════════════════════════╝
 
+-- Ensure meta_connections has the columns this view references —
+-- they are normally created by schema-meta-oauth.sql, but we add
+-- them defensively so the order of script execution doesn't matter.
+ALTER TABLE meta_connections
+  ADD COLUMN IF NOT EXISTS token_type TEXT DEFAULT 'oauth';
+
 -- A single "channel health" view so the dashboard banner can query
 -- one place instead of joining four tables on the client.
 CREATE OR REPLACE VIEW channel_health_summary AS

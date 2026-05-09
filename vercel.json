@@ -13,8 +13,10 @@
   ],
   "functions": {
     "api/**/*.js":                          { "maxDuration": 30 },
-    "api/cron-*.js":                        { "maxDuration": 60 },
-    "api/cron/**/*.js":                    { "maxDuration": 60 },
+    "api/cron-publish.js":                  { "maxDuration": 60 },
+    "api/cron-refresh-tokens.js":           { "maxDuration": 60 },
+    "api/cron-renew-subscriptions.js":      { "maxDuration": 60 },
+    "api/cron/**/*.js":                     { "maxDuration": 60 },
     "api/ai.js":                            { "maxDuration": 60 },
     "api/social-post.js":                   { "maxDuration": 60 },
     "api/posts/publish/instagram.js":       { "maxDuration": 60 },
