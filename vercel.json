@@ -12,15 +12,7 @@
     { "source": "/welcome",                "destination": "/welcome.html" }
   ],
   "functions": {
-    "api/**/*.js":                          { "maxDuration": 30 },
-    "api/cron-publish.js":                  { "maxDuration": 60 },
-    "api/cron-refresh-tokens.js":           { "maxDuration": 60 },
-    "api/cron-renew-subscriptions.js":      { "maxDuration": 60 },
-    "api/cron/**/*.js":                     { "maxDuration": 60 },
-    "api/ai.js":                            { "maxDuration": 60 },
-    "api/social-post.js":                   { "maxDuration": 60 },
-    "api/posts/publish/instagram.js":       { "maxDuration": 60 },
-    "api/google/campaigns/create-pmax.js":  { "maxDuration": 60 }
+    "api/**/*.js": { "maxDuration": 60 }
   },
   "crons": [
     { "path": "/api/cron-publish",                "schedule": "55 13 * * *" },
