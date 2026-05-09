@@ -18,7 +18,7 @@
   // Each channel groups a set of flat data-page ids. The first id
   // in the list is the channel's default landing page.
   const CHANNELS = {
-    meta:     { default: 'quickpost',       pages: ['quickpost', 'schedule', 'inmuebles', 'posts'] },
+    meta:     { default: 'quickpost',       pages: ['quickpost', 'schedule', 'inmuebles', 'meta-videos', 'posts'] },
     whatsapp: { default: 'whatsapp',        pages: ['whatsapp', 'wa-broadcasts', 'wa-analytics', 'wa-template-new', 'wa-template-edit', 'wa-broadcast-new', 'wa-broadcast-detail'] },
     google:   { default: 'google-campaigns', pages: ['google-campaigns', 'google-campaign-new', 'google-pmax', 'google-leads', 'google-analytics', 'google-campaign-detail'] },
     tiktok:   { default: 'tiktok-videos',   pages: ['tiktok-videos', 'tiktok-schedule', 'tiktok-analytics'] }
@@ -70,6 +70,7 @@
     'meta/quickpost':               'quickpost',
     'meta/schedule':                'schedule',
     'meta/inmuebles':               'inmuebles',
+    'meta/videos':                  'meta-videos',
     'meta/posts':                   'posts'
   }
 

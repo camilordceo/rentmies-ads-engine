@@ -1,11 +1,20 @@
 /**
  * POST /api/posts/publish/facebook
  *      Authorization: Bearer <supabase_jwt>  (or x-empresa-id header for demo)
- *      body: { caption, image_url?, link?, inventario_id? }
+ *      body: { caption, image_url?, video_url?, link?, inventario_id?, media_video_id? }
  *
  * Publishes to the Facebook Page stored in meta_connections, using the
  * page-level access token (NOT the system_user token). Logs the result
  * to published_posts.
+ *
+ * Branches:
+ *   video_url present → POST /{page_id}/videos with file_url + description
+ *   image_url present → POST /{page_id}/photos
+ *   link present      → POST /{page_id}/feed with link
+ *   else              → POST /{page_id}/feed text-only
+ *
+ * media_video_id (FK to media_videos) is recorded on published_posts so
+ * usage_count auto-increments via the trigger from schema-videos-bloque4.sql.
  */
 
 const axios = require('axios')
@@ -27,9 +36,12 @@ module.exports = async (req, res) => {
   const auth = await authedEmpresa(req, sb)
   if (auth.error) return res.status(auth.status).json({ error: auth.error })
 
-  const { caption, image_url, link, inventario_id } = req.body || {}
-  if (!caption && !image_url && !link) {
-    return res.status(400).json({ error: 'Necesito al menos caption, image_url o link' })
+  const { caption, image_url, video_url, link, inventario_id, media_video_id } = req.body || {}
+  if (!caption && !image_url && !video_url && !link) {
+    return res.status(400).json({ error: 'Necesito al menos caption, image_url, video_url o link' })
+  }
+  if (video_url && !video_url.startsWith('https://')) {
+    return res.status(400).json({ error: 'video_url debe ser una URL pública HTTPS', code: 'video_not_public' })
   }
 
   let conn
@@ -47,21 +59,33 @@ module.exports = async (req, res) => {
     return res.status(400).json({ error: 'Sin Page Access Token. Vuelve a probar la conexión en Settings.', code: 'no_page_token' })
   }
 
+  const mediaKind = video_url ? 'video' : (image_url ? 'image' : (link ? 'link' : 'text'))
   // Insert pending row so we can update with success/failure + show in history immediately
   let pending = await logPublished(sb, {
     empresa_id: auth.empresaId,
     meta_connection_id: conn.id,
     inventario_id: inventario_id || null,
-    platform: 'facebook',
+    platform: video_url ? 'facebook_video' : 'facebook',
     caption: caption || null,
-    media_url: image_url || null,
-    media_kind: image_url ? 'image' : (link ? 'link' : 'text'),
+    media_url: video_url || image_url || null,
+    media_kind: mediaKind,
+    media_video_id: (video_url && media_video_id) ? media_video_id : null,
     status: 'publishing'
   })
 
   try {
     let postId, permalink
-    if (image_url && image_url.startsWith('http')) {
+    if (video_url) {
+      // Facebook Page video upload via file_url. Returns immediately with id;
+      // FB processes async — the video appears on the page within seconds.
+      const { data } = await axios.post(`${META_GRAPH}/${conn.page_id}/videos`, null, {
+        params: { file_url: video_url, description: caption || '', access_token: pageToken },
+        timeout: 60000
+      })
+      postId = data.id
+      // FB videos use a different permalink shape
+      permalink = `https://www.facebook.com/${conn.page_id}/videos/${postId}`
+    } else if (image_url && image_url.startsWith('http')) {
       const { data } = await axios.post(`${META_GRAPH}/${conn.page_id}/photos`, null, {
         params: { url: image_url, caption: caption || '', access_token: pageToken },
         timeout: 30000

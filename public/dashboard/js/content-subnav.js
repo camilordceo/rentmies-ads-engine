@@ -34,10 +34,11 @@
   // what rmRouter.goTo() expects — flat page ids match index.html.
   const CHANNEL_NAVS = {
     meta: [
-      { id: 'quickpost', label: 'Quick Post', icon: ICON.quickpost },
-      { id: 'schedule',  label: 'Campañas',   icon: ICON.schedule },
-      { id: 'inmuebles', label: 'Inmuebles',  icon: ICON.inmuebles },
-      { id: 'posts',     label: 'Historial',  icon: ICON.history }
+      { id: 'quickpost',    label: 'Quick Post', icon: ICON.quickpost },
+      { id: 'schedule',     label: 'Campañas',   icon: ICON.schedule },
+      { id: 'inmuebles',    label: 'Inmuebles',  icon: ICON.inmuebles },
+      { id: 'meta-videos',  label: 'Videos',     icon: ICON.video },
+      { id: 'posts',        label: 'Historial',  icon: ICON.history }
     ],
     whatsapp: [
       { id: 'whatsapp',       label: 'Templates',  icon: ICON.whatsapp },

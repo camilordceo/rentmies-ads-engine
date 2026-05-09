@@ -16,6 +16,7 @@
     inmuebles: [],
     inmuebleSource: '',
     customImageUrl: '',
+    mediaVideoId: null,                              // FK to media_videos when using a library video
     customInstructions: '',
     caption: '',
     platform: 'instagram',                          // legacy, kept for AI caption hint
@@ -74,7 +75,10 @@
                 </div>
                 <div class="ae-field">
                   <label class="ae-field-label" for="qp-img-file">O sube imagen (≤3MB) o video (≤250MB)</label>
-                  <input id="qp-img-file" class="ae-input" type="file" accept="image/png,image/jpeg,image/webp,video/mp4,video/quicktime,video/webm" style="padding:7px 10px; font-size:11px;" />
+                  <div style="display:flex; gap:6px; align-items:center;">
+                    <input id="qp-img-file" class="ae-input" type="file" accept="image/png,image/jpeg,image/webp,video/mp4,video/quicktime,video/webm" style="flex:1; padding:7px 10px; font-size:11px;" />
+                    <button type="button" id="qp-pick-library" class="ae-btn-ghost" style="padding:7px 12px; font-size:11px; white-space:nowrap;" title="Elegir video de tu librería">📹 Librería</button>
+                  </div>
                 </div>
               </div>
 
@@ -237,6 +241,25 @@
 
     refreshCredsCard()
     wire()
+
+    // Pre-fill from "Use this video" coming from the library page
+    try {
+      const presetRaw = sessionStorage.getItem('rm_quickpost_preset_video')
+      if (presetRaw) {
+        const preset = JSON.parse(presetRaw)
+        if (preset && preset.url) {
+          state.customImageUrl = preset.url
+          state.mediaKind = preset.kind || 'video'
+          state.mediaVideoId = preset.video_id || null
+          const urlInput = document.getElementById('qp-img-url')
+          if (urlInput) urlInput.value = preset.url
+          const status = document.getElementById('qp-img-status')
+          if (status && preset.title) status.textContent = `✓ Video de librería: ${preset.title}`
+        }
+        sessionStorage.removeItem('rm_quickpost_preset_video')
+      }
+    } catch (_) {}
+
     syncFromState()
   }
 
@@ -291,9 +314,11 @@
   function wire() {
     document.getElementById('qp-img-url').addEventListener('input', e => {
       state.customImageUrl = e.target.value.trim()
+      state.mediaVideoId = null    // manual URL change drops the library link
       syncFromState()
     })
     document.getElementById('qp-img-file').addEventListener('change', handleFileUpload)
+    document.getElementById('qp-pick-library')?.addEventListener('click', openLibraryPicker)
 
     renderPlatformCards()
     document.getElementById('qp-caption').addEventListener('input', e => {
@@ -381,6 +406,32 @@
     `
   }
 
+  // ── Library picker ─────────────────────────────────────────
+  function openLibraryPicker () {
+    if (!window.rmVideoLibrary) {
+      window.rmToast?.('Librería no cargada — refresca la página', 'error')
+      return
+    }
+    // If user has selected only Instagram + Reels would be the placement,
+    // filter to ig_reels-compatible. Otherwise show all videos.
+    const platforms = Array.from(state.platforms)
+    let platformFilter = 'all'
+    if (platforms.length === 1 && platforms[0] === 'instagram') platformFilter = 'ig_reels'
+    if (platforms.length === 1 && platforms[0] === 'facebook_page') platformFilter = 'fb_feed'
+
+    window.rmVideoLibrary.open({ platform: platformFilter, title: 'Elige un video de tu librería' }, video => {
+      if (!video) return
+      state.customImageUrl = video.source_url
+      state.mediaKind = 'video'
+      state.mediaVideoId = video.id
+      const urlInput = document.getElementById('qp-img-url')
+      if (urlInput) urlInput.value = video.source_url
+      const status = document.getElementById('qp-img-status')
+      if (status) status.textContent = `✓ Video de librería: ${video.title}`
+      syncFromState()
+    })
+  }
+
   // ── File upload (Supabase via /api/ai?action=upload-ref) ──
 
   async function handleFileUpload(e) {
@@ -397,6 +448,7 @@
       })
       state.customImageUrl = result.url
       state.mediaKind = result.kind
+      state.mediaVideoId = null            // direct upload — not from library
       document.getElementById('qp-img-url').value = result.url
       status.textContent = `✓ ${result.kind === 'video' ? 'Video' : 'Imagen'} subido`
       syncFromState()
@@ -599,7 +651,11 @@
       const url = platform === 'instagram'
         ? '/api/posts/publish/instagram'
         : '/api/posts/publish/facebook'
-      const body = { caption, inventario_id: inmueble ? inmueble.id : null }
+      const body = {
+        caption,
+        inventario_id: inmueble ? inmueble.id : null,
+        media_video_id: (isVideo && state.mediaVideoId) ? state.mediaVideoId : undefined
+      }
       if (platform === 'instagram') {
         if (isVideo) { body.media_type = 'REELS'; body.video_url = mediaUrl }
         else { body.media_type = 'IMAGE'; body.image_url = mediaUrl }

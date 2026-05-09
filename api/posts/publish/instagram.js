@@ -46,7 +46,7 @@ module.exports = async (req, res) => {
   const auth = await authedEmpresa(req, sb)
   if (auth.error) return res.status(auth.status).json({ error: auth.error })
 
-  const { caption, image_url, video_url, inventario_id } = req.body || {}
+  const { caption, image_url, video_url, inventario_id, media_video_id } = req.body || {}
   const media_type = (req.body && req.body.media_type) || (video_url ? 'REELS' : 'IMAGE')
 
   if (caption && caption.length > 2200) {
@@ -106,6 +106,7 @@ module.exports = async (req, res) => {
     caption: caption || null,
     media_url: image_url || video_url || null,
     media_kind: video_url ? 'video' : 'image',
+    media_video_id: (video_url && media_video_id) ? media_video_id : null,
     status: 'publishing'
   })
 
