@@ -387,11 +387,26 @@ ALTER TABLE tiktok_videos                  ENABLE ROW LEVEL SECURITY;
 -- ║ HELPFUL VIEWS                                                ║
 -- ╚══════════════════════════════════════════════════════════════╝
 
--- Ensure meta_connections has the columns this view references —
--- they are normally created by schema-meta-oauth.sql, but we add
--- them defensively so the order of script execution doesn't matter.
+-- Make sure meta_connections exists with the columns this view
+-- references. Normally created in full by schema-meta-oauth.sql;
+-- here we add what we need so the order of script execution and
+-- legacy table state don't break the view definition.
+CREATE TABLE IF NOT EXISTS meta_connections (
+  id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  empresa_id  UUID NOT NULL REFERENCES empresas(id) ON DELETE CASCADE,
+  status      TEXT DEFAULT 'active',
+  created_at  TIMESTAMPTZ DEFAULT NOW(),
+  updated_at  TIMESTAMPTZ DEFAULT NOW()
+);
+
 ALTER TABLE meta_connections
-  ADD COLUMN IF NOT EXISTS token_type TEXT DEFAULT 'oauth';
+  ADD COLUMN IF NOT EXISTS status            TEXT DEFAULT 'active',
+  ADD COLUMN IF NOT EXISTS token_type        TEXT DEFAULT 'oauth',
+  ADD COLUMN IF NOT EXISTS token_expires_at  TIMESTAMPTZ,
+  ADD COLUMN IF NOT EXISTS waba_id           TEXT,
+  ADD COLUMN IF NOT EXISTS page_id           TEXT,
+  ADD COLUMN IF NOT EXISTS page_name         TEXT,
+  ADD COLUMN IF NOT EXISTS ig_business_id    TEXT;
 
 -- A single "channel health" view so the dashboard banner can query
 -- one place instead of joining four tables on the client.
