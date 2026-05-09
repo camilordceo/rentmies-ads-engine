@@ -41,12 +41,32 @@
     "api/wompi/checkout.js":           { "maxDuration": 30 },
     "api/wompi/webhook.js":            { "maxDuration": 15 },
     "api/wompi/subscription.js":       { "maxDuration": 10 },
-    "api/cron-renew-subscriptions.js": { "maxDuration": 60 }
+    "api/cron-renew-subscriptions.js": { "maxDuration": 60 },
+    "api/cron/process-broadcasts.js":  { "maxDuration": 60 },
+    "api/whatsapp/templates/sync.js":   { "maxDuration": 30 },
+    "api/whatsapp/templates/submit.js": { "maxDuration": 30 },
+    "api/whatsapp/templates/save.js":   { "maxDuration": 15 },
+    "api/whatsapp/templates/list.js":   { "maxDuration": 15 },
+    "api/whatsapp/templates/create.js": { "maxDuration": 15 },
+    "api/whatsapp/broadcasts/list.js":  { "maxDuration": 15 },
+    "api/whatsapp/broadcasts/create.js":{ "maxDuration": 30 },
+    "api/whatsapp/broadcasts/start.js": { "maxDuration": 15 },
+    "api/webhooks/meta.js":             { "maxDuration": 15 },
+    "api/google/connection.js":         { "maxDuration": 10 },
+    "api/google/campaigns/list.js":     { "maxDuration": 15 },
+    "api/google/campaigns/create.js":   { "maxDuration": 15 },
+    "api/google/oauth/start.js":        { "maxDuration": 5 },
+    "api/google/oauth/callback.js":     { "maxDuration": 15 },
+    "api/tiktok/connection.js":         { "maxDuration": 10 },
+    "api/tiktok/oauth/start.js":        { "maxDuration": 5 },
+    "api/tiktok/oauth/callback.js":     { "maxDuration": 15 },
+    "api/tiktok/videos/list.js":        { "maxDuration": 15 }
   },
   "crons": [
     { "path": "/api/cron-publish",              "schedule": "55 13 * * *" },
     { "path": "/api/cron-refresh-tokens",       "schedule": "0 3 * * *" },
-    { "path": "/api/cron-renew-subscriptions",  "schedule": "0 4 * * *" }
+    { "path": "/api/cron-renew-subscriptions",  "schedule": "0 4 * * *" },
+    { "path": "/api/cron/process-broadcasts",   "schedule": "* * * * *" }
   ],
   "headers": [
     {

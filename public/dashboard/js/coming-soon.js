@@ -14,17 +14,17 @@
 
   // Page id → { channel, title, eyebrow, lede, milestone }
   const STUBS = {
-    'wa-broadcasts': {
+    'wa-broadcast-detail': {
       channel: 'whatsapp',
-      title: 'Broadcasts <em>masivos</em>',
-      eyebrow: 'WHATSAPP · BROADCASTS',
-      lede: 'Sube tu CSV de contactos y dispara templates aprobadas a miles de leads en minutos. Cumple con políticas de Meta — solo plantillas pre-validadas.',
-      milestone: 'Disponible en el Bloque 2',
+      title: 'Detalle del <em>broadcast</em>',
+      eyebrow: 'WHATSAPP · BROADCAST DETAIL',
+      lede: 'Vista detallada del broadcast con timeline en vivo, lista filtrable de destinatarios, y export de los que fallaron para reintentar.',
+      milestone: 'Próximamente',
       bullets: [
-        'CSV de hasta 10,000 contactos por broadcast',
-        'Variables dinámicas con merge tags por contacto',
-        'Tracking en vivo (enviado · entregado · leído · respuesta)',
-        'Tier de mensajería de tu WABA visible en cada launch'
+        'Timeline minuto-a-minuto del envío',
+        'Filtrar destinatarios por status (sent / delivered / read / failed)',
+        'Export CSV de los fallidos con error_code para análisis',
+        'Botón pausar/reanudar el broadcast en vivo'
       ]
     },
     'wa-analytics': {

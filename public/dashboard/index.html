@@ -65,7 +65,12 @@
   <script src="js/page-posts-history.js" defer></script>
   <script src="js/camilord-quickpost.js" defer></script>
   <script src="js/page-inmuebles.js" defer></script>
-  <script src="js/page-whatsapp.js" defer></script>
+  <script src="js/whatsapp/template-validation.js" defer></script>
+  <script src="js/whatsapp/template-presets.js" defer></script>
+  <script src="js/whatsapp/page-templates.js" defer></script>
+  <script src="js/whatsapp/page-template-editor.js" defer></script>
+  <script src="js/whatsapp/page-broadcasts.js" defer></script>
+  <script src="js/whatsapp/page-broadcast-wizard.js" defer></script>
   <script src="js/page-campaign-builder.js" defer></script>
   <script src="js/dashboard.js" defer></script>
   <script src="js/history.js" defer></script>
@@ -147,10 +152,22 @@
       <section data-page="posts"><!-- page-posts-history.js renders here --></section>
 
       <!-- WHATSAPP TEMPLATES (channel: WhatsApp) -->
-      <section data-page="whatsapp"><!-- page-whatsapp.js renders here --></section>
+      <section data-page="whatsapp"><!-- js/whatsapp/page-templates.js renders here --></section>
+
+      <!-- WHATSAPP TEMPLATE EDITOR — new -->
+      <section data-page="wa-template-new"><!-- js/whatsapp/page-template-editor.js renders here --></section>
+
+      <!-- WHATSAPP TEMPLATE EDITOR — edit existing -->
+      <section data-page="wa-template-edit"><!-- js/whatsapp/page-template-editor.js renders here --></section>
 
       <!-- WHATSAPP BROADCASTS (channel: WhatsApp) -->
       <section data-page="wa-broadcasts"><!-- js/whatsapp/page-broadcasts.js renders here --></section>
+
+      <!-- WHATSAPP BROADCAST WIZARD — new -->
+      <section data-page="wa-broadcast-new"><!-- js/whatsapp/page-broadcast-wizard.js renders here --></section>
+
+      <!-- WHATSAPP BROADCAST DETAIL -->
+      <section data-page="wa-broadcast-detail"><!-- js/whatsapp/page-broadcast-detail.js renders here --></section>
 
       <!-- WHATSAPP ANALYTICS (channel: WhatsApp) -->
       <section data-page="wa-analytics"><!-- js/whatsapp/page-analytics.js renders here --></section>

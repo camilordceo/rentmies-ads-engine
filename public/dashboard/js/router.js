@@ -19,7 +19,7 @@
   // in the list is the channel's default landing page.
   const CHANNELS = {
     meta:     { default: 'quickpost',       pages: ['quickpost', 'schedule', 'inmuebles', 'posts'] },
-    whatsapp: { default: 'whatsapp',        pages: ['whatsapp', 'wa-broadcasts', 'wa-analytics'] },
+    whatsapp: { default: 'whatsapp',        pages: ['whatsapp', 'wa-broadcasts', 'wa-analytics', 'wa-template-new', 'wa-template-edit', 'wa-broadcast-new', 'wa-broadcast-detail'] },
     google:   { default: 'google-campaigns', pages: ['google-campaigns', 'google-pmax', 'google-leads'] },
     tiktok:   { default: 'tiktok-videos',   pages: ['tiktok-videos', 'tiktok-schedule', 'tiktok-analytics'] }
   }
@@ -51,19 +51,23 @@
   //   #google/performance-max → 'google-pmax'
   //   #tiktok/videos        → 'tiktok-videos'
   const SUBROUTE_ALIASES = {
-    'whatsapp/templates':       'whatsapp',
-    'whatsapp/broadcasts':      'wa-broadcasts',
-    'whatsapp/analytics':       'wa-analytics',
-    'google/campaigns':         'google-campaigns',
-    'google/performance-max':   'google-pmax',
-    'google/lead-forms':        'google-leads',
-    'tiktok/videos':            'tiktok-videos',
-    'tiktok/schedule':          'tiktok-schedule',
-    'tiktok/analytics':         'tiktok-analytics',
-    'meta/quickpost':           'quickpost',
-    'meta/schedule':            'schedule',
-    'meta/inmuebles':           'inmuebles',
-    'meta/posts':               'posts'
+    'whatsapp/templates':           'whatsapp',
+    'whatsapp/templates/new':       'wa-template-new',
+    'whatsapp/templates/edit':      'wa-template-edit',
+    'whatsapp/broadcasts':          'wa-broadcasts',
+    'whatsapp/broadcasts/new':      'wa-broadcast-new',
+    'whatsapp/broadcasts/detail':   'wa-broadcast-detail',
+    'whatsapp/analytics':           'wa-analytics',
+    'google/campaigns':             'google-campaigns',
+    'google/performance-max':       'google-pmax',
+    'google/lead-forms':            'google-leads',
+    'tiktok/videos':                'tiktok-videos',
+    'tiktok/schedule':              'tiktok-schedule',
+    'tiktok/analytics':             'tiktok-analytics',
+    'meta/quickpost':               'quickpost',
+    'meta/schedule':                'schedule',
+    'meta/inmuebles':               'inmuebles',
+    'meta/posts':                   'posts'
   }
 
   function normalizeHash (raw) {
