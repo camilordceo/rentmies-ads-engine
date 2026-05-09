@@ -92,7 +92,8 @@ FROM google_campaigns c
 WHERE c.status != 'REMOVED';
 
 -- ── updated_at triggers for the new table ────────────────────────
-DROP TRIGGER IF EXISTS trg_google_recommendations_touched ON google_recommendations;
-CREATE TRIGGER trg_google_recommendations_touched
+-- Postgres 14+ supports CREATE OR REPLACE TRIGGER, so we avoid the
+-- DROP-then-CREATE pattern (Supabase flags raw DROP as destructive).
+CREATE OR REPLACE TRIGGER trg_google_recommendations_touched
   BEFORE UPDATE ON google_recommendations
   FOR EACH ROW EXECUTE FUNCTION rentmies_set_updated_at();

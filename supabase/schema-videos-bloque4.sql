@@ -81,6 +81,28 @@ ALTER TABLE media_videos ENABLE ROW LEVEL SECURITY;
 -- Optional FK from a published post back to its source video so
 -- usage_count can be incremented and the library can show "this
 -- video has been published 3× to IG, 1× to FB".
+--
+-- Make sure published_posts exists with the columns the trigger
+-- function and the view need. Normally created in full by
+-- schema-meta-oauth.sql; this defensive create lets schema-videos
+-- run on a Supabase that hasn't applied the meta-oauth schema yet.
+CREATE TABLE IF NOT EXISTS published_posts (
+  id                   UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  empresa_id           UUID NOT NULL REFERENCES empresas(id) ON DELETE CASCADE,
+  inventario_id        UUID,
+  platform             TEXT NOT NULL,
+  caption              TEXT,
+  media_url            TEXT,
+  media_kind           TEXT,
+  post_id              TEXT,
+  post_permalink       TEXT,
+  status               TEXT DEFAULT 'published',
+  error_message        TEXT,
+  scheduled_at         TIMESTAMPTZ,
+  published_at         TIMESTAMPTZ,
+  created_at           TIMESTAMPTZ DEFAULT NOW()
+);
+
 ALTER TABLE published_posts
   ADD COLUMN IF NOT EXISTS media_video_id UUID REFERENCES media_videos(id) ON DELETE SET NULL;
 
@@ -88,8 +110,8 @@ CREATE INDEX IF NOT EXISTS idx_published_posts_media_video
   ON published_posts (media_video_id) WHERE media_video_id IS NOT NULL;
 
 -- ── updated_at trigger ──────────────────────────────────────────
-DROP TRIGGER IF EXISTS trg_media_videos_updated_at ON media_videos;
-CREATE TRIGGER trg_media_videos_updated_at
+-- Postgres 14+ supports CREATE OR REPLACE TRIGGER, so no DROP first.
+CREATE OR REPLACE TRIGGER trg_media_videos_updated_at
   BEFORE UPDATE ON media_videos
   FOR EACH ROW EXECUTE FUNCTION rentmies_set_updated_at();
 
@@ -109,8 +131,7 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
-DROP TRIGGER IF EXISTS trg_published_posts_bump_video_usage ON published_posts;
-CREATE TRIGGER trg_published_posts_bump_video_usage
+CREATE OR REPLACE TRIGGER trg_published_posts_bump_video_usage
   AFTER INSERT ON published_posts
   FOR EACH ROW EXECUTE FUNCTION rentmies_bump_video_usage();
 
