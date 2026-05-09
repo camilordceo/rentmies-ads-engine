@@ -40,43 +40,17 @@
         'Comparativa contra benchmarks del sector inmobiliario'
       ]
     },
-    'google-campaigns': {
+    'google-campaign-detail': {
       channel: 'google',
-      title: 'Google <em>Campaigns</em>',
-      eyebrow: 'GOOGLE ADS · CAMPAIGNS',
-      lede: 'Crea campañas de Search, Display y YouTube directo desde Rentmies. Keywords pre-armadas para inmobiliarias colombianas.',
-      milestone: 'Disponible en el Bloque 3',
+      title: 'Detalle de <em>campaña</em>',
+      eyebrow: 'GOOGLE ADS · CAMPAIGN DETAIL',
+      lede: 'Vista detallada con time-series por día, asset performance breakdown, search terms report, y controles de presupuesto en vivo.',
+      milestone: 'Próximamente',
       bullets: [
-        'OAuth con Google Ads (developer token approved)',
-        'Search campaigns con keywords inmobiliarias por ciudad',
-        'Display ads usando los assets que ya generas para Meta',
-        'Tracking unificado de conversiones con WhatsApp'
-      ]
-    },
-    'google-pmax': {
-      channel: 'google',
-      title: 'Performance <em>Max</em>',
-      eyebrow: 'GOOGLE ADS · PERFORMANCE MAX',
-      lede: 'Una sola campaña que distribuye automáticamente entre Search, Display, YouTube, Maps y Discover. La IA de Google optimiza el mix.',
-      milestone: 'Disponible en el Bloque 3',
-      bullets: [
-        'Asset groups con headlines + descripciones + imágenes',
-        'Audience signals para targeting inmobiliario',
-        'Conversion tracking integrado con tu CRM',
-        'Reporte de placements donde realmente convirtió'
-      ]
-    },
-    'google-leads': {
-      channel: 'google',
-      title: 'Lead <em>Forms</em>',
-      eyebrow: 'GOOGLE ADS · LEAD FORMS',
-      lede: 'Captura leads sin sacar al usuario de Google. Los formularios se llenan automáticamente con datos del usuario logueado.',
-      milestone: 'Disponible en el Bloque 3',
-      bullets: [
-        'Lead form extensions en campañas de Search',
-        'Pre-llenado automático con datos de Google',
-        'Sincronización en tiempo real con WhatsApp follow-up',
-        'CSV download de leads + webhook al CRM'
+        'Time-series chart de impressions / clicks / conversions',
+        'Asset performance por headline / descripción / imagen',
+        'Search terms report (qué buscan los que clickean)',
+        'Edit budget en vivo · pause / activate inline'
       ]
     },
     'tiktok-videos': {

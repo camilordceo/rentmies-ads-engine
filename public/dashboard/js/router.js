@@ -20,7 +20,7 @@
   const CHANNELS = {
     meta:     { default: 'quickpost',       pages: ['quickpost', 'schedule', 'inmuebles', 'posts'] },
     whatsapp: { default: 'whatsapp',        pages: ['whatsapp', 'wa-broadcasts', 'wa-analytics', 'wa-template-new', 'wa-template-edit', 'wa-broadcast-new', 'wa-broadcast-detail'] },
-    google:   { default: 'google-campaigns', pages: ['google-campaigns', 'google-pmax', 'google-leads'] },
+    google:   { default: 'google-campaigns', pages: ['google-campaigns', 'google-campaign-new', 'google-pmax', 'google-leads', 'google-analytics', 'google-campaign-detail'] },
     tiktok:   { default: 'tiktok-videos',   pages: ['tiktok-videos', 'tiktok-schedule', 'tiktok-analytics'] }
   }
 
@@ -59,8 +59,11 @@
     'whatsapp/broadcasts/detail':   'wa-broadcast-detail',
     'whatsapp/analytics':           'wa-analytics',
     'google/campaigns':             'google-campaigns',
+    'google/campaigns/new':         'google-campaign-new',
+    'google/campaigns/detail':      'google-campaign-detail',
     'google/performance-max':       'google-pmax',
     'google/lead-forms':            'google-leads',
+    'google/analytics':             'google-analytics',
     'tiktok/videos':                'tiktok-videos',
     'tiktok/schedule':              'tiktok-schedule',
     'tiktok/analytics':             'tiktok-analytics',
