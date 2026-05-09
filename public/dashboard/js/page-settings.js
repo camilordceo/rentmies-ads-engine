@@ -1,17 +1,15 @@
 /* ─────────────────────────────────────────────────────────────
-   Settings — Meta Connection (System User Token / Camino B)
+   Settings — Multi-channel connection hub
+   Renders one card per channel (Meta · WhatsApp · Google · TikTok)
+   with a status indicator and channel-specific actions. Meta keeps
+   its existing System User Token flow inline; the other channels
+   show their connect-CTAs and minimal forms.
 
-   Primary flow: paste a non-expiring System User token + Page ID
-   (+ optional IG Business ID, WABA ID), Test Connection, Save.
-
-   Reads/writes BOTH:
-     - meta_connections (server-side, via /api/credentials/meta) —
-       canonical source of truth across both /app and /dashboard
-     - localStorage.meta_creds (browser) — kept in sync so legacy
-       quickpost flows that read it directly keep working
-
-   The "¿Cómo consigo el token?" link opens a step-by-step modal
-   based on docs/GUIA_CONEXION_META.md.
+   Reads/writes:
+     - meta_connections (server) via /api/credentials/meta
+     - localStorage.meta_creds  (legacy mirror for /app)
+     - google_connections (server) via /api/google/connection (Bloque 3)
+     - tiktok_connections (server) via /api/tiktok/connection (later)
    ───────────────────────────────────────────────────────────── */
 
 (function () {
@@ -27,81 +25,116 @@
     if (meta.access_token) localStorage.setItem('wa_access_token', meta.access_token)
     if (meta.waba_id) localStorage.setItem('wa_waba_id', meta.waba_id)
   }
-  function authToken () { return localStorage.getItem('sb_token') || '' }
-  function authHeaders () {
-    const t = authToken()
-    const empresaId = (() => { try { return (JSON.parse(localStorage.getItem('sb_user') || '{}')).id } catch (_) { return '' } })()
-    const h = { 'Content-Type': 'application/json' }
-    if (t) h.Authorization = 'Bearer ' + t
-    else { h.Authorization = 'Bearer demo_local'; h['x-empresa-id'] = empresaId || 'demo' }
-    return h
-  }
 
   function escapeAttr (s) { return String(s == null ? '' : s).replace(/"/g, '&quot;') }
   function escapeHtml (s) { return String(s == null ? '' : s).replace(/[&<>]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;'})[c]) }
   function fmtN (n) { if (!n) return '0'; if (n >= 1e6) return (n/1e6).toFixed(1)+'M'; if (n >= 1e3) return (n/1e3).toFixed(1)+'K'; return String(n) }
 
-  let state = {
+  // ─── State per channel ────────────────────────────────────
+  const state = {
     loading: false,
-    serverConn: null,    // meta_connections row from server
-    testResult: null,    // last response from /api/credentials/meta/test
     showToken: false,
-    error: null
+    error: null,
+    meta:     { conn: null, testResult: null },
+    whatsapp: { conn: null },                         // derived from meta connection (waba_id)
+    google:   { conn: null, loaded: false },
+    tiktok:   { conn: null, loaded: false }
   }
 
-  // ── Render ────────────────────────────────────────────────
+  // ─── Channel status helpers ───────────────────────────────
+  function metaStatus () {
+    const c = state.meta.conn
+    if (!c || !c.connected) return { kind: 'off',  label: 'No conectado' }
+    if (c.status !== 'active')                            return { kind: 'warn', label: 'Estado: ' + c.status }
+    return { kind: 'ok', label: `Conectado a "${c.page_name || 'tu Página'}"` }
+  }
 
-  function html () {
+  function whatsappStatus () {
+    const c = state.meta.conn
+    const waba = (c && c.waba_id) || getMetaLocal().waba_id
+    if (!waba)                            return { kind: 'off',  label: 'WABA no configurada' }
+    if (!c || c.status !== 'active')      return { kind: 'warn', label: 'Conexión Meta inactiva' }
+    return { kind: 'ok', label: 'WABA · ' + waba.slice(0, 6) + '…' }
+  }
+
+  function googleStatus () {
+    if (!state.google.loaded)             return { kind: 'off',  label: 'Cargando…' }
+    const c = state.google.conn
+    if (!c || !c.connected)               return { kind: 'off',  label: 'No conectado' }
+    if (c.status !== 'active')            return { kind: 'warn', label: 'Estado: ' + c.status }
+    return { kind: 'ok', label: 'Customer ID · ' + (c.customer_id || '—') }
+  }
+
+  function tiktokStatus () {
+    if (!state.tiktok.loaded)             return { kind: 'off',  label: 'Cargando…' }
+    const c = state.tiktok.conn
+    if (!c || !c.connected)               return { kind: 'off',  label: 'No conectado' }
+    if (c.status !== 'active')            return { kind: 'warn', label: 'Estado: ' + c.status }
+    return { kind: 'ok', label: '@' + (c.username || 'business') }
+  }
+
+  // Visual treatment per status kind
+  function dotForKind (kind) {
+    const c = kind === 'ok'   ? 'var(--rm-teal)'
+            : kind === 'warn' ? '#f59e0b'
+            : '#9ca3af'
+    const glow = kind === 'ok' ? 'box-shadow:0 0 8px var(--rm-teal); animation:ae-pulse 1.6s ease-in-out infinite;' : ''
+    return `<span style="width:8px; height:8px; border-radius:50%; background:${c}; ${glow}"></span>`
+  }
+
+  // ─── Render: status overview row ──────────────────────────
+  function overviewRowHtml () {
+    const channels = [
+      { key: 'meta',     label: 'Meta',     emoji: '📘', s: metaStatus() },
+      { key: 'whatsapp', label: 'WhatsApp', emoji: '💬', s: whatsappStatus() },
+      { key: 'google',   label: 'Google',   emoji: '🔍', s: googleStatus() },
+      { key: 'tiktok',   label: 'TikTok',   emoji: '🎵', s: tiktokStatus() }
+    ]
+    return `
+      <div class="rm-channels-overview">
+        ${channels.map(ch => `
+          <a href="#settings" class="rm-channel-tile rm-channel-${ch.key} rm-status-${ch.s.kind}" data-jump="${ch.key}">
+            <div class="rm-channel-tile-h">
+              <span class="rm-channel-tile-emoji">${ch.emoji}</span>
+              ${dotForKind(ch.s.kind)}
+            </div>
+            <div class="rm-channel-tile-label">${ch.label}</div>
+            <div class="rm-channel-tile-status">${escapeHtml(ch.s.label)}</div>
+          </a>
+        `).join('')}
+      </div>
+    `
+  }
+
+  // ─── Render: each channel card ────────────────────────────
+  function metaCardHtml () {
     const meta = getMetaLocal()
-    const conn = state.serverConn
-
-    // Status indicator
-    const dotColor = conn && conn.connected && conn.status === 'active' ? 'var(--rm-teal)' : '#9ca3af'
-    const statusLabel = conn && conn.connected
-      ? (conn.status === 'active'
-         ? `Conectado a "${escapeHtml(conn.page_name || 'tu Página')}"`
-         : `Estado: ${conn.status || 'desconocido'}`)
-      : 'No conectado'
-
-    const isConnected = conn && conn.connected && conn.status === 'active'
+    const s = metaStatus()
+    const isConnected = s.kind === 'ok'
 
     return `
-      <div class="rp-page rp-rise">
-
-        <div class="rp-page-header">
-          <span class="rp-eyebrow">CONFIGURACIÓN · INTEGRACIONES</span>
-          <h1 class="rp-display">Conecta tu <em>Meta Business</em></h1>
-          <p class="rp-subhead">Pega un System User Token desde tu Business Manager. Es <strong>permanente, no caduca</strong>, y solo accede a los assets que tú le asignes.</p>
+      <section class="ae-formcard rm-channel-card" id="settings-meta-card" data-channel="meta">
+        <div class="ae-formcard-h">
+          <span style="display:flex; align-items:center; gap:10px;">
+            ${dotForKind(s.kind)}
+            <span>📘 Meta · Facebook & Instagram</span>
+          </span>
+          <span class="ae-formcard-h-accessory" id="settings-meta-status">${escapeHtml(s.label)}</span>
         </div>
 
         ${!isConnected ? `
-          <section class="ae-formcard" style="background:linear-gradient(135deg, rgba(64,217,157,0.10), rgba(0,108,74,0.04)); border-left:3px solid var(--rp-teal);">
-            <div class="ae-formcard-h">
-              <span style="display:flex; align-items:center; gap:10px;">
-                ✨ <span>¿Primera vez? Te guiamos paso a paso</span>
-              </span>
-            </div>
-            <p style="font-size:14px; line-height:1.55; color:var(--rm-ink-2); margin:8px 0 16px;">
-              Si nunca has conectado Meta antes, usa nuestro asistente guiado. Te llevamos por cada
-              clic en Meta, con explicaciones simples y validación automática. Toma <strong>~12 minutos</strong>.
+          <div class="rm-channel-card-cta">
+            <p style="margin:0 0 12px; font-size:13.5px; line-height:1.55; color:var(--rm-ink-2);">
+              ¿Primera vez? Te guiamos paso a paso por Business Manager. Toma <strong>~12 minutos</strong>.
             </p>
             <a class="ae-btn-authority" href="#connect" style="text-decoration:none;">Empezar conexión guiada →</a>
-            <a class="ae-btn-ghost" href="#" id="s-skip-wizard" style="margin-left:10px;">O pega tu token directamente abajo ↓</a>
-          </section>
+            <button class="ae-btn-ghost" id="s-toggle-advanced">o pega tu token directamente ↓</button>
+          </div>
         ` : ''}
 
-        <!-- ═══════════ META CONNECTION CARD ═══════════ -->
-        <section class="ae-formcard" id="settings-meta-card">
-          <div class="ae-formcard-h">
-            <span style="display:flex; align-items:center; gap:10px;">
-              <span id="settings-status-dot" style="width:8px; height:8px; border-radius:50%; background:${dotColor}; ${dotColor === 'var(--rm-teal)' ? 'box-shadow:0 0 8px var(--rm-teal); animation:ae-pulse 1.6s ease-in-out infinite;' : ''}"></span>
-              Meta · Facebook & Instagram
-            </span>
-            <span class="ae-formcard-h-accessory" id="settings-meta-status">${escapeHtml(statusLabel)}</span>
-          </div>
+        <div id="settings-result-block" style="margin-bottom:16px;"></div>
 
-          <div id="settings-result-block" style="margin-bottom:16px;"></div>
-
+        <div class="rm-channel-card-body" id="meta-advanced-body" ${!isConnected ? 'hidden' : ''}>
           <div class="ae-field">
             <label class="ae-field-label" for="s-token">System User Access Token</label>
             <div style="position:relative;">
@@ -135,55 +168,229 @@
             </div>
           </div>
 
-          <div class="ae-field">
-            <label class="ae-field-label" for="s-waba-id">WABA ID <span style="color:var(--rm-muted); font-weight:400;">· opcional</span></label>
-            <input id="s-waba-id" class="ae-input" type="text"
-                   placeholder="WhatsApp Business Account ID" value="${escapeAttr(meta.waba_id || '')}" />
-            <div class="ae-field-hint">Solo si usas WhatsApp Business API.</div>
-          </div>
-
           <div class="ae-action-row" style="margin-top:18px;">
             <button type="button" class="ae-btn-primary" id="s-save-btn">GUARDAR Y PROBAR</button>
             <button type="button" class="ae-btn-ghost" id="s-test-btn">SOLO PROBAR</button>
             <button type="button" class="ae-btn-ghost" id="s-clear-btn" style="margin-left:auto; color:var(--rm-red);">Limpiar</button>
           </div>
+        </div>
+      </section>
+    `
+  }
 
-          <details class="ae-optional" style="margin-top:18px;">
-            <summary>¿Cómo consigo el token? <span style="margin-left:auto; color:var(--rm-muted); font-weight:500;">resumen</span></summary>
+  function whatsappCardHtml () {
+    const meta = getMetaLocal()
+    const s = whatsappStatus()
+    const isConnected = s.kind === 'ok'
+    const metaConnected = metaStatus().kind === 'ok'
+
+    return `
+      <section class="ae-formcard rm-channel-card" data-channel="whatsapp">
+        <div class="ae-formcard-h">
+          <span style="display:flex; align-items:center; gap:10px;">
+            ${dotForKind(s.kind)}
+            <span>💬 WhatsApp Business</span>
+          </span>
+          <span class="ae-formcard-h-accessory">${escapeHtml(s.label)}</span>
+        </div>
+
+        ${!metaConnected ? `
+          <p style="margin:0 0 8px; font-size:13.5px; color:var(--rm-ink-2); line-height:1.55;">
+            WhatsApp Business API se activa con tu mismo Business Manager de Meta.
+            <strong>Conecta Meta primero</strong> y luego pega tu WABA ID aquí.
+          </p>
+        ` : `
+          <p style="margin:0 0 12px; font-size:13.5px; color:var(--rm-ink-2); line-height:1.55;">
+            Pega tu WABA ID y Phone Number ID. Los puedes encontrar en
+            <a href="https://business.facebook.com/wa/manage/home/" target="_blank" style="color:var(--rm-green-deep); text-decoration:underline;">WhatsApp Manager</a>.
+          </p>
+        `}
+
+        <div class="ae-grid-2">
+          <div class="ae-field">
+            <label class="ae-field-label" for="s-waba-id">WABA ID</label>
+            <input id="s-waba-id" class="ae-input" type="text"
+                   placeholder="WhatsApp Business Account ID"
+                   value="${escapeAttr(meta.waba_id || '')}" ${!metaConnected ? 'disabled' : ''} />
+            <div class="ae-field-hint">Ej: 1234567890123456</div>
+          </div>
+          <div class="ae-field">
+            <label class="ae-field-label" for="s-phone-id">Phone Number ID <span style="color:var(--rm-muted); font-weight:400;">· opcional</span></label>
+            <input id="s-phone-id" class="ae-input" type="text"
+                   placeholder="123456789012345"
+                   value="${escapeAttr(meta.phone_number_id || '')}" ${!metaConnected ? 'disabled' : ''} />
+            <div class="ae-field-hint">Solo si tienes varios números asociados a la WABA.</div>
+          </div>
+        </div>
+
+        <div class="ae-action-row" style="margin-top:18px;">
+          <button type="button" class="ae-btn-primary" id="s-wa-save-btn" ${!metaConnected ? 'disabled' : ''}>GUARDAR WHATSAPP</button>
+          <a class="ae-btn-ghost" href="#whatsapp">Ver Templates →</a>
+          ${isConnected ? `<a class="ae-btn-ghost" href="#wa-broadcasts" style="margin-left:auto;">Crear broadcast →</a>` : ''}
+        </div>
+      </section>
+    `
+  }
+
+  function googleCardHtml () {
+    const s = googleStatus()
+    const c = state.google.conn
+    const isConnected = s.kind === 'ok'
+
+    return `
+      <section class="ae-formcard rm-channel-card" data-channel="google">
+        <div class="ae-formcard-h">
+          <span style="display:flex; align-items:center; gap:10px;">
+            ${dotForKind(s.kind)}
+            <span>🔍 Google Ads</span>
+          </span>
+          <span class="ae-formcard-h-accessory">${escapeHtml(s.label)}</span>
+        </div>
+
+        ${isConnected ? `
+          <div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(180px, 1fr)); gap:12px;">
+            <div>
+              <div class="ae-field-label" style="margin-bottom:4px;">CUSTOMER ID</div>
+              <div style="font-family:var(--rm-mono); font-size:13px; color:var(--rm-ink);">${escapeHtml(c?.customer_id || '—')}</div>
+            </div>
+            <div>
+              <div class="ae-field-label" style="margin-bottom:4px;">CUENTA</div>
+              <div style="font-size:13px; color:var(--rm-ink);">${escapeHtml(c?.descriptive_name || c?.account_name || '—')}</div>
+            </div>
+            <div>
+              <div class="ae-field-label" style="margin-bottom:4px;">MONEDA</div>
+              <div style="font-size:13px; color:var(--rm-ink);">${escapeHtml(c?.currency_code || 'COP')}</div>
+            </div>
+          </div>
+          <div class="ae-action-row" style="margin-top:18px;">
+            <a class="ae-btn-primary" href="#google-campaigns" style="text-decoration:none;">Ir a Campaigns →</a>
+            <button type="button" class="ae-btn-ghost" id="s-google-refresh">Renovar OAuth</button>
+            <button type="button" class="ae-btn-ghost" id="s-google-disconnect" style="margin-left:auto; color:var(--rm-red);">Desconectar</button>
+          </div>
+        ` : `
+          <p style="margin:0 0 14px; font-size:13.5px; color:var(--rm-ink-2); line-height:1.55;">
+            Conecta tu cuenta de Google Ads para crear campañas de Search, Display y Performance Max
+            directamente desde Rentmies. Necesitas un <strong>customer ID activo</strong> y
+            (recomendado) una cuenta MCC.
+          </p>
+          <div class="ae-action-row">
+            <a class="ae-btn-authority" href="/api/google/oauth/start" style="text-decoration:none;">
+              Conectar con Google →
+            </a>
+            <a class="ae-btn-ghost" href="https://ads.google.com/intl/es-419/home/tools/manager-accounts/" target="_blank">
+              Crear cuenta MCC ↗
+            </a>
+          </div>
+          <details class="ae-optional" style="margin-top:14px;">
+            <summary>¿Qué es lo que vamos a poder hacer? <span style="margin-left:auto; color:var(--rm-muted); font-weight:500;">resumen</span></summary>
             <div class="ae-optional-body">
-              <ol style="margin:0; padding-left:20px; font-size:13px; line-height:1.7;">
-                <li><strong>Entra a business.facebook.com</strong> con tu cuenta admin</li>
-                <li><strong>Business Settings → Users → System Users → Add</strong> · nombre "Rentmies Connection", rol Admin</li>
-                <li><strong>Add Assets</strong> · selecciona tu Página de Facebook + cuenta de Instagram (+ WABA si aplica) con permisos Manage</li>
-                <li><strong>Generate New Token</strong> · selecciona la app Rentmies, marca permisos pages_manage_posts, pages_read_engagement, instagram_content_publish, instagram_basic, business_management</li>
-                <li><strong>Copia el token</strong> y pégalo arriba</li>
-                <li><strong>Click GUARDAR Y PROBAR</strong> — verás los assets detectados ✓</li>
-              </ol>
-              <div class="ae-action-row" style="margin-top:14px;">
-                <a href="/docs/GUIA_CONEXION_META.md" target="_blank" class="ae-btn-ghost">Guía completa →</a>
-                <a href="#" id="s-help-link-2" class="ae-btn-ghost">Abrir paso a paso visual →</a>
-              </div>
+              <ul style="margin:0; padding-left:20px; font-size:13px; line-height:1.7;">
+                <li>Crear campañas de Search con keywords pre-armadas para inmobiliarias</li>
+                <li>Lanzar Performance Max con assets multi-formato (texto + imagen + video)</li>
+                <li>Capturar leads sin que el usuario salga de Google con Lead Forms</li>
+                <li>Sincronizar leads automáticamente con tu agente de WhatsApp</li>
+              </ul>
             </div>
           </details>
-        </section>
+        `}
+      </section>
+    `
+  }
 
-        <!-- ═══════════ ACCOUNT / SIGN OUT ═══════════ -->
-        <section class="ae-formcard">
-          <div class="ae-formcard-h"><span>Cuenta</span></div>
-          <div id="settings-account" style="font-size:13px; color:var(--rm-ink-2);"></div>
-          <div class="ae-action-row" style="margin-top:14px;">
-            <a href="/login" class="ae-btn-ghost" id="settings-account-cta">Iniciar sesión</a>
-          </div>
-        </section>
+  function tiktokCardHtml () {
+    const s = tiktokStatus()
+    const c = state.tiktok.conn
+    const isConnected = s.kind === 'ok'
 
-        <!-- ═══════════ SERVER STATUS ═══════════ -->
-        <section class="ae-formcard">
-          <div class="ae-formcard-h">
-            <span>Servicios del servidor</span>
-            <span class="ae-formcard-h-accessory" id="settings-health-pill">cargando…</span>
+    return `
+      <section class="ae-formcard rm-channel-card" data-channel="tiktok">
+        <div class="ae-formcard-h">
+          <span style="display:flex; align-items:center; gap:10px;">
+            ${dotForKind(s.kind)}
+            <span>🎵 TikTok</span>
+          </span>
+          <span class="ae-formcard-h-accessory">${escapeHtml(s.label)}</span>
+        </div>
+
+        ${isConnected ? `
+          <div style="display:flex; align-items:center; gap:14px; margin-bottom:8px;">
+            ${c?.avatar_url ? `<img src="${escapeAttr(c.avatar_url)}" alt="" style="width:44px; height:44px; border-radius:50%;">` : ''}
+            <div>
+              <div style="font-weight:600; font-size:14px;">@${escapeHtml(c?.username || 'business')}</div>
+              <div style="font-size:12px; color:var(--rm-muted);">Token expira en ${c?.token_hours_left || '—'}h · auto-refresh activo</div>
+            </div>
           </div>
-          <div id="settings-health-grid" style="display:grid; grid-template-columns:repeat(auto-fill, minmax(200px, 1fr)); gap:10px;"></div>
-        </section>
+          <div class="ae-action-row">
+            <a class="ae-btn-primary" href="#tiktok-videos" style="text-decoration:none;">Ir a Videos →</a>
+            <button type="button" class="ae-btn-ghost" id="s-tiktok-refresh">Refrescar token</button>
+            <button type="button" class="ae-btn-ghost" id="s-tiktok-disconnect" style="margin-left:auto; color:var(--rm-red);">Desconectar</button>
+          </div>
+        ` : `
+          <p style="margin:0 0 14px; font-size:13.5px; color:var(--rm-ink-2); line-height:1.55;">
+            Conecta tu TikTok Business Account para subir Reels verticales y programar videos.
+            Token de TikTok expira cada 24h — Rentmies lo refresca automáticamente.
+          </p>
+          <div class="ae-action-row">
+            <a class="ae-btn-authority" href="/api/tiktok/oauth/start" style="text-decoration:none;">
+              Conectar con TikTok →
+            </a>
+            <a class="ae-btn-ghost" href="https://business.tiktok.com/" target="_blank">
+              Crear TikTok Business Account ↗
+            </a>
+          </div>
+        `}
+      </section>
+    `
+  }
+
+  // ─── Render: server health card ───────────────────────────
+  function serverHealthCardHtml () {
+    return `
+      <section class="ae-formcard">
+        <div class="ae-formcard-h">
+          <span>Servicios del servidor</span>
+          <span class="ae-formcard-h-accessory" id="settings-health-pill">cargando…</span>
+        </div>
+        <div id="settings-health-grid" style="display:grid; grid-template-columns:repeat(auto-fill, minmax(200px, 1fr)); gap:10px;"></div>
+      </section>
+    `
+  }
+
+  function accountCardHtml () {
+    return `
+      <section class="ae-formcard">
+        <div class="ae-formcard-h"><span>Cuenta</span></div>
+        <div id="settings-account" style="font-size:13px; color:var(--rm-ink-2);"></div>
+        <div class="ae-action-row" style="margin-top:14px;">
+          <a href="/login" class="ae-btn-ghost" id="settings-account-cta">Iniciar sesión</a>
+        </div>
+      </section>
+    `
+  }
+
+  // ─── Whole page HTML ──────────────────────────────────────
+  function html () {
+    return `
+      <div class="rp-page rp-rise">
+
+        <div class="rp-page-header">
+          <span class="rp-eyebrow">CONFIGURACIÓN · INTEGRACIONES</span>
+          <h1 class="rp-display">Conecta tus <em>canales</em></h1>
+          <p class="rp-subhead">Una conexión por canal — Meta, WhatsApp, Google, TikTok. Cada conexión vive en su propio card y mantiene su salud independiente. Puedes empezar con el que ya tienes y agregar el resto cuando quieras.</p>
+        </div>
+
+        <!-- Status overview row -->
+        ${overviewRowHtml()}
+
+        <!-- Channel cards -->
+        ${metaCardHtml()}
+        ${whatsappCardHtml()}
+        ${googleCardHtml()}
+        ${tiktokCardHtml()}
+
+        <!-- Server status + Account -->
+        ${serverHealthCardHtml()}
+        ${accountCardHtml()}
       </div>
     `
   }
@@ -219,8 +426,178 @@
     `
   }
 
-  // ── Health card (server services status) ─────────────────
+  // ─── Server actions ──────────────────────────────────────
+  async function loadMetaConnection () {
+    try {
+      const r = await fetch('/api/credentials/meta', { headers: window.rmApi?.authHeaders() || { 'Content-Type': 'application/json' } })
+      if (!r.ok) return
+      state.meta.conn = await r.json()
+    } catch (_) {}
+  }
 
+  async function loadGoogleConnection () {
+    try {
+      const r = await fetch('/api/google/connection', { headers: window.rmApi?.authHeaders() || { 'Content-Type': 'application/json' } })
+      state.google.loaded = true
+      if (!r.ok) {
+        state.google.conn = null
+        return
+      }
+      state.google.conn = await r.json()
+    } catch (_) {
+      state.google.loaded = true
+      state.google.conn = null
+    }
+  }
+
+  async function loadTikTokConnection () {
+    try {
+      const r = await fetch('/api/tiktok/connection', { headers: window.rmApi?.authHeaders() || { 'Content-Type': 'application/json' } })
+      state.tiktok.loaded = true
+      if (!r.ok) {
+        state.tiktok.conn = null
+        return
+      }
+      state.tiktok.conn = await r.json()
+    } catch (_) {
+      state.tiktok.loaded = true
+      state.tiktok.conn = null
+    }
+  }
+
+  function readMetaForm () {
+    return {
+      access_token: $('s-token')?.value.trim() || '',
+      page_id:      $('s-page-id')?.value.trim() || '',
+      instagram_id: $('s-ig-id')?.value.trim() || '',
+      waba_id:      $('s-waba-id')?.value.trim() || ''
+    }
+  }
+
+  async function saveMeta (alsoTest) {
+    const form = readMetaForm()
+    if (!form.access_token) { window.rmToast?.('Pega el access token primero', 'error'); return }
+    if (!form.page_id)      { window.rmToast?.('Pega el Page ID primero', 'error'); return }
+
+    const saveBtn = $('s-save-btn')
+    saveBtn.disabled = true
+    const originalLabel = saveBtn.textContent
+    saveBtn.textContent = alsoTest ? 'PROBANDO…' : 'GUARDANDO…'
+
+    try {
+      const r = await fetch('/api/credentials/meta', {
+        method: 'POST',
+        headers: window.rmApi?.authHeaders() || { 'Content-Type': 'application/json' },
+        body: JSON.stringify(form)
+      })
+      const j = await r.json()
+      if (!r.ok) throw new Error(j.error || 'Error guardando')
+
+      const meta = getMetaLocal()
+      Object.assign(meta, {
+        access_token: form.access_token,
+        page_id: form.page_id,
+        ig_user_id: form.instagram_id,
+        waba_id: form.waba_id
+      })
+      setMetaLocal(meta)
+
+      if (alsoTest) await runMetaTest(form)
+      else window.rmToast?.('✅ Credenciales guardadas', 'success')
+      await loadMetaConnection()
+      renderResult()
+      renderHeaderStatus()
+    } catch (err) {
+      window.rmToast?.('Error: ' + err.message, 'error')
+    } finally {
+      saveBtn.disabled = false
+      saveBtn.textContent = originalLabel
+    }
+  }
+
+  async function runMetaTest (form) {
+    const r = await fetch('/api/credentials/meta/test', {
+      method: 'POST',
+      headers: window.rmApi?.authHeaders() || { 'Content-Type': 'application/json' },
+      body: JSON.stringify(form || readMetaForm())
+    })
+    state.meta.testResult = await r.json()
+    if (state.meta.testResult.ok) {
+      window.rmToast?.(`✅ Conectado a ${state.meta.testResult.page_name}`, 'success')
+    } else {
+      window.rmToast?.(`✗ ${state.meta.testResult.error || 'Test falló'}`, 'error')
+    }
+  }
+
+  async function metaTestOnly () {
+    const form = readMetaForm()
+    if (!form.access_token || !form.page_id) {
+      window.rmToast?.('Pega token y Page ID primero', 'error'); return
+    }
+    const btn = $('s-test-btn')
+    btn.disabled = true
+    const orig = btn.textContent
+    btn.textContent = 'PROBANDO…'
+    try {
+      await runMetaTest(form)
+      renderResult()
+      await loadMetaConnection()
+      renderHeaderStatus()
+    } finally {
+      btn.disabled = false
+      btn.textContent = orig
+    }
+  }
+
+  function clearMeta () {
+    if (!confirm('¿Borrar las credenciales del navegador? La conexión en servidor queda intacta hasta que guardes una nueva.')) return
+    localStorage.removeItem('meta_creds')
+    localStorage.removeItem('wa_access_token')
+    localStorage.removeItem('wa_waba_id')
+    ;['s-token','s-page-id','s-ig-id','s-waba-id','s-phone-id'].forEach(id => { const el = $(id); if (el) el.value = '' })
+    state.meta.testResult = null
+    renderResult()
+    window.rmToast?.('Credenciales locales limpiadas', 'info')
+  }
+
+  function toggleMetaToken () {
+    state.showToken = !state.showToken
+    const inp = $('s-token')
+    const btn = $('s-token-toggle')
+    if (inp) inp.type = state.showToken ? 'text' : 'password'
+    if (btn) btn.textContent = state.showToken ? 'OCULTAR' : 'MOSTRAR'
+  }
+
+  async function saveWhatsApp () {
+    const waba = $('s-waba-id')?.value.trim()
+    const phoneId = $('s-phone-id')?.value.trim()
+    if (!waba) { window.rmToast?.('Pega el WABA ID primero', 'error'); return }
+    const meta = getMetaLocal()
+    Object.assign(meta, { waba_id: waba, phone_number_id: phoneId })
+    setMetaLocal(meta)
+
+    // Persist to server (reuses meta endpoint)
+    try {
+      const form = readMetaForm()
+      form.waba_id = waba
+      const r = await fetch('/api/credentials/meta', {
+        method: 'POST',
+        headers: window.rmApi?.authHeaders() || { 'Content-Type': 'application/json' },
+        body: JSON.stringify(form)
+      })
+      if (!r.ok) {
+        const j = await r.json().catch(() => ({}))
+        throw new Error(j.error || 'Error guardando')
+      }
+      window.rmToast?.('✅ WhatsApp configurado', 'success')
+      await loadMetaConnection()
+      renderHeaderStatus()
+    } catch (err) {
+      window.rmToast?.('Error: ' + err.message, 'error')
+    }
+  }
+
+  // ─── Server health (env vars) ─────────────────────────────
   async function renderHealth () {
     const grid = $('settings-health-grid')
     const pill = $('settings-health-pill')
@@ -240,7 +617,9 @@
       { label: 'Supabase Storage', ok: !!env.supabase,      detail: env.supabase ? 'service_role activo' : 'falta SUPABASE_SERVICE_KEY' },
       { label: 'Supabase DB',      ok: db === 'connected',  detail: db || 'no probado' },
       { label: 'Meta env vars',    ok: !!env.meta,          detail: env.meta ? 'fallback configurado' : 'opcional · usa creds del navegador' },
-      { label: 'Google AI',        ok: !!env.google_ai,     detail: env.google_ai ? 'configurada' : 'opcional' }
+      { label: 'Google Ads token', ok: !!env.google_ads,    detail: env.google_ads ? 'developer token configurado' : 'falta GOOGLE_ADS_DEVELOPER_TOKEN' },
+      { label: 'Google AI',        ok: !!env.google_ai,     detail: env.google_ai ? 'configurada' : 'opcional' },
+      { label: 'TikTok app',       ok: !!env.tiktok,        detail: env.tiktok ? 'TIKTOK_APP_ID/SECRET ok' : 'opcional · no integrado todavía' }
     ]
     grid.innerHTML = services.map(s => `
       <div style="background:${s.ok ? 'rgba(0,77,53,0.06)' : 'var(--rm-surface-2)'};
@@ -285,142 +664,19 @@
     }
   }
 
-  // ── Server actions ────────────────────────────────────────
-
-  async function loadConnection () {
-    try {
-      const r = await fetch('/api/credentials/meta', { headers: authHeaders() })
-      if (!r.ok) return
-      state.serverConn = await r.json()
-    } catch (e) { /* non-fatal */ }
-  }
-
-  function readForm () {
-    return {
-      access_token: $('s-token').value.trim(),
-      page_id: $('s-page-id').value.trim(),
-      instagram_id: $('s-ig-id').value.trim(),
-      waba_id: $('s-waba-id').value.trim()
-    }
-  }
-
-  async function save (alsoTest) {
-    const form = readForm()
-    if (!form.access_token) { window.rmToast?.('Pega el access token primero', 'error'); return }
-    if (!form.page_id)      { window.rmToast?.('Pega el Page ID primero', 'error'); return }
-
-    const saveBtn = $('s-save-btn')
-    saveBtn.disabled = true
-    const originalLabel = saveBtn.textContent
-    saveBtn.textContent = alsoTest ? 'PROBANDO…' : 'GUARDANDO…'
-
-    try {
-      // 1. Save
-      const r = await fetch('/api/credentials/meta', {
-        method: 'POST', headers: authHeaders(), body: JSON.stringify(form)
-      })
-      const j = await r.json()
-      if (!r.ok) throw new Error(j.error || 'Error guardando')
-
-      // 2. Mirror to localStorage so legacy quickpost flows keep working
-      const meta = getMetaLocal()
-      Object.assign(meta, {
-        access_token: form.access_token,
-        page_id: form.page_id,
-        ig_user_id: form.instagram_id,
-        waba_id: form.waba_id
-      })
-      setMetaLocal(meta)
-
-      if (alsoTest) {
-        await runTest(form)
-      } else {
-        window.rmToast?.('✅ Credenciales guardadas', 'success')
-      }
-      await loadConnection()
-      renderResult()
-      renderStatusHeader()
-    } catch (err) {
-      window.rmToast?.('Error: ' + err.message, 'error')
-      state.error = err.message
-    } finally {
-      saveBtn.disabled = false
-      saveBtn.textContent = originalLabel
-    }
-  }
-
-  async function runTest (form) {
-    const r = await fetch('/api/credentials/meta/test', {
-      method: 'POST', headers: authHeaders(),
-      body: JSON.stringify(form || readForm())
-    })
-    state.testResult = await r.json()
-    if (state.testResult.ok) {
-      window.rmToast?.(`✅ Conectado a ${state.testResult.page_name}`, 'success')
-    } else {
-      window.rmToast?.(`✗ ${state.testResult.error || 'Test falló'}`, 'error')
-    }
-  }
-
-  async function testOnly () {
-    const form = readForm()
-    if (!form.access_token || !form.page_id) {
-      window.rmToast?.('Pega token y Page ID primero', 'error'); return
-    }
-    const btn = $('s-test-btn')
-    btn.disabled = true
-    const orig = btn.textContent
-    btn.textContent = 'PROBANDO…'
-    try {
-      await runTest(form)
-      renderResult()
-      await loadConnection()
-      renderStatusHeader()
-    } finally {
-      btn.disabled = false
-      btn.textContent = orig
-    }
-  }
-
   function renderResult () {
     const block = $('settings-result-block')
-    if (block) block.innerHTML = resultBlockHtml(state.testResult)
+    if (block) block.innerHTML = resultBlockHtml(state.meta.testResult)
   }
 
-  function renderStatusHeader () {
-    const dot = $('settings-status-dot')
+  function renderHeaderStatus () {
     const status = $('settings-meta-status')
-    if (!dot || !status) return
-    const conn = state.serverConn
-    const ok = conn && conn.connected && conn.status === 'active'
-    dot.style.background = ok ? 'var(--rm-teal)' : '#9ca3af'
-    dot.style.boxShadow = ok ? '0 0 8px var(--rm-teal)' : 'none'
-    dot.style.animation = ok ? 'ae-pulse 1.6s ease-in-out infinite' : 'none'
-    status.textContent = ok ? `Conectado a "${conn.page_name || 'tu Página'}"`
-                            : (conn && conn.connected ? `Estado: ${conn.status}` : 'No conectado')
+    if (!status) return
+    const s = metaStatus()
+    status.textContent = s.label
   }
 
-  function clearAll () {
-    if (!confirm('¿Borrar las credenciales del navegador? La conexión en servidor queda intacta hasta que guardes una nueva.')) return
-    localStorage.removeItem('meta_creds')
-    localStorage.removeItem('wa_access_token')
-    localStorage.removeItem('wa_waba_id')
-    ;['s-token','s-page-id','s-ig-id','s-waba-id'].forEach(id => { const el = $(id); if (el) el.value = '' })
-    state.testResult = null
-    renderResult()
-    window.rmToast?.('Credenciales locales limpiadas', 'info')
-  }
-
-  function toggleToken () {
-    state.showToken = !state.showToken
-    const inp = $('s-token')
-    const btn = $('s-token-toggle')
-    if (inp) inp.type = state.showToken ? 'text' : 'password'
-    if (btn) btn.textContent = state.showToken ? 'OCULTAR' : 'MOSTRAR'
-  }
-
-  // ── Help modal ────────────────────────────────────────────
-
+  // ─── Help modal (kept from old version) ───────────────────
   const HELP_STEPS = [
     { num: '01', icon: '🏢', title: 'Entra a tu Business Manager', desc: 'Ve a <a href="https://business.facebook.com" target="_blank" style="color:var(--rm-green-deep);">business.facebook.com</a> con la cuenta admin de tu inmobiliaria.' },
     { num: '02', icon: '⚙️', title: 'Business Settings → Users → System Users', desc: 'En el menú de la izquierda, busca <strong>System Users</strong> bajo la sección Users.' },
@@ -479,9 +735,26 @@
   }
   function escClose (e) { if (e.key === 'Escape') closeHelpModal() }
 
-  function injectHelpStyles () {
-    if ($('rm-help-styles')) return
+  function injectStyles () {
+    if ($('rm-settings-styles')) return
     const css = `
+      /* Channel overview tiles */
+      .rm-channels-overview { display:grid; grid-template-columns:repeat(auto-fit, minmax(180px, 1fr)); gap:14px; margin-bottom:28px; }
+      .rm-channel-tile { display:block; padding:16px 18px; background:var(--rp-surface, #fff); border:1px solid var(--rm-border, #e8e3dc); border-radius:8px; text-decoration:none; color:inherit; transition:transform .15s, box-shadow .15s, border-color .15s; cursor:pointer; }
+      .rm-channel-tile:hover { transform:translateY(-2px); box-shadow:0 6px 18px rgba(0,0,0,0.06); border-color:var(--rp-teal, #40d99d); }
+      .rm-channel-tile-h { display:flex; align-items:center; justify-content:space-between; margin-bottom:10px; }
+      .rm-channel-tile-emoji { font-size:20px; }
+      .rm-channel-tile-label { font-size:14px; font-weight:600; color:var(--rm-ink, #0f1410); margin-bottom:2px; }
+      .rm-channel-tile-status { font-size:11.5px; color:var(--rm-muted, #7a7e79); font-family:var(--rm-mono); }
+      .rm-channel-tile.rm-status-ok    { border-color: rgba(64,217,157,0.4); }
+      .rm-channel-tile.rm-status-warn  { border-color: rgba(245,158,11,0.4); }
+      .rm-channel-tile.rm-status-off   { border-color: var(--rm-border, #e8e3dc); }
+
+      /* Channel cards on settings page */
+      .rm-channel-card { margin-bottom: 18px; }
+      .rm-channel-card-cta { padding:14px 16px; background:linear-gradient(135deg, rgba(64,217,157,0.10), rgba(0,108,74,0.04)); border-radius:6px; margin-bottom:14px; }
+      .rm-channel-card-body[hidden] { display:none; }
+
       /* Help modal */
       #rm-help-modal { position:fixed; inset:0; z-index:2000; opacity:0; transition:opacity .2s; }
       #rm-help-modal.open { opacity:1; }
@@ -512,36 +785,68 @@
       .rm-meta-asset-emoji { font-size:14px; flex-shrink:0; width:18px; text-align:center; }
     `
     const s = document.createElement('style')
-    s.id = 'rm-help-styles'
+    s.id = 'rm-settings-styles'
     s.textContent = css
     document.head.appendChild(s)
   }
 
-  // ── Wire ──────────────────────────────────────────────────
-
+  // ─── Wire ─────────────────────────────────────────────────
   function wire () {
-    $('s-save-btn').addEventListener('click', () => save(true))
-    $('s-test-btn').addEventListener('click', testOnly)
-    $('s-clear-btn').addEventListener('click', clearAll)
-    $('s-token-toggle').addEventListener('click', toggleToken)
+    $('s-save-btn')?.addEventListener('click', () => saveMeta(true))
+    $('s-test-btn')?.addEventListener('click', metaTestOnly)
+    $('s-clear-btn')?.addEventListener('click', clearMeta)
+    $('s-token-toggle')?.addEventListener('click', toggleMetaToken)
     $('s-help-link')?.addEventListener('click', openHelpModal)
-    $('s-help-link-2')?.addEventListener('click', openHelpModal)
+    $('s-toggle-advanced')?.addEventListener('click', () => {
+      const body = $('meta-advanced-body')
+      if (body) body.hidden = !body.hidden
+    })
+    $('s-wa-save-btn')?.addEventListener('click', saveWhatsApp)
+    // Smooth scroll to channel card on overview tile click
+    document.querySelectorAll('[data-jump]').forEach(el => {
+      el.addEventListener('click', e => {
+        e.preventDefault()
+        const target = document.querySelector(`[data-channel="${el.dataset.jump}"]`)
+        if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' })
+      })
+    })
   }
-
-  // ── Mount ─────────────────────────────────────────────────
 
   async function mount () {
     const slot = document.querySelector('section[data-page="settings"]')
     if (!slot) return
-    injectHelpStyles()
-    state.testResult = null
-    state.serverConn = null
+    state.meta.testResult = null
+    state.meta.conn = null
+    state.google.loaded = false
+    state.tiktok.loaded = false
+
+    injectStyles()
     slot.innerHTML = html()
     wire()
     renderHealth()
     renderAccount()
-    // Load server-side connection status in background
-    loadConnection().then(() => { renderStatusHeader() })
+
+    // Load all four channel statuses in parallel
+    Promise.all([
+      loadMetaConnection(),
+      loadGoogleConnection(),
+      loadTikTokConnection()
+    ]).then(() => {
+      // Re-render tiles + meta header
+      const slot2 = document.querySelector('section[data-page="settings"]')
+      if (!slot2) return
+      const overview = slot2.querySelector('.rm-channels-overview')
+      if (overview) overview.outerHTML = overviewRowHtml()
+      // Re-wire tile clicks after re-render
+      document.querySelectorAll('[data-jump]').forEach(el => {
+        el.addEventListener('click', e => {
+          e.preventDefault()
+          const target = document.querySelector(`[data-channel="${el.dataset.jump}"]`)
+          if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' })
+        })
+      })
+      renderHeaderStatus()
+    })
   }
 
   document.addEventListener('rm-page-change', e => { if (e.detail.page === 'settings') mount() })

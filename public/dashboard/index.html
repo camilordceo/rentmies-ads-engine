@@ -37,18 +37,26 @@
   <link rel="stylesheet" href="css/quickpost-extras.css">
   <link rel="stylesheet" href="css/posts-history.css">
   <link rel="stylesheet" href="css/connect-wizard.css">
+  <link rel="stylesheet" href="css/shared/components.css">
 
   <!-- Module scripts — order matters: store first, then dependents -->
   <script src="js/toast.js" defer></script>
   <script src="js/store.js" defer></script>
   <script src="js/persist.js" defer></script>
+  <script src="js/shared/api-client.js" defer></script>
+  <script src="js/shared/components.js" defer></script>
   <script src="js/router.js" defer></script>
   <script src="js/content-subnav.js" defer></script>
+  <script src="js/coming-soon.js" defer></script>
   <script src="js/data-bridge.js" defer></script>
   <script src="js/inmuebles-source.js" defer></script>
   <script src="js/upload-asset.js" defer></script>
   <script src="js/csv-import.js" defer></script>
+  <script src="js/core/health.js" defer></script>
   <script src="js/meta-health.js" defer></script>
+  <script src="js/whatsapp/health.js" defer></script>
+  <script src="js/google/health.js" defer></script>
+  <script src="js/tiktok/health.js" defer></script>
   <script src="js/auth.js" defer></script>
   <script src="js/page-quickpost.js" defer></script>
   <script src="js/page-settings.js" defer></script>
@@ -73,6 +81,7 @@
   <script src="js/angles.js" defer></script>
   <script src="js/phone.js" defer></script>
   <script src="js/camilord-brain.js" defer></script>
+  <script src="js/camilord/modes.js" defer></script>
   <script src="js/camilord-modes.js" defer></script>
   <script src="js/launch.js" defer></script>
 </head>
@@ -88,9 +97,10 @@
 
     <nav class="rp-topbar-nav ae-topnav-nav" aria-label="Navegación principal">
       <button class="rp-topbar-link ae-topnav-link active" data-page="dashboard">Dashboard</button>
-      <button class="rp-topbar-link ae-topnav-link" data-page="schedule">Campaigns</button>
-      <button class="rp-topbar-link ae-topnav-link" data-page="quickpost">Content</button>
-      <button class="rp-topbar-link ae-topnav-link" data-page="analytics">Analytics</button>
+      <button class="rp-topbar-link ae-topnav-link" data-channel="meta">Meta</button>
+      <button class="rp-topbar-link ae-topnav-link" data-channel="whatsapp">WhatsApp</button>
+      <button class="rp-topbar-link ae-topnav-link" data-channel="google">Google</button>
+      <button class="rp-topbar-link ae-topnav-link" data-channel="tiktok">TikTok</button>
     </nav>
 
     <div class="rp-topbar-spacer ae-topnav-spacer"></div>
@@ -136,8 +146,32 @@
       <!-- POSTS HISTORY (sub-route of Content) -->
       <section data-page="posts"><!-- page-posts-history.js renders here --></section>
 
-      <!-- WHATSAPP TEMPLATES (sub-route of Content) -->
+      <!-- WHATSAPP TEMPLATES (channel: WhatsApp) -->
       <section data-page="whatsapp"><!-- page-whatsapp.js renders here --></section>
+
+      <!-- WHATSAPP BROADCASTS (channel: WhatsApp) -->
+      <section data-page="wa-broadcasts"><!-- js/whatsapp/page-broadcasts.js renders here --></section>
+
+      <!-- WHATSAPP ANALYTICS (channel: WhatsApp) -->
+      <section data-page="wa-analytics"><!-- js/whatsapp/page-analytics.js renders here --></section>
+
+      <!-- GOOGLE CAMPAIGNS (channel: Google) -->
+      <section data-page="google-campaigns"><!-- js/google/page-campaigns.js renders here --></section>
+
+      <!-- GOOGLE PERFORMANCE MAX (channel: Google) -->
+      <section data-page="google-pmax"><!-- js/google/page-performance-max.js renders here --></section>
+
+      <!-- GOOGLE LEAD FORMS (channel: Google) -->
+      <section data-page="google-leads"><!-- js/google/page-lead-forms.js renders here --></section>
+
+      <!-- TIKTOK VIDEOS (channel: TikTok) -->
+      <section data-page="tiktok-videos"><!-- js/tiktok/page-videos.js renders here --></section>
+
+      <!-- TIKTOK SCHEDULE (channel: TikTok) -->
+      <section data-page="tiktok-schedule"><!-- js/tiktok/page-schedule.js renders here --></section>
+
+      <!-- TIKTOK ANALYTICS (channel: TikTok) -->
+      <section data-page="tiktok-analytics"><!-- js/tiktok/page-analytics.js renders here --></section>
 
       <!-- SETTINGS / Credentials -->
       <section data-page="settings"><!-- page-settings.js renders here --></section>
