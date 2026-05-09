@@ -387,10 +387,15 @@ ALTER TABLE tiktok_videos                  ENABLE ROW LEVEL SECURITY;
 -- ║ HELPFUL VIEWS                                                ║
 -- ╚══════════════════════════════════════════════════════════════╝
 
--- Make sure meta_connections exists with the columns this view
--- references. Normally created in full by schema-meta-oauth.sql;
--- here we add what we need so the order of script execution and
--- legacy table state don't break the view definition.
+-- ── Defensive alters before the view ─────────────────────────────
+-- The view references columns from meta_connections (created by
+-- schema-meta-oauth.sql) plus google_connections and tiktok_connections
+-- (created above in this same file). If any of these tables exist
+-- from older runs / older schemas without the required columns,
+-- CREATE TABLE IF NOT EXISTS does NOT add the missing columns —
+-- so we ALTER each table to ensure every referenced column exists.
+
+-- meta_connections (might pre-exist from schema-meta-oauth.sql or older work)
 CREATE TABLE IF NOT EXISTS meta_connections (
   id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   empresa_id  UUID NOT NULL REFERENCES empresas(id) ON DELETE CASCADE,
@@ -407,6 +412,17 @@ ALTER TABLE meta_connections
   ADD COLUMN IF NOT EXISTS page_id           TEXT,
   ADD COLUMN IF NOT EXISTS page_name         TEXT,
   ADD COLUMN IF NOT EXISTS ig_business_id    TEXT;
+
+-- google_connections — defensive in case an older partial run left
+-- the table without these columns
+ALTER TABLE google_connections
+  ADD COLUMN IF NOT EXISTS status                  TEXT DEFAULT 'active',
+  ADD COLUMN IF NOT EXISTS access_token_expires_at TIMESTAMPTZ;
+
+-- tiktok_connections — same
+ALTER TABLE tiktok_connections
+  ADD COLUMN IF NOT EXISTS status                  TEXT DEFAULT 'active',
+  ADD COLUMN IF NOT EXISTS access_token_expires_at TIMESTAMPTZ;
 
 -- A single "channel health" view so the dashboard banner can query
 -- one place instead of joining four tables on the client.
