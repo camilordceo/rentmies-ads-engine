@@ -28,6 +28,7 @@
 
   function $ (id) { return document.getElementById(id) }
   const esc = (s) => window.rmc?.escapeHtml(s) ?? String(s ?? '')
+  const fmt = (n) => Number(n || 0).toLocaleString('es-CO')
 
   // ─── KPI computation ─────────────────────────────────────
   function computeStats (list) {
@@ -100,9 +101,14 @@
     const filtered = applyFilters(state.templates)
     const subnav = window.rpSubnav ? window.rpSubnav.html(PAGE_ID) : ''
 
+    const totalSent = state.templates.reduce((a, t) => a + Number(t.sent_count || 0), 0)
+    const totalRead = state.templates.reduce((a, t) => a + Number(t.read_count || 0), 0)
+    const readRate = totalSent ? Math.round((totalRead / totalSent) * 100) : 0
+
     const kpis = [
       { label: 'TOTAL TEMPLATES', value: String(stats.total), highlight: false },
       { label: 'APROBADAS',       value: String(stats.approved), delta: stats.approved + ' usables ahora', up: true, highlight: true },
+      { label: 'ENVIADOS · 90D',  value: fmt(totalSent), delta: totalSent ? `${readRate}% leídos` : 'sin envíos aún', up: totalSent > 0 },
       { label: 'PENDIENTES',      value: String(stats.pending),  delta: stats.pending  ? 'En revisión Meta' : 'sin nada en revisión' },
       { label: 'RECHAZADAS',      value: String(stats.rejected), delta: stats.rejected ? 'Revisar y reenviar' : 'sin rechazos', up: false }
     ]
@@ -192,6 +198,7 @@
                   <th>Idioma</th>
                   <th>Status</th>
                   <th>Quality</th>
+                  <th>Rendimiento</th>
                   <th>Actualizada</th>
                   <th></th>
                 </tr>
@@ -219,6 +226,7 @@
         <td><span class="wa-lang">${esc((t.language || '').toUpperCase())}</span></td>
         <td>${statusPillHtml(t.status)}</td>
         <td>${qualityDot(t.quality_score)}</td>
+        <td>${perfCellHtml(t)}</td>
         <td><span class="wa-time">${esc(timeAgo(updatedTime))}</span></td>
         <td class="wa-tpl-actions">
           <button type="button" class="ae-btn-ghost" data-act="view" data-tpl-id="${esc(t.id)}">Ver</button>
@@ -226,6 +234,21 @@
         </td>
       </tr>
     `
+  }
+
+  // Per-template performance cell. Numbers come from Meta's template_analytics
+  // (sent/delivered up to 90d; read only the last 7d, per Meta's retention).
+  function perfCellHtml (t) {
+    const sent = Number(t.sent_count || 0)
+    const read = Number(t.read_count || 0)
+    if (!sent) return `<span class="wa-perf-empty" title="Sin envíos en los últimos 90 días">—</span>`
+    const rate = Math.round((read / sent) * 100)
+    const rateCls = rate >= 60 ? 'high' : rate >= 30 ? 'med' : 'low'
+    return `
+      <div class="wa-perf" title="${fmt(sent)} enviados · ${fmt(read)} leídos">
+        <span class="wa-perf-main">${fmt(sent)} <span class="wa-perf-unit">env.</span></span>
+        <span class="wa-perf-sub wa-perf-${rateCls}">${fmt(read)} leídos · ${rate}%</span>
+      </div>`
   }
 
   function emptyAllHtml () {
@@ -296,6 +319,16 @@
       .wa-cat-util { background: rgba(64,217,157,0.10); color: var(--rm-green-deep, #004d35); }
       .wa-cat-auth { background: rgba(66,133,244,0.10); color: #1d4ed8; }
 
+      /* Performance (template_analytics) */
+      .wa-perf { display:flex; flex-direction:column; gap:1px; line-height:1.25; }
+      .wa-perf-main { font-family:var(--rm-mono, 'JetBrains Mono', monospace); font-size:12.5px; font-weight:700; color:var(--rm-ink, #0f1410); }
+      .wa-perf-unit { font-weight:500; font-size:10px; color:var(--rm-muted, #7a7e79); }
+      .wa-perf-sub { font-size:10.5px; color:var(--rm-muted, #7a7e79); }
+      .wa-perf-sub.wa-perf-high { color: var(--rm-green-deep, #004d35); }
+      .wa-perf-sub.wa-perf-med  { color: #92400e; }
+      .wa-perf-sub.wa-perf-low  { color: var(--rm-red, #c0392b); }
+      .wa-perf-empty { color:var(--rm-muted, #7a7e79); }
+
       /* Quality */
       .wa-quality { display:inline-flex; padding:3px 8px; border-radius:3px; font-family:var(--rm-mono); font-size:10px; font-weight:700; letter-spacing:0.08em; }
       .wa-quality--high  { background: rgba(64,217,157,0.10); color: var(--rm-green-deep, #004d35); }
@@ -351,6 +384,34 @@
     } finally {
       state.syncing = false
       render()
+    }
+    // Then pull the per-template numbers (best-effort — never blocks the list).
+    fetchAnalytics()
+  }
+
+  // Pull sent/delivered/read/clicked from Meta's template_analytics and merge
+  // them into the rows in place. The endpoint also persists them to the DB so
+  // they show instantly on the next load.
+  async function fetchAnalytics () {
+    if (!state.templates.length) return
+    try {
+      const data = await window.rmApi.post('/api/whatsapp/templates/analytics', {})
+      const map = data.analytics || {}
+      let touched = 0
+      for (const t of state.templates) {
+        const a = t.meta_template_id && map[String(t.meta_template_id)]
+        if (!a) continue
+        t.sent_count = a.sent
+        t.delivered_count = a.delivered
+        t.read_count = a.read
+        t.clicked_count = a.clicked
+        touched++
+      }
+      if (touched) render()
+    } catch (err) {
+      // Numbers are a bonus — a missing WABA / disabled insights shouldn't
+      // surface as a scary error on the templates list.
+      console.warn('[wa-templates] analytics fetch failed:', err.message)
     }
   }
 

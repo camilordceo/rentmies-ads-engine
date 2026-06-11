@@ -18,6 +18,7 @@
 
 const axios = require('axios')
 const { createClient } = require('@supabase/supabase-js')
+const { enableInsights } = require('../../../lib/whatsapp-graph')
 
 const META_GRAPH = 'https://graph.facebook.com/v21.0'
 
@@ -174,6 +175,13 @@ module.exports = async (req, res) => {
         detail: fbErr(err)
       })
     }
+  }
+
+  // ── 4b. Enable Template Insights so template_analytics works ──
+  // One-time, irreversible, idempotent. Best-effort — never blocks the
+  // connection. Without this, GET /{waba}/template_analytics returns 200005.
+  if (waba && waba.id) {
+    try { await enableInsights(waba.id, access_token) } catch (_) {}
   }
 
   // ── 5. Persist everything to meta_connections ─────────────

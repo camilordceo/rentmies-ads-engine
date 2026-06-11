@@ -41,7 +41,10 @@ module.exports = async (req, res) => {
       .eq('empresa_id', auth.empresaId)
       .maybeSingle()
     if (conn && conn.status === 'active') {
-      token = token || conn.page_access_token || conn.long_lived_token
+      // WhatsApp Business Management needs the system user token
+      // (whatsapp_business_management). The page token does NOT carry that
+      // scope, so prefer long_lived_token here — page token is last resort.
+      token = token || conn.long_lived_token || conn.page_access_token
       wabaId = wabaId || conn.waba_id
       metaConnId = conn.id
     }
